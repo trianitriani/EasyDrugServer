@@ -1,12 +1,7 @@
 package it.unipi.EasyDrugServer.model;
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.redis.core.RedisHash;
-
 import java.io.Serializable;
 
-    @RedisHash("PrescriptionDrug")
-    public class PrescriptionDrug implements Serializable {
+public class PrescriptedDrug implements Serializable {
     private Integer id;         // Parte della chiave (ID della prescrizione)
     private String idPaziente; // Parte della chiave (ID del paziente)
     private String info;       // Attributo
@@ -15,7 +10,7 @@ import java.io.Serializable;
     private Boolean active;
 
     // Costruttore vuoto (necessario per la deserializzazione)
-    public PrescriptionDrug() {}
+    public PrescriptedDrug() {}
 
 
 
