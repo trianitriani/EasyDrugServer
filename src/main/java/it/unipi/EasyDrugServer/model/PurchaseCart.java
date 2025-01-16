@@ -4,18 +4,15 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.security.Timestamp;
 import java.util.List;
 
-@Setter
 @Getter
+@Setter
 @Data
-public class Prescription {
-    private Timestamp timestamp;
-    private boolean active;
+public class PurchaseCart {
     private List<Drug> drugs;
 
-    public Prescription(){
+    public PurchaseCart(){
 
     }
 }
