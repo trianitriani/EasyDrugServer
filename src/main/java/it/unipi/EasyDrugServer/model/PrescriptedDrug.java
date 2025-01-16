@@ -1,6 +1,9 @@
 package it.unipi.EasyDrugServer.model;
+import lombok.Data;
+
 import java.io.Serializable;
 
+@Data
 public class PrescriptedDrug implements Serializable {
     private Integer id;         // Parte della chiave (ID della prescrizione)
     private String idPaziente; // Parte della chiave (ID del paziente)
@@ -9,7 +12,7 @@ public class PrescriptedDrug implements Serializable {
     private Boolean purchased;
     private Boolean active;
 
-    // Costruttore vuoto (necessario per la deserializzazione)
+    // Costruttore vuoto (necessario per la deserialization)
     public PrescriptedDrug() {}
 
 
