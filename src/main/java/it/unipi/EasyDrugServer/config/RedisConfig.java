@@ -6,16 +6,25 @@ import redis.clients.jedis.JedisPool;
 
 @Getter
 public class RedisConfig {
+    protected final String host = "localhost";
+    protected final int port = 6379;
     private final JedisPool jedisPool;
 
     public RedisConfig() {
-        this.jedisPool = new JedisPool("localhost", 6379);
+        this.jedisPool = new JedisPool(host, port);
     }
 
     public RedisConfig(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
 
+    /**
+     * In this way we can reuse the id of a previous element that was eliminated, if there not exists
+     * new increments the counter of element of that entity.
+     * @param jedis connection to server
+     * @param entity name of the entity
+     * @return id
+     */
     public String getReusableId(Jedis jedis,String entity){
         String id = jedis.rpop("available_"+entity+"_ids");
         if(id == null){

@@ -2,27 +2,27 @@ package it.unipi.EasyDrugServer.service;
 
 import it.unipi.EasyDrugServer.model.Drug;
 import it.unipi.EasyDrugServer.model.Patient;
-import it.unipi.EasyDrugServer.repository.redis.PatientRedisRepository;
+import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRepository;
+import it.unipi.EasyDrugServer.model.PurchaseCart;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class PatientService {
-    private final PatientRedisRepository patientRedisRepository;
+    private final PurchaseCartRepository purchaseCartRepository;
 
     public Patient getPatient(String codePatient){
-        return patientRedisRepository.findByCode(codePatient);
+        return purchaseCartRepository.findByCode(codePatient);
     }
 
-    public String saveDrugToPurchase(String codPatient, Drug drug) {
-        patientRedisRepository.saveDrugToPurchase(codPatient, drug);
+    public String saveDrugIntoPurchaseCart(String codPatient, Drug drug) {
+        purchaseCartRepository.saveDrugIntoPurchaseCart(codPatient, drug);
         return null;
     }
 
-    public List<Drug> getCart(String patientCode){
-        return patientRedisRepository.getCart(patientCode);
+    public PurchaseCart getPurchaseCart(String patientCode){
+        return purchaseCartRepository.getPurchaseCart(patientCode);
     }
 
 }

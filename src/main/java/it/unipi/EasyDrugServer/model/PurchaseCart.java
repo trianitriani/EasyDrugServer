@@ -15,4 +15,8 @@ public class PurchaseCart {
     public PurchaseCart(){
 
     }
+
+    public PurchaseCart(List<Drug> drugs){
+        this.drugs = drugs;
+    }
 }
