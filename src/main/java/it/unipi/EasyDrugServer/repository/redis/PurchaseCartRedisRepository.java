@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.springframework.stereotype.Repository;
 import redis.clients.jedis.JedisCluster;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.Timestamp;
@@ -34,13 +35,17 @@ public class PurchaseCartRedisRepository {
 
     public void saveDrugIntoPurchaseCart(String codPatient, Drug drug) {
         try(jedisCluster){
-            String info = "{ id: " + drug.getId() + ", name: '" + drug.getName() + "', price: " + drug.getPrice() +
-                    ", prescriptionTimestamp: '" + drug.getPrescriptionTimestamp() + "' }";
+            JsonObject info = new JsonObject();
+            info.addProperty("id", drug.getId());
+            info.addProperty("name", drug.getName());
+            info.addProperty("price", drug.getPrice());
+            info.addProperty("prescriptionTimestamp", drug.getPrescriptionTimestamp().toInstant().toString());
+
             double quantity = drug.getQuantity();
             // Now we have to search a valid id_purch for a new element
             String id_purch = redisHelper.getReusableId(jedisCluster, "purch");
             String key = this.entity + ":" + id_purch + ":" + codPatient + ":";
-            jedisCluster.set(key + "info", info);
+            jedisCluster.set(key + "info", String.valueOf(info));
             jedisCluster.set(key + "quantity", String.valueOf((quantity)));
             System.out.println(jedisCluster.get(key + "info"));
         }
