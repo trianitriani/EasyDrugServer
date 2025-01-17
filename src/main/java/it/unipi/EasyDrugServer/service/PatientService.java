@@ -1,11 +1,12 @@
 package it.unipi.EasyDrugServer.service;
 
-import it.unipi.EasyDrugServer.model.Drug;
 import it.unipi.EasyDrugServer.model.Patient;
+import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
-import it.unipi.EasyDrugServer.model.PurchaseCart;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,12 +26,12 @@ public class PatientService {
         return purchaseCartRedisRepository.findByCode(codePatient);
     }
 
-    public String saveDrugIntoPurchaseCart(String codPatient, Drug drug) {
+    public String saveDrugIntoPurchaseCart(String codPatient, PurchaseDrugDTO drug) {
         purchaseCartRedisRepository.saveDrugIntoPurchaseCart(codPatient, drug);
         return null;
     }
 
-    public PurchaseCart getPurchaseCart(String patientCode){
+    public List<PurchaseDrugDTO> getPurchaseCart(String patientCode){
         return purchaseCartRedisRepository.getPurchaseCart(patientCode);
     }
 

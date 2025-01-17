@@ -2,19 +2,19 @@ package it.unipi.EasyDrugServer.repository.redis;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import it.unipi.EasyDrugServer.model.Drug;
-import it.unipi.EasyDrugServer.model.Patient;
+import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
+import it.unipi.EasyDrugServer.model.*;
 import it.unipi.EasyDrugServer.utility.RedisHelper;
-import it.unipi.EasyDrugServer.model.PurchaseCart;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Repository;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
+import java.time.LocalDateTime;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.sql.Timestamp;
 
 @Setter
 @Getter
@@ -33,88 +33,80 @@ public class PurchaseCartRedisRepository {
         return null;
     }
 
-    public void saveDrugIntoPurchaseCart(String codPatient, Drug drug) {
+    public void saveDrugIntoPurchaseCart(String codPatient, PurchaseDrugDTO drug) {
         try(jedisCluster){
             JsonObject info = new JsonObject();
             info.addProperty("id", drug.getId());
             info.addProperty("name", drug.getName());
             info.addProperty("price", drug.getPrice());
-            info.addProperty("prescriptionTimestamp", drug.getPrescriptionTimestamp().toInstant().toString());
+            info.addProperty("prescriptionTimestamp", String.valueOf(drug.getPrescriptionTimestamp()));
 
-            double quantity = drug.getQuantity();
+            int quantity = drug.getQuantity();
             // Now we have to search a valid id_purch for a new element
             String id_purch = redisHelper.getReusableId(jedisCluster, "purch");
             String key = this.entity + ":" + id_purch + ":" + codPatient + ":";
             jedisCluster.set(key + "info", String.valueOf(info));
-            jedisCluster.set(key + "quantity", String.valueOf((quantity)));
+            jedisCluster.set(key + "quantity", String.valueOf(quantity));
             System.out.println(jedisCluster.get(key + "info"));
         }
     }
 
-    public PurchaseCart getPurchaseCart(String patientCode){
+    public List<PurchaseDrugDTO> getPurchaseCart(String patientCode){
         try(jedisCluster){
-            PurchaseCart purchaseCart = new PurchaseCart();
-            List<Drug> cartList = new ArrayList<>();
-            for(int i=8; i<redisHelper.nEntities(jedisCluster, this.entity); i++){
+            List<PurchaseDrugDTO> cartList = new ArrayList<>();
+            for(int i=0; i<=redisHelper.nEntities(jedisCluster, this.entity); i++){
                     String info;
                     String quantity;
                     String key = this.entity + ":" + i + ":" + patientCode + ":";
                     if(jedisCluster.exists(key + "info")){
+                        System.out.println(jedisCluster.get(key + "info"));
                         info = jedisCluster.get(key + "info");
                         quantity = jedisCluster.get(key + "quantity");
                     } else continue;
                     // Se continuo significa che l'oggetto esiste realmente e lo inserisco nella lista
-                    Drug drug = new Drug();
+                    PurchaseDrugDTO drug = new PurchaseDrugDTO();
                     // inserimento info
                     JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
                     int id = jsonObject.get("id").getAsInt();
                     String name = jsonObject.get("name").getAsString();
                     double price = jsonObject.get("price").getAsDouble();
-
-                    // Ottieni il timestamp come long
-                    long timestampMillis = jsonObject.get("timestamp").getAsLong();
-                    Timestamp timestamp = new Timestamp(timestampMillis);
+                    String prescriptionTimestampString = jsonObject.get("prescriptionTimestamp").getAsString();
+                    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+                    LocalDateTime prescriptionTimestamp = LocalDateTime.parse(prescriptionTimestampString, formatter);
 
                     drug.setId(id);
                     drug.setName(name);
                     drug.setPrice(price);
-                    drug.setPrescriptionTimestamp(timestamp);
+                    drug.setPrescriptionTimestamp(prescriptionTimestamp);
                     drug.setQuantity(Integer.parseInt(quantity));
                     cartList.add(drug);
             }
-            purchaseCart.setDrugs(cartList);
-            return purchaseCart;
+            return cartList;
         }
     }
-
 
     public int confirmPurchase(String patientCode){
         try(jedisCluster){
             int deleted = 0;
 
             // cerco tutti i farmaci che sono nel carrello e si riferiscono al paziente selezionato
-            for(int i=0; i<redisHelper.nEntities(jedisCluster, this.entity); i++){
-                String key = this.entity + i + ":" + patientCode + ":";
+            for(int i=0; i<=redisHelper.nEntities(jedisCluster, this.entity); i++){
+                String key = this.entity + ":" + i + ":" + patientCode + ":";
                 if(jedisCluster.exists(key + "info")){
-                    String info = jedisCluster.get(key + "info");
-                    JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
-                    int id = jsonObject.get("id").getAsInt();
-                    long timestampMillis = jsonObject.get("timestamp").getAsLong();
-                    Timestamp timestamp = new Timestamp(timestampMillis);
+                    // String info = jedisCluster.get(key + "info");
+                    // JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
 
                     // elimino dal key value il farmaco nel carrello
                     deleted++;
                     jedisCluster.del(key + "info");
                     jedisCluster.del(key + "quantity");
-
+                    redisHelper.returnIdToPool(jedisCluster, String.valueOf(i));
                     // metto purchased = true al corrispondente farmaco prescritto (stesso codice e timestamp)
-
 
                 }
             }
 
             // se tutti i farmaci della prescrizione hanno purchased = true, allora elimino tutta la prescrizione
-
 
             return deleted;
         }

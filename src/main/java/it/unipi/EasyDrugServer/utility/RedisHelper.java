@@ -6,16 +6,9 @@ import redis.clients.jedis.JedisPool;
 
 @Component
 public class RedisHelper {
-    private final String host = "localhost";
-    private final int port = 6379;
-    private final JedisPool jedisPool;
 
     public RedisHelper() {
-        this.jedisPool = new JedisPool(host, port);
-    }
 
-    public RedisHelper(JedisPool jedisPool) {
-        this.jedisPool = jedisPool;
     }
 
     /**
@@ -36,17 +29,12 @@ public class RedisHelper {
         return id;
     }
 
-    public void returnIdToPool(Jedis jedis, String id){
-        jedis.lpush("available_"+id+"_ids",id);
+    public void returnIdToPool(JedisCluster jedisCluster, String id){
+        jedisCluster.lpush("available_"+id+"_ids",id);
     }
 
     public int nEntities(JedisCluster jedisCluster, String entity){
         return Integer.parseInt(jedisCluster.get("global:"+entity+"_counter"));
     }
 
-    public void close(){
-        if(jedisPool != null){
-            jedisPool.close();
-        }
-    }
 }

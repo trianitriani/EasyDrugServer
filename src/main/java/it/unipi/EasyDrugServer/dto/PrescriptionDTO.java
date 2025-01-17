@@ -1,5 +1,6 @@
-package it.unipi.EasyDrugServer.model;
+package it.unipi.EasyDrugServer.dto;
 
+import it.unipi.EasyDrugServer.model.Drug;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,12 +11,12 @@ import java.util.List;
 @Setter
 @Getter
 @Data
-public class Prescription {
+public class PrescriptionDTO {
     private Timestamp timestamp;
     private boolean active;
-    private List<Drug> drugs;
+    private List<PrescriptedDrugsDTO> prescriptedDrugs;
 
-    public Prescription(){
+    public PrescriptionDTO(){
 
     }
 }
