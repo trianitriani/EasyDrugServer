@@ -21,9 +21,8 @@ public class PatientService {
      */
 
 
-
     public Patient getPatient(String codePatient){
-        return purchaseCartRedisRepository.findByCode(codePatient);
+        return null;
     }
 
     public String saveDrugIntoPurchaseCart(String codPatient, PurchaseDrugDTO drug) {

@@ -29,10 +29,12 @@ public class PurchaseCartRedisRepository {
         this.redisHelper = redisHelper;
     }
 
-    public Patient findByCode(String codePatient) {
-        return null;
-    }
-
+    /**
+     * Insert into redis db information related to a specific drug that is insert into a cart
+     * of a specific patient by a pharmacist
+     * @param codPatient code of patient
+     * @param drug drug insert into a cart
+     */
     public void saveDrugIntoPurchaseCart(String codPatient, PurchaseDrugDTO drug) {
         try(jedisCluster){
             JsonObject info = new JsonObject();
@@ -51,6 +53,11 @@ public class PurchaseCartRedisRepository {
         }
     }
 
+    /**
+     *
+     * @param patientCode
+     * @return
+     */
     public List<PurchaseDrugDTO> getPurchaseCart(String patientCode){
         try(jedisCluster){
             List<PurchaseDrugDTO> cartList = new ArrayList<>();
@@ -63,7 +70,7 @@ public class PurchaseCartRedisRepository {
                         info = jedisCluster.get(key + "info");
                         quantity = jedisCluster.get(key + "quantity");
                     } else continue;
-                    // Se continuo significa che l'oggetto esiste realmente e lo inserisco nella lista
+                    // Se sono qui significa che l'oggetto esiste realmente e lo inserisco nella lista
                     PurchaseDrugDTO drug = new PurchaseDrugDTO();
                     // inserimento info
                     JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
@@ -88,7 +95,6 @@ public class PurchaseCartRedisRepository {
     public int confirmPurchase(String patientCode){
         try(jedisCluster){
             int deleted = 0;
-
             // cerco tutti i farmaci che sono nel carrello e si riferiscono al paziente selezionato
             for(int i=0; i<=redisHelper.nEntities(jedisCluster, this.entity); i++){
                 String key = this.entity + ":" + i + ":" + patientCode + ":";
