@@ -1,5 +1,6 @@
 package it.unipi.EasyDrugServer.service;
 
+import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
@@ -13,21 +14,12 @@ import java.util.List;
 public class PatientService {
     private final PurchaseCartRedisRepository purchaseCartRedisRepository;
 
-    /*
-    public PatientService(PurchaseCartRedisRepository purchaseCartRedisRepository) {
-        this.purchaseCartRedisRepository = purchaseCartRedisRepository;
-    }
-
-     */
-
-
-    public Patient getPatient(String codePatient){
+    public Patient getPatient(String patientCode){
         return null;
     }
 
-    public String saveDrugIntoPurchaseCart(String codPatient, PurchaseDrugDTO drug) {
-        purchaseCartRedisRepository.saveDrugIntoPurchaseCart(codPatient, drug);
-        return null;
+    public PurchaseDrugDTO saveDrugIntoPurchaseCart(String patientCode, PurchaseDrugDTO drug) {
+        return purchaseCartRedisRepository.saveDrugIntoPurchaseCart(patientCode, drug);
     }
 
     public List<PurchaseDrugDTO> getPurchaseCart(String patientCode){
@@ -38,4 +30,17 @@ public class PatientService {
         return purchaseCartRedisRepository.confirmPurchase(patientCode);
     }
 
+    public PurchaseDrugDTO modifyPurchaseDrugQuantity(String patientCode, int idDrug, int quantity) throws NotFoundException {
+        PurchaseDrugDTO purchaseDrugDTO = purchaseCartRedisRepository.modifyPurchaseDrugQuantity(patientCode, idDrug, quantity);
+        if(purchaseDrugDTO == null)
+            throw new NotFoundException("Impossibile modify the drug: patient "+patientCode+" has not drug with id "+idDrug+" in the cart.");
+        return purchaseDrugDTO;
+    }
+
+    public PurchaseDrugDTO deletePurchaseDrug(String patientCode, int idDrug) throws NotFoundException {
+        PurchaseDrugDTO purchaseDrugDTO =  purchaseCartRedisRepository.deletePurchaseDrug(patientCode, idDrug);
+        if(purchaseDrugDTO == null)
+            throw new NotFoundException("Impossibile delete the drug: patient "+patientCode+" has not drug with id "+idDrug+" in the cart.");
+        return purchaseDrugDTO;
+    }
 }

@@ -7,13 +7,14 @@ import lombok.Setter;
 @Data
 @Setter
 @Getter
-public class PrescriptedDrugsDTO {
+public class PrescriptedDrugDTO {
     private int id;
     private String name;
     private double price;
     private int quantity;
+    private boolean purchased;
 
-    public PrescriptedDrugsDTO() {
+    public PrescriptedDrugDTO() {
 
     }
 }

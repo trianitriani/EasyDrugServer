@@ -5,16 +5,15 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.security.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Setter
 @Getter
 @Data
 public class PrescriptionDTO {
-    private Timestamp timestamp;
-    private boolean active;
-    private List<PrescriptedDrugsDTO> prescriptedDrugs;
+    private LocalDateTime timestamp;
+    private List<PrescriptedDrugDTO> prescriptedDrugs;
 
     public PrescriptionDTO(){
 
