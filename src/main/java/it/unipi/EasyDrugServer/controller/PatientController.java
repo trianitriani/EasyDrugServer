@@ -1,10 +1,12 @@
 package it.unipi.EasyDrugServer.controller;
 
+import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.ValidResponse;
 import it.unipi.EasyDrugServer.service.PatientService;
 import it.unipi.EasyDrugServer.model.Patient;
 import jakarta.validation.Valid;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -90,5 +92,10 @@ public class PatientController {
         PurchaseDrugDTO purchaseDrug = patientService.deletePurchaseDrug(patientCode, idDrug);
         ValidResponse response = new ValidResponse(HttpStatus.OK, purchaseDrug);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/{patientCode}/prescriptions/active")
+    public List<PrescriptionDTO> getAllPrescriptions(@PathVariable String patientCode){
+        return patientService.getAllPrescriptions(patientCode);
     }
 }

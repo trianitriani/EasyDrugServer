@@ -1,8 +1,10 @@
 package it.unipi.EasyDrugServer.service;
 
+import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
+import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PatientService {
     private final PurchaseCartRedisRepository purchaseCartRedisRepository;
+    private final PrescriptionRedisRepository prescriptionRedisRepository;
 
     public Patient getPatient(String patientCode){
         return null;
@@ -42,5 +45,9 @@ public class PatientService {
         if(purchaseDrugDTO == null)
             throw new NotFoundException("Impossibile delete the drug: patient "+patientCode+" has not drug with id "+idDrug+" in the cart.");
         return purchaseDrugDTO;
+    }
+
+    public List<PrescriptionDTO> getAllPrescriptions(String patientCode){
+        return prescriptionRedisRepository.getAllPrescriptions(patientCode);
     }
 }
