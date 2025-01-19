@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.function.EntityResponse;
 
 import javax.swing.text.html.parser.Entity;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -94,8 +96,15 @@ public class PatientController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    /**
+     * Mostra al paziente le sue prescrizioni attive, usata quando entra nella sua home.
+     * @param patientCode codice del paziente
+     * @return ResponseEntity
+     */
     @GetMapping("/{patientCode}/prescriptions/active")
-    public List<PrescriptionDTO> getAllPrescriptions(@PathVariable String patientCode){
-        return patientService.getAllPrescriptions(patientCode);
+    public ResponseEntity<ValidResponse> getAllPrescriptions(@PathVariable String patientCode){
+        HashMap<LocalDateTime, PrescriptionDTO> prescriptions = patientService.getAllPrescriptions(patientCode);
+        ValidResponse response = new ValidResponse(HttpStatus.OK, prescriptions);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

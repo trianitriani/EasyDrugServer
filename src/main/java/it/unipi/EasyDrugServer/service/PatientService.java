@@ -9,6 +9,8 @@ import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -47,7 +49,7 @@ public class PatientService {
         return purchaseDrugDTO;
     }
 
-    public List<PrescriptionDTO> getAllPrescriptions(String patientCode){
+    public HashMap<LocalDateTime, PrescriptionDTO> getAllPrescriptions(String patientCode){
         return prescriptionRedisRepository.getAllPrescriptions(patientCode);
     }
 }

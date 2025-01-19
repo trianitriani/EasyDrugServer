@@ -151,7 +151,6 @@ public class PrescriptionRedisRepository {
     }
 
 
-
     private boolean isValidDoctor(String doctorCode, String patientCode){
         String patKey = "pat: " + patientCode + ":" + doctorCode;
         if(!Objects.equals(doctorCode, jedisCluster.get(patKey)))
@@ -194,6 +193,7 @@ public class PrescriptionRedisRepository {
                 }
 
             }
+            return prescriptions;
         }
     }
 }
