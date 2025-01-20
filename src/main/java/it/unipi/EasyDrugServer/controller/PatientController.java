@@ -36,9 +36,9 @@ public class PatientController {
      * @return
      */
     @PostMapping("/{patientCode}/purchases/pending/drugs")
-    public ResponseEntity<ValidResponse> saveDrugIntoPurchaseCart(@PathVariable String patientCode,
+    public ResponseEntity<ValidResponse> savePurchaseDrug(@PathVariable String patientCode,
                                                                   @RequestBody PurchaseDrugDTO drug){
-        PurchaseDrugDTO purchaseDrug = patientService.saveDrugIntoPurchaseCart(patientCode, drug);
+        PurchaseDrugDTO purchaseDrug = patientService.savePurchaseDrug(patientCode, drug);
         ValidResponse response = new ValidResponse(HttpStatus.CREATED, purchaseDrug);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -63,8 +63,10 @@ public class PatientController {
      * @return
      */
     @PostMapping("/{patientCode}/purchases")
-    public int confirmPurchase(@PathVariable String patientCode){
-        return patientService.confirmPurchase(patientCode);
+    public ResponseEntity<ValidResponse> confirmPurchase(@PathVariable String patientCode){
+        List<PurchaseDrugDTO> purchaseCart = patientService.confirmPurchaseCart(patientCode);
+        ValidResponse response = new ValidResponse(HttpStatus.OK, purchaseCart);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     /**
@@ -103,7 +105,7 @@ public class PatientController {
      */
     @GetMapping("/{patientCode}/prescriptions/active")
     public ResponseEntity<ValidResponse> getAllPrescriptions(@PathVariable String patientCode){
-        HashMap<LocalDateTime, PrescriptionDTO> prescriptions = patientService.getAllPrescriptions(patientCode);
+        List<PrescriptionDTO> prescriptions = patientService.getAllPrescriptions(patientCode);
         ValidResponse response = new ValidResponse(HttpStatus.OK, prescriptions);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

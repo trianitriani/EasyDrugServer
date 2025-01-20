@@ -23,16 +23,16 @@ public class PatientService {
         return null;
     }
 
-    public PurchaseDrugDTO saveDrugIntoPurchaseCart(String patientCode, PurchaseDrugDTO drug) {
-        return purchaseCartRedisRepository.saveDrugIntoPurchaseCart(patientCode, drug);
+    public PurchaseDrugDTO savePurchaseDrug(String patientCode, PurchaseDrugDTO drug) {
+        return purchaseCartRedisRepository.savePurchaseDrug(patientCode, drug);
     }
 
     public List<PurchaseDrugDTO> getPurchaseCart(String patientCode){
         return purchaseCartRedisRepository.getPurchaseCart(patientCode);
     }
 
-    public int confirmPurchase(String patientCode){
-        return purchaseCartRedisRepository.confirmPurchase(patientCode);
+    public List<PurchaseDrugDTO> confirmPurchaseCart(String patientCode){
+        return purchaseCartRedisRepository.confirmPurchaseCart(patientCode);
     }
 
     public PurchaseDrugDTO modifyPurchaseDrugQuantity(String patientCode, int idDrug, int quantity) throws NotFoundException {
@@ -49,7 +49,7 @@ public class PatientService {
         return purchaseDrugDTO;
     }
 
-    public HashMap<LocalDateTime, PrescriptionDTO> getAllPrescriptions(String patientCode){
+    public List<PrescriptionDTO> getAllPrescriptions(String patientCode){
         return prescriptionRedisRepository.getAllPrescriptions(patientCode);
     }
 }

@@ -29,8 +29,8 @@ public class RedisHelper {
         return id;
     }
 
-    public void returnIdToPool(JedisCluster jedisCluster, String id){
-        jedisCluster.lpush("available_"+id+"_ids",id);
+    public void returnIdToPool(JedisCluster jedisCluster, String entity, String id){
+        jedisCluster.lpush("available_"+entity+"_ids", id);
     }
 
     public int nEntities(JedisCluster jedisCluster, String entity){
