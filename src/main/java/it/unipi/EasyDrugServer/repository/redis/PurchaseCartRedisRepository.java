@@ -113,20 +113,38 @@ public class PurchaseCartRedisRepository {
             for(int i=0; i<=redisHelper.nEntities(jedisCluster, this.entity); i++){
                 String key = this.entity + ":" + i + ":" + patientCode + ":";
                 if(jedisCluster.exists(key + "info")){
-                    // String info = jedisCluster.get(key + "info");
-                    // JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
+                    // metto purchased = true al corrispondente farmaco prescritto (stesso codice e timestamp)
+                    String info = jedisCluster.get(key + "info");
+                    JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
+                    int id = jsonObject.get("id").getAsInt();
+
+                    String timestampString = jedisCluster.get("timestamp");
+                    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+                    LocalDateTime timestamp = LocalDateTime.parse(timestampString, formatter);
+
+                    for(int j=0; j<=redisHelper.nEntities(jedisCluster, "pres"); j++){
+                        String presKey = "pres:" + j + ":" + patientCode + ":";
+                        if(jedisCluster.exists(presKey + "info")){
+                            String presInfo = jedisCluster.get(presKey + "info");
+                            JsonObject jsonPres = JsonParser.parseString(presInfo).getAsJsonObject();
+                            int presId = jsonPres.get("id").getAsInt();
+
+                            String presTimestampString = jedisCluster.get("timestamp");
+                            LocalDateTime presTimestamp = LocalDateTime.parse(presTimestampString, formatter);
+                        }
+                    }
 
                     // elimino dal key value il farmaco nel carrello
                     confirmed++;
                     jedisCluster.del(key + "info");
                     jedisCluster.del(key + "quantity");
                     redisHelper.returnIdToPool(jedisCluster, String.valueOf(i));
-                    // metto purchased = true al corrispondente farmaco prescritto (stesso codice e timestamp)
 
                 }
             }
 
             // se tutti i farmaci della prescrizione hanno purchased = true, allora elimino tutta la prescrizione
+
 
             return confirmed;
         }

@@ -153,9 +153,7 @@ public class PrescriptionRedisRepository {
 
     private boolean isValidDoctor(String doctorCode, String patientCode){
         String patKey = "pat: " + patientCode + ":" + doctorCode;
-        if(!Objects.equals(doctorCode, jedisCluster.get(patKey)))
-            return false;
-        return true;
+        return Objects.equals(doctorCode, jedisCluster.get(patKey));
     }
 
     public HashMap<LocalDateTime, PrescriptionDTO> getAllPrescriptions(String patientCode) {
@@ -181,9 +179,12 @@ public class PrescriptionRedisRepository {
                     String purchased = jedisCluster.get(key + "purchased");
                     prescribedDrug.setPurchased(Boolean.parseBoolean(purchased));
 
+                    // se esiste già una lista di prescrizione con quel timestamp, allora aggiungo il nuovo farmaco a quella lista
                     if(prescriptions.containsKey(timestamp)){
                         PrescriptionDTO prescription = prescriptions.get(timestamp);
                         prescription.addPrescribedDrug(prescribedDrug);
+
+                    // se non esiste una lista di prescrizione con quel timestamp, allora creo una nuova lista
                     } else {
                         PrescriptionDTO prescription = new PrescriptionDTO();
                         prescription.setTimestamp(timestamp);
