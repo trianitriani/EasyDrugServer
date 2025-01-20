@@ -21,10 +21,7 @@ import redis.clients.jedis.exceptions.JedisException;
 import java.time.LocalDateTime;
 
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Setter
 @Getter
@@ -117,6 +114,12 @@ public class PurchaseCartRedisRepository {
             int confirmed = 0;
             HashMap<String, List<Integer>> prescribedDrugs = new HashMap<>();
             List<PurchaseDrugDTO> purchaseDrugs = new ArrayList<>();
+            // liste di chiavi che comporteranno una modifica al db
+            List<String> purchToDelete = new ArrayList<>();
+            List<String> presDrugToDelete = new ArrayList<>();
+            List<String> presDrugPurchased = new ArrayList<>();
+            List<String> presToDelete = new ArrayList<>();
+            HashMap<String, Integer> presToModify = new HashMap<>();
             // cerco tutti i farmaci che sono nel carrello e si riferiscono al paziente selezionato
             for(int i=1; i<=redisHelper.nEntities(jedisCluster, this.entity); i++){
                 String keyPurch = this.entity + ":" + i + ":" + patientCode + ":";
@@ -133,6 +136,7 @@ public class PurchaseCartRedisRepository {
                         prescribedDrugs.get(timestampString).add(id);
                     }
                     // elimino dal key value il farmaco nel carrello
+                    purchToDelete.add(keyPurch);
                     confirmed++;
                     jedisCluster.del(keyPurch + "info");
                     jedisCluster.del(keyPurch + "quantity");
@@ -167,28 +171,62 @@ public class PurchaseCartRedisRepository {
                             if(prescribedDrugs.get(stringTimestamp).contains(id)){
                                 if (ended){
                                     // Allora vado a eliminare quel farmaco
+                                    presDrugToDelete.add(presDrugKey);
                                     jedisCluster.del(presDrugKey + "info");
                                     jedisCluster.del(presDrugKey + "quantity");
                                     jedisCluster.del(presDrugKey + "purchased");
                                     redisHelper.returnIdToPool(jedisCluster, "pres-drug", Integer.toString(k));
                                 } else {
+                                    presDrugPurchased.add(presDrugKey);
                                     jedisCluster.set(presDrugKey + "purchased", "true");
                                 }
                             }
                         }
                     }
                     if(ended) {
+                        presToDelete.add(presKey);
                         jedisCluster.del(presKey + "timestamp");
                         jedisCluster.del(presKey + "toPurchase");
                         redisHelper.returnIdToPool(jedisCluster, "pres", Integer.toString(j));
                     } else {
                         toPurchase -= nPurchased;
+                        presToModify.put(presKey, toPurchase);
                         jedisCluster.set(presKey + "toPurchase", String.valueOf(toPurchase));
                     }
                 }
             }
             if(purchaseDrugs.isEmpty())
                 throw new ForbiddenException("You can not complete da payment if a cart is empty");
+
+            // effettuo le modifiche usando multi
+
+            for (String purchKey : purchToDelete) {
+                // Esegui un'operazione su ciascun elemento
+                System.out.println("Eliminazione di: " + purchKey);
+            }
+            for (String presDrugKey : presDrugToDelete) {
+                // Esegui un'operazione su ciascun elemento
+                System.out.println("Eliminazione di: " + presDrugKey);
+            }
+            for (String presDrugKey : presDrugPurchased) {
+                // Esegui un'operazione su ciascun elemento
+                System.out.println("Contrassegno come acquistato: " + presDrugKey);
+                // Ad esempio: jedisCluster.set(purchasedDrugKey, "true");
+            }
+            for (String presKey : presToDelete) {
+                // Esegui un'operazione su ciascun elemento
+                System.out.println("Contrassegno come acquistato: " + presKey);
+                // Ad esempio: jedisCluster.set(purchasedDrugKey, "true");
+            }
+            for (Map.Entry<String, Integer> entry : presToModify.entrySet()) {
+                String presKey = entry.getKey();
+                Integer newValue = entry.getValue();
+
+                // Esegui un'operazione su ciascuna coppia chiave-valore
+                System.out.println("Modifica di: " + presKey + " con valore: " + newValue);
+                // Ad esempio: jedisCluster.set(presKey, newValue.toString());
+            }
+
 
             return purchaseDrugs;
         } catch (JedisConnectionException e) {
