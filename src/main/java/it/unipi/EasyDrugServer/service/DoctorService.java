@@ -6,8 +6,9 @@ import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.UnauthorizedException;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
+// import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
+import it.unipi.EasyDrugServer.exception.BadRequestException;
 
 @Service
 @RequiredArgsConstructor

@@ -30,6 +30,7 @@ public class PurchaseCartRedisRepository {
     private final String entity = "purch-drug";
     private final JedisCluster jedisCluster;
     private final RedisHelper redisHelper;
+
     /*
         purch-drug:purch-drug:id_pat:id
         purch-drug:purch-drug:id_pat:info { name, price, prescriptionTimestamp }
@@ -51,18 +52,17 @@ public class PurchaseCartRedisRepository {
     public PurchaseDrugDTO savePurchaseDrug(String patientCode, PurchaseDrugDTO drug) {
         try {
             JsonObject info = new JsonObject();
-            info.addProperty("id", drug.getId());
             info.addProperty("name", drug.getName());
             info.addProperty("price", drug.getPrice());
             info.addProperty("prescriptionTimestamp", String.valueOf(drug.getPrescriptionTimestamp()));
 
             int quantity = drug.getQuantity();
             // Now we have to search a valid id_purch for a new element
-            String id_purch = redisHelper.getReusableId(jedisCluster, "purch");
+            String id_purch = redisHelper.getReusableId(jedisCluster, this.entity);
             String key = this.entity + ":" + id_purch + ":" + patientCode + ":";
+            jedisCluster.set(key + "id", String.valueOf(drug.getId()));
             jedisCluster.set(key + "info", String.valueOf(info));
             jedisCluster.set(key + "quantity", String.valueOf(quantity));
-            System.out.println(jedisCluster.get(key + "info"));
             return drug;
         } catch (JedisConnectionException e) {
             throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
@@ -87,7 +87,7 @@ public class PurchaseCartRedisRepository {
                 String info;
                 String quantity;
                 String key = this.entity + ":" + i + ":" + patientCode + ":";
-                if(!jedisCluster.exists(key + "info")) continue;
+                if(!jedisCluster.exists(key + "id")) continue;
                 // Se sono qui significa che l'oggetto esiste realmente e lo inserisco nella lista
                 PurchaseDrugDTO drug = createPurchaseDrugDTO(key);
                 cartList.add(drug);
@@ -111,7 +111,6 @@ public class PurchaseCartRedisRepository {
      */
     public List<PurchaseDrugDTO> confirmPurchaseCart(String patientCode){
         try {
-            int confirmed = 0;
             HashMap<String, List<Integer>> prescribedDrugs = new HashMap<>();
             List<PurchaseDrugDTO> purchaseDrugs = new ArrayList<>();
             // liste di chiavi che comporteranno una modifica al db
@@ -123,7 +122,7 @@ public class PurchaseCartRedisRepository {
             // cerco tutti i farmaci che sono nel carrello e si riferiscono al paziente selezionato
             for(int i=1; i<=redisHelper.nEntities(jedisCluster, this.entity); i++){
                 String keyPurch = this.entity + ":" + i + ":" + patientCode + ":";
-                if(jedisCluster.exists(keyPurch + "info")){
+                if(jedisCluster.exists(keyPurch + "id")){
                     PurchaseDrugDTO drug = createPurchaseDrugDTO(keyPurch);
                     purchaseDrugs.add(drug);
                     int id = drug.getId();
@@ -137,7 +136,7 @@ public class PurchaseCartRedisRepository {
                     }
                     // elimino dal key value il farmaco nel carrello
                     purchToDelete.add(keyPurch);
-                    confirmed++;
+                    jedisCluster.del(keyPurch + "id");
                     jedisCluster.del(keyPurch + "info");
                     jedisCluster.del(keyPurch + "quantity");
                     redisHelper.returnIdToPool(jedisCluster, this.entity, String.valueOf(i));
@@ -164,14 +163,13 @@ public class PurchaseCartRedisRepository {
                     // ciclo tutti i farmaci
                     for(int k=1; k<=redisHelper.nEntities(jedisCluster, "pres-drug"); k++){
                         String presDrugKey = "pres-drug:" + k + ":" + j + ":";
-                        if(jedisCluster.exists(presDrugKey + "info")){
-                            String info = jedisCluster.get(presDrugKey + "info");
-                            JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
-                            int id = jsonObject.get("id").getAsInt();
+                        if(jedisCluster.exists(presDrugKey + "id")){
+                            int id = Integer.parseInt(jedisCluster.get((presDrugKey + "id")));
                             if(prescribedDrugs.get(stringTimestamp).contains(id)){
                                 if (ended){
                                     // Allora vado a eliminare quel farmaco
                                     presDrugToDelete.add(presDrugKey);
+                                    jedisCluster.del(presDrugKey + "id");
                                     jedisCluster.del(presDrugKey + "info");
                                     jedisCluster.del(presDrugKey + "quantity");
                                     jedisCluster.del(presDrugKey + "purchased");
@@ -245,10 +243,9 @@ public class PurchaseCartRedisRepository {
             // ricavare il farmaco con id = idDrug
             for(int i=0; i<=redisHelper.nEntities(jedisCluster, this.entity); i++){
                 String key = this.entity + ":" + i + ":" + patientCode + ":";
-                if(jedisCluster.exists(key + "info")){
-                    String info = jedisCluster.get(key + "info");
-                    JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
-                    if(idDrug != jsonObject.get("id").getAsInt()) continue;
+                if(jedisCluster.exists(key + "id")){
+
+                    if(idDrug != Integer.parseInt(jedisCluster.get(key + "id"))) continue;
                     // modifica il campo quantità
                     jedisCluster.set(key + "quantity", String.valueOf(quantity));
                     return createPurchaseDrugDTO(idDrug, quantity, key);
@@ -278,11 +275,10 @@ public class PurchaseCartRedisRepository {
             for(int i=0; i<=redisHelper.nEntities(jedisCluster, this.entity); i++) {
                 String key = this.entity + ":" + i + ":" + patientCode + ":";
                 if (jedisCluster.exists(key + "info")) {
-                    String info = jedisCluster.get(key + "info");
-                    JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
-                    if (idDrug != jsonObject.get("id").getAsInt()) continue;
+                    if (idDrug != Integer.parseInt(jedisCluster.get(key + "id"))) continue;
 
                     // elimino il farmaco
+                    jedisCluster.del(key + "id");
                     jedisCluster.del(key + "info");
                     jedisCluster.del(key + "quantity");
                     redisHelper.returnIdToPool(jedisCluster, this.entity, String.valueOf(i));
@@ -304,8 +300,8 @@ public class PurchaseCartRedisRepository {
 
     private PurchaseDrugDTO createPurchaseDrugDTO(String key) {
         PurchaseDrugDTO prescribedDrug = new PurchaseDrugDTO();
+        prescribedDrug.setId(Integer.parseInt(jedisCluster.get(key + "id")));
         JsonObject jsonObject = JsonParser.parseString(jedisCluster.get(key + "info")).getAsJsonObject();
-        prescribedDrug.setId(jsonObject.get("id").getAsInt());
         prescribedDrug.setName(jsonObject.get("name").getAsString());
         prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
         String timestampString = jsonObject.get("prescriptionTimestamp").getAsString();

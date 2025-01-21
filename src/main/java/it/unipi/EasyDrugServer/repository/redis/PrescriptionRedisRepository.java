@@ -32,6 +32,7 @@ public class PrescriptionRedisRepository {
     private final String presDrug = "pres-drug";
     private final JedisCluster jedisCluster;
     private final RedisHelper redisHelper;
+
     /*
         pres:id_pres:id_pat:timestamp
         pres:id_pres:id_pat:toPurchase
@@ -57,7 +58,7 @@ public class PrescriptionRedisRepository {
             int i;
             // controllare se esiste una prescrizione inattiva del paziente
             for(i=1; i<=redisHelper.nEntities(jedisCluster, this.pres); i++){
-                String presKey = pres + ":" + i + ":" + patientCode + ":";
+                String presKey = this.pres + ":" + i + ":" + patientCode + ":";
                 if(jedisCluster.exists(presKey + "timestamp")){
                     String timestamp = jedisCluster.get(presKey + "timestamp");
                     if(!Objects.equals(timestamp, "false")) continue;
@@ -79,7 +80,7 @@ public class PrescriptionRedisRepository {
             String id_presDrug = redisHelper.getReusableId(jedisCluster, this.presDrug);
             String presDrugKey = this.presDrug + ":" + id_presDrug + ":" + i + ":";
             JsonObject info = new JsonObject();
-            info.addProperty("id", drug.getId());
+            jedisCluster.set(presDrugKey + "id", String.valueOf(drug.getId()));
             info.addProperty("name", drug.getName());
             info.addProperty("price", drug.getPrice());
             jedisCluster.set(presDrugKey + "info", String.valueOf(info));
@@ -120,7 +121,7 @@ public class PrescriptionRedisRepository {
                     // cicliamo i vari farmaci della prescrizione
                     for (int j=1; j<=redisHelper.nEntities(jedisCluster, this.presDrug); j++){
                         String keyDrugs = this.presDrug + ":" + j + ":" + i + ":";
-                        if(jedisCluster.exists(keyDrugs + "info")) {
+                        if(jedisCluster.exists(keyDrugs + "id")) {
                             nDrugs++;
                             // inserisco il farmaco prescritto nella lista di prescrizione per ritornarlo
                             prescription.addPrescribedDrug(createPrescribedDrugDTO(keyDrugs));
@@ -168,10 +169,8 @@ public class PrescriptionRedisRepository {
             for(int i=1; i<=redisHelper.nEntities(jedisCluster, this.presDrug); i++) {
                 // cerco tutti i farmaci con il campo "timestamp" non esistente (quelli non ancora confermati)
                 String keyPresDrug = this.presDrug + ":" + i + ":" + index_pres + ":";
-                if(jedisCluster.exists(keyPresDrug + "info")){
-                    String info = jedisCluster.get(keyPresDrug + "info");
-                    JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
-                    if(idDrug == jsonObject.get("id").getAsInt()){
+                if(jedisCluster.exists(keyPresDrug + "id")){
+                    if(idDrug == Integer.parseInt(jedisCluster.get(keyPresDrug + "id"))){
                         // ho trovato il farmaco da modificare
                         jedisCluster.set(keyPresDrug + "quantity", String.valueOf(quantity));
                         return createPrescribedDrugDTO(idDrug, quantity, keyPresDrug);
@@ -206,14 +205,13 @@ public class PrescriptionRedisRepository {
                     // l'id della prescrizione inattiva è i, adesso devo cercare il farmaco da eliminare
                     for(int j=1; j<=redisHelper.nEntities(jedisCluster, this.presDrug); j++) {
                         String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
-                        if(jedisCluster.exists(keyPresDrug + "info")){
-                            String info = jedisCluster.get(keyPresDrug + "info");
-                            JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
-                            if(idDrug == jsonObject.get("id").getAsInt()){
+                        if(jedisCluster.exists(keyPresDrug + "id")){
+                            if(idDrug == Integer.parseInt(jedisCluster.get(keyPresDrug + "id"))){
                                 // è il farmaco da rimuovere
                                 // preparo l'oggetto per il ritorno
                                 prescribedDrug = createPrescribedDrugDTO(idDrug, keyPresDrug);
                                 // rimuovo il farmaco dalla prescrizione attiva
+                                jedisCluster.del(keyPresDrug + "id");
                                 jedisCluster.del(keyPresDrug + "info");
                                 jedisCluster.del(keyPresDrug + "quantity");
                                 jedisCluster.del(keyPresDrug + "purchased");
@@ -243,7 +241,7 @@ public class PrescriptionRedisRepository {
     public List<PrescriptionDTO> getAllPrescriptions(String patientCode) {
         try {
             List<PrescriptionDTO> prescriptions = new ArrayList<>();
-            for (int i = 1; i <= redisHelper.nEntities(jedisCluster, this.pres); i++) {
+            for (int i=1; i <= redisHelper.nEntities(jedisCluster, this.pres); i++) {
                 String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
                 // Controllare che le prescrizioni siano attive, quindi con timestamp != false
                 if(jedisCluster.exists(keyPres + "timestamp") &&
@@ -258,7 +256,7 @@ public class PrescriptionRedisRepository {
                     prescription.setTimestamp(timestamp);
                     for(int j=1; j<=redisHelper.nEntities(jedisCluster, this.presDrug); j++) {
                         String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
-                        if(jedisCluster.exists(keyPresDrug + "info")){
+                        if(jedisCluster.exists(keyPresDrug + "id")){
                             // allora il farmaco è relativo a quella prescrizione dell'utente
                             prescription.addPrescribedDrug(createPrescribedDrugDTO(keyPresDrug));
                         }
@@ -285,8 +283,8 @@ public class PrescriptionRedisRepository {
 
     private PrescribedDrugDTO createPrescribedDrugDTO(String key){
         PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
+        prescribedDrug.setId(Integer.parseInt(jedisCluster.get(key + "id")));
         JsonObject jsonObject = JsonParser.parseString(jedisCluster.get(key + "info")).getAsJsonObject();
-        prescribedDrug.setId(jsonObject.get("id").getAsInt());
         prescribedDrug.setName(jsonObject.get("name").getAsString());
         prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
         prescribedDrug.setQuantity(Integer.parseInt(jedisCluster.get(key + "quantity")));
