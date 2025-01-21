@@ -14,6 +14,7 @@ import lombok.Setter;
 import org.springframework.stereotype.Repository;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.exceptions.JedisException;
@@ -42,13 +43,6 @@ public class PurchaseCartRedisRepository {
         this.redisHelper = redisHelper;
     }
 
-    /**
-     * ## PHARMACIST ##
-     * Insert into redis db information related to a specific drug that is insert into a cart
-     * of a specific patient by a pharmacist
-     * @param patientCode code of patient
-     * @param drug drug insert into a cart
-     */
     public PurchaseDrugDTO savePurchaseDrug(String patientCode, PurchaseDrugDTO drug) {
         try {
             JsonObject info = new JsonObject();
@@ -75,17 +69,13 @@ public class PurchaseCartRedisRepository {
         }
     }
 
-    /**
-     * ## PHARMACIST ##
-     * @param patientCode
-     * @return
-     */
     public List<PurchaseDrugDTO> getPurchaseCart(String patientCode){
         try {
+            // controllare se il paziente esiste o meno
+            //if(!isValidPatient(patientCode))
+            //    throw new NotFoundException("Patient "+patientCode+" not found");
             List<PurchaseDrugDTO> cartList = new ArrayList<>();
             for(int i=0; i<=redisHelper.nEntities(jedisCluster, this.entity); i++){
-                String info;
-                String quantity;
                 String key = this.entity + ":" + i + ":" + patientCode + ":";
                 if(!jedisCluster.exists(key + "id")) continue;
                 // Se sono qui significa che l'oggetto esiste realmente e lo inserisco nella lista
@@ -104,11 +94,6 @@ public class PurchaseCartRedisRepository {
         }
     }
 
-    /**
-     * ## PHARMACIST ##
-     * @param patientCode
-     * @return
-     */
     public List<PurchaseDrugDTO> confirmPurchaseCart(String patientCode){
         try {
             HashMap<String, List<Integer>> prescribedDrugs = new HashMap<>();
@@ -251,7 +236,33 @@ public class PurchaseCartRedisRepository {
                     return createPurchaseDrugDTO(idDrug, quantity, key);
                 }
             }
-            throw new NotFoundException("None drug "+idDrug+" into purchase cart of patient "+patientCode);
+            throw new NotFoundException("Impossibile modify the drug: patient "+patientCode+" has not drug with id "+idDrug+" in the cart.");
+
+        } catch (JedisConnectionException e) {
+            throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
+        } catch (JedisDataException e) {
+            throw new RuntimeException("Data error with redis: " + e.getMessage(), e);
+        } catch (JedisException e) {
+            throw new RuntimeException("Generic error with redis: " + e.getMessage(), e);
+        }
+    }
+
+    public PurchaseDrugDTO deletePurchaseDrug(String patientCode, int idDrug) {
+        try {
+            for(int i=0; i<=redisHelper.nEntities(jedisCluster, this.entity); i++) {
+                String key = this.entity + ":" + i + ":" + patientCode + ":";
+                if (jedisCluster.exists(key + "info")) {
+                    if (idDrug != Integer.parseInt(jedisCluster.get(key + "id"))) continue;
+                    // elimino il farmaco
+                    PurchaseDrugDTO drug = createPurchaseDrugDTO(idDrug, key);
+                    jedisCluster.del(key + "id");
+                    jedisCluster.del(key + "info");
+                    jedisCluster.del(key + "quantity");
+                    redisHelper.returnIdToPool(jedisCluster, this.entity, String.valueOf(i));
+                    return drug;
+                }
+            }
+            throw new NotFoundException("Impossibile delete the drug: patient "+patientCode+" has not drug with id "+idDrug+" in the cart.");
 
         } catch (JedisConnectionException e) {
             throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
@@ -264,38 +275,9 @@ public class PurchaseCartRedisRepository {
         }
     }
 
-    /**
-     * ## PHARMACIST ##
-     * @param patientCode
-     * @param idDrug
-     * @return
-     */
-    public PurchaseDrugDTO deletePurchaseDrug(String patientCode, int idDrug) {
-        try {
-            for(int i=0; i<=redisHelper.nEntities(jedisCluster, this.entity); i++) {
-                String key = this.entity + ":" + i + ":" + patientCode + ":";
-                if (jedisCluster.exists(key + "info")) {
-                    if (idDrug != Integer.parseInt(jedisCluster.get(key + "id"))) continue;
-
-                    // elimino il farmaco
-                    jedisCluster.del(key + "id");
-                    jedisCluster.del(key + "info");
-                    jedisCluster.del(key + "quantity");
-                    redisHelper.returnIdToPool(jedisCluster, this.entity, String.valueOf(i));
-                    return createPurchaseDrugDTO(idDrug, key);
-                }
-            }
-            throw new NotFoundException("None drug "+idDrug+" into purchase cart of patient "+patientCode);
-
-        } catch (JedisConnectionException e) {
-            throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
-        } catch (JedisDataException e) {
-            throw new RuntimeException("Data error with redis: " + e.getMessage(), e);
-        } catch (JedisException e) {
-            throw new RuntimeException("Generic error with redis: " + e.getMessage(), e);
-        } catch (Exception e) {
-            throw new RuntimeException("Generic server error: " + e.getMessage(), e);
-        }
+    private boolean isValidPatient(String patientCode) {
+        String patKey = "pat: " + patientCode + ":doc";
+        return jedisCluster.exists(patKey);
     }
 
     private PurchaseDrugDTO createPurchaseDrugDTO(String key) {
@@ -305,9 +287,13 @@ public class PurchaseCartRedisRepository {
         prescribedDrug.setName(jsonObject.get("name").getAsString());
         prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
         String timestampString = jsonObject.get("prescriptionTimestamp").getAsString();
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-        LocalDateTime prescriptionTimestamp = LocalDateTime.parse(timestampString, formatter);
-        prescribedDrug.setPrescriptionTimestamp(prescriptionTimestamp);
+        if(Objects.equals(timestampString, "null")){
+            prescribedDrug.setPrescriptionTimestamp(null);
+        } else {
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+            LocalDateTime prescriptionTimestamp = LocalDateTime.parse(timestampString, formatter);
+            prescribedDrug.setPrescriptionTimestamp(prescriptionTimestamp);
+        }
         prescribedDrug.setQuantity(Integer.parseInt(jedisCluster.get(key + "quantity")));
         return prescribedDrug;
     }
@@ -319,9 +305,13 @@ public class PurchaseCartRedisRepository {
         prescribedDrug.setName(jsonObject.get("name").getAsString());
         prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
         String timestampString = jsonObject.get("prescriptionTimestamp").getAsString();
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-        LocalDateTime prescriptionTimestamp = LocalDateTime.parse(timestampString, formatter);
-        prescribedDrug.setPrescriptionTimestamp(prescriptionTimestamp);
+        if(Objects.equals(timestampString, "null")){
+            prescribedDrug.setPrescriptionTimestamp(null);
+        } else {
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+            LocalDateTime prescriptionTimestamp = LocalDateTime.parse(timestampString, formatter);
+            prescribedDrug.setPrescriptionTimestamp(prescriptionTimestamp);
+        }
         prescribedDrug.setQuantity(Integer.parseInt(jedisCluster.get(key + "quantity")));
         return prescribedDrug;
     }
@@ -333,9 +323,13 @@ public class PurchaseCartRedisRepository {
         prescribedDrug.setName(jsonObject.get("name").getAsString());
         prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
         String timestampString = jsonObject.get("prescriptionTimestamp").getAsString();
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-        LocalDateTime prescriptionTimestamp = LocalDateTime.parse(timestampString, formatter);
-        prescribedDrug.setPrescriptionTimestamp(prescriptionTimestamp);
+        if(Objects.equals(timestampString, "null")){
+            prescribedDrug.setPrescriptionTimestamp(null);
+        } else {
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+            LocalDateTime prescriptionTimestamp = LocalDateTime.parse(timestampString, formatter);
+            prescribedDrug.setPrescriptionTimestamp(prescriptionTimestamp);
+        }
         prescribedDrug.setQuantity(quantity);
         return prescribedDrug;
     }

@@ -2,6 +2,6 @@ package it.unipi.EasyDrugServer.exception;
 
 public class NotFoundException extends RuntimeException {
     public NotFoundException(String message) {
-        super();
+        super(message);
     }
 }

@@ -15,23 +15,27 @@ import it.unipi.EasyDrugServer.exception.BadRequestException;
 public class DoctorService {
     private final PrescriptionRedisRepository prescriptionRedisRepository;
 
-    public PrescribedDrugDTO saveDrugIntoPrescription(String doctorCode, String patientCode, PrescribedDrugDTO drug) throws UnauthorizedException {
-        return prescriptionRedisRepository.saveDrugIntoPrescription(doctorCode, patientCode, drug);
+    public PrescriptionDTO getInactivePrescription(String doctorCode, String patientCode) {
+        return prescriptionRedisRepository.getInactivePrescription(doctorCode, patientCode);
     }
 
-    public PrescriptionDTO confirmPrescription(String doctorCode, String patientCode) throws UnauthorizedException, ForbiddenException {
-        return prescriptionRedisRepository.confirmPrescription(doctorCode, patientCode);
+    public PrescribedDrugDTO saveInactivePrescribedDrug(String doctorCode, String patientCode, PrescribedDrugDTO drug) {
+        return prescriptionRedisRepository.saveInactivePrescribedDrug(doctorCode, patientCode, drug);
     }
 
-    public PrescribedDrugDTO modifyPrescribedDrugQuantity(String doctorCode, String patientCode, int idDrug, int quantity) throws BadRequestException {
+    public PrescribedDrugDTO deleteInactivePrescribedDrug(String doctorCode, String patientCode, int idDrug) {
+        return prescriptionRedisRepository.deleteInactivePrescribedDrug(doctorCode, patientCode, idDrug);
+    }
+
+    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String doctorCode, String patientCode, int idDrug, int quantity) {
         if(quantity == 0)
-            return prescriptionRedisRepository.deletePrescribedDrug(doctorCode, patientCode, idDrug);
+            return prescriptionRedisRepository.deleteInactivePrescribedDrug(doctorCode, patientCode, idDrug);
         else if(quantity < 0)
             throw new BadRequestException("You can not insert a negative quantity.");
-        return prescriptionRedisRepository.modifyPrescribedDrugQuantity(doctorCode, patientCode, idDrug, quantity);
+        return prescriptionRedisRepository.modifyInactivePrescribedDrugQuantity(doctorCode, patientCode, idDrug, quantity);
     }
 
-    public PrescribedDrugDTO deletePrescribedDrug(String doctorCode, String patientCode, int idDrug){
-        return prescriptionRedisRepository.deletePrescribedDrug(doctorCode, patientCode, idDrug);
+    public PrescriptionDTO activatePrescription(String doctorCode, String patientCode) {
+        return prescriptionRedisRepository.activatePrescription(doctorCode, patientCode);
     }
 }

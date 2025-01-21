@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
-import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.exception.UnauthorizedException;
@@ -20,7 +19,6 @@ import redis.clients.jedis.exceptions.JedisException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,7 +46,83 @@ public class PrescriptionRedisRepository {
         this.redisHelper = redisHelper;
     }
 
-    public PrescribedDrugDTO saveDrugIntoPrescription(String doctorCode, String patientCode, PrescribedDrugDTO drug) throws UnauthorizedException {
+    public List<PrescriptionDTO> getAllActivePrescriptions(String patientCode) {
+        try {
+            List<PrescriptionDTO> prescriptions = new ArrayList<>();
+            for (int i=1; i <= redisHelper.nEntities(jedisCluster, this.pres); i++) {
+                String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
+                // Controllare che le prescrizioni siano attive, quindi con timestamp != false
+                if(jedisCluster.exists(keyPres + "timestamp") &&
+                   !Objects.equals(jedisCluster.get(keyPres + "timestamp"), "null")){
+                    // allora si tratta di una prescrizione attiva
+                    String timestampString = jedisCluster.get(keyPres + "timestamp");
+                    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+                    LocalDateTime timestamp = LocalDateTime.parse(timestampString, formatter);
+
+                    // cerco all'interno della prescrizione alla ricerca di tutti i farmaci di essa
+                    PrescriptionDTO prescription = new PrescriptionDTO();
+                    prescription.setTimestamp(timestamp);
+                    for(int j=1; j<=redisHelper.nEntities(jedisCluster, this.presDrug); j++) {
+                        String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
+                        if(jedisCluster.exists(keyPresDrug + "id")){
+                            // allora il farmaco è relativo a quella prescrizione dell'utente
+                            prescription.addPrescribedDrug(createPrescribedDrugDTO(keyPresDrug));
+                        }
+                    }
+                    prescriptions.add(prescription);
+                }
+            }
+            return prescriptions;
+        } catch (JedisConnectionException e) {
+            throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
+        } catch (JedisDataException e) {
+            throw new RuntimeException("Data error with redis: " + e.getMessage(), e);
+        } catch (JedisException e) {
+            throw new RuntimeException("Generic error with redis: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Generic server error: " + e.getMessage(), e);
+        }
+    }
+
+    public PrescriptionDTO getInactivePrescription(String doctorCode, String patientCode) {
+        try {
+            // controllo se il medico può prescrivere al paziente selezionato [funzione]
+            if(!this.isValidDoctor(doctorCode, patientCode))
+                throw new UnauthorizedException("The patient "+patientCode+" has another family doctor.");
+
+            PrescriptionDTO prescription = new PrescriptionDTO();
+            prescription.setTimestamp(null);
+            for (int i=1; i <= redisHelper.nEntities(jedisCluster, this.pres); i++) {
+                String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
+                // Controllare che le prescrizioni siano attive, quindi con timestamp != false
+                if(jedisCluster.exists(keyPres + "timestamp") &&
+                   Objects.equals(jedisCluster.get(keyPres + "timestamp"), "null")){
+                    // allora si tratta di una prescrizione inattiva
+                    // cerco all'interno della prescrizione alla ricerca di tutti i farmaci di essa
+                    for(int j=1; j<=redisHelper.nEntities(jedisCluster, this.presDrug); j++) {
+                        String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
+                        if(jedisCluster.exists(keyPresDrug + "id")){
+                            // allora il farmaco è relativo a quella prescrizione dell'utente
+                            prescription.addPrescribedDrug(createPrescribedDrugDTO(keyPresDrug));
+                        }
+                    }
+                    break;
+                }
+            }
+            return prescription;
+
+        } catch (JedisConnectionException e) {
+            throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
+        } catch (JedisDataException e) {
+            throw new RuntimeException("Data error with redis: " + e.getMessage(), e);
+        } catch (JedisException e) {
+            throw new RuntimeException("Generic error with redis: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Generic server error: " + e.getMessage(), e);
+        }
+    }
+
+    public PrescribedDrugDTO saveInactivePrescribedDrug(String doctorCode, String patientCode, PrescribedDrugDTO drug) {
         try {
             // controllo se il medico può prescrivere al paziente selezionato [funzione]
             if(!this.isValidDoctor(doctorCode, patientCode))
@@ -98,7 +172,99 @@ public class PrescriptionRedisRepository {
         }
     }
 
-    public PrescriptionDTO confirmPrescription(String doctorCode, String patientCode) throws UnauthorizedException, ForbiddenException {
+    public PrescribedDrugDTO deleteInactivePrescribedDrug(String doctorCode, String patientCode, int idDrug) {
+        try {
+            if (!this.isValidDoctor(doctorCode, patientCode))
+                throw new UnauthorizedException("The patient " + patientCode + " has another family doctor.");
+
+            PrescribedDrugDTO prescribedDrug;
+            for(int i=1; i<=redisHelper.nEntities(jedisCluster, this.pres); i++) {
+                // cerco l'unica prescrizione inattiva con timestamp false
+                String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
+                if (jedisCluster.exists(keyPres + "timestamp") &&
+                        !Objects.equals(jedisCluster.get(keyPres + "timestamp"), "false")) {
+
+                    // l'id della prescrizione inattiva è i, adesso devo cercare il farmaco da eliminare
+                    for(int j=1; j<=redisHelper.nEntities(jedisCluster, this.presDrug); j++) {
+                        String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
+                        if(jedisCluster.exists(keyPresDrug + "id")){
+                            if(idDrug == Integer.parseInt(jedisCluster.get(keyPresDrug + "id"))){
+                                // è il farmaco da rimuovere
+                                // preparo l'oggetto per il ritorno
+                                prescribedDrug = createPrescribedDrugDTO(idDrug, keyPresDrug);
+                                // rimuovo il farmaco dalla prescrizione attiva
+                                jedisCluster.del(keyPresDrug + "id");
+                                jedisCluster.del(keyPresDrug + "info");
+                                jedisCluster.del(keyPresDrug + "quantity");
+                                jedisCluster.del(keyPresDrug + "purchased");
+                                redisHelper.returnIdToPool(jedisCluster, this.presDrug, String.valueOf(i));
+                                return prescribedDrug;
+                            }
+                        }
+                    }
+                    // se qui, allora il farmaco non è stato trovato
+                    throw new NotFoundException("The selected drug "+idDrug+" is not found.");
+                }
+            }
+            // se qui allora non ci sono prescrizioni inattive
+            throw new NotFoundException("Not found any inactive prescription related to patient "+patientCode);
+
+        } catch (JedisConnectionException e) {
+            throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
+        } catch (JedisDataException e) {
+            throw new RuntimeException("Data error with redis: " + e.getMessage(), e);
+        } catch (JedisException e) {
+            throw new RuntimeException("Generic error with redis: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Generic server error: " + e.getMessage(), e);
+        }
+    }
+
+    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String doctorCode, String patientCode, int idDrug, int quantity) {
+        try {
+            if(!this.isValidDoctor(doctorCode, patientCode))
+                throw new UnauthorizedException("The patient "+patientCode+" has another family doctor.");
+
+            // cercare l'id della prescrizione inattiva
+            int index_pres = 0;
+            for(int i=1; i<redisHelper.nEntities(jedisCluster, this.pres); i++){
+                String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
+                if(jedisCluster.exists(keyPres + "timestamp")){
+                    String timestamp = jedisCluster.get(keyPres + "timestamp");
+                    if(!timestamp.equals("false")) continue;
+                    index_pres = i;
+                    break;
+                }
+            }
+            if(index_pres == 0)
+                throw new NotFoundException("Not found any inactive prescription for patient "+patientCode);
+
+            // adesso dato l'id della prescrizione trovo il farmaco a cui modificare la quantità
+            for(int i=1; i<=redisHelper.nEntities(jedisCluster, this.presDrug); i++) {
+                // cerco tutti i farmaci con il campo "timestamp" non esistente (quelli non ancora confermati)
+                String keyPresDrug = this.presDrug + ":" + i + ":" + index_pres + ":";
+                if(jedisCluster.exists(keyPresDrug + "id")){
+                    if(idDrug == Integer.parseInt(jedisCluster.get(keyPresDrug + "id"))){
+                        // ho trovato il farmaco da modificare
+                        jedisCluster.set(keyPresDrug + "quantity", String.valueOf(quantity));
+                        return createPrescribedDrugDTO(idDrug, quantity, keyPresDrug);
+                    }
+                }
+            }
+            throw new NotFoundException("Not found any drug with id "+idDrug+" into an inactive prescription");
+
+        } catch (JedisConnectionException e) {
+            throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
+        } catch (JedisDataException e) {
+            throw new RuntimeException("Data error with redis: " + e.getMessage(), e);
+        } catch (JedisException e) {
+            throw new RuntimeException("Generic error with redis: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Generic server error: " + e.getMessage(), e);
+        }
+    }
+
+    public PrescriptionDTO activatePrescription(String doctorCode, String patientCode) {
         try {
             // controllo se il medico può prescrivere al paziente selezionato
             if(!this.isValidDoctor(doctorCode, patientCode))
@@ -146,138 +312,8 @@ public class PrescriptionRedisRepository {
         }
     }
 
-    public PrescribedDrugDTO modifyPrescribedDrugQuantity(String doctorCode, String patientCode, int idDrug, int quantity) throws UnauthorizedException, NotFoundException {
-        try {
-            if(!this.isValidDoctor(doctorCode, patientCode))
-                throw new UnauthorizedException("The patient "+patientCode+" has another family doctor.");
-
-            // cercare l'id della prescrizione inattiva
-            int index_pres = 0;
-            for(int i=1; i<redisHelper.nEntities(jedisCluster, this.pres); i++){
-                String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
-                if(jedisCluster.exists(keyPres + "timestamp")){
-                    String timestamp = jedisCluster.get(keyPres + "timestamp");
-                    if(!timestamp.equals("false")) continue;
-                    index_pres = i;
-                    break;
-                }
-            }
-            if(index_pres == 0)
-                throw new NotFoundException("Not found any inactive prescription for patient "+patientCode);
-
-            // adesso dato l'id della prescrizione trovo il farmaco a cui modificare la quantità
-            for(int i=1; i<=redisHelper.nEntities(jedisCluster, this.presDrug); i++) {
-                // cerco tutti i farmaci con il campo "timestamp" non esistente (quelli non ancora confermati)
-                String keyPresDrug = this.presDrug + ":" + i + ":" + index_pres + ":";
-                if(jedisCluster.exists(keyPresDrug + "id")){
-                    if(idDrug == Integer.parseInt(jedisCluster.get(keyPresDrug + "id"))){
-                        // ho trovato il farmaco da modificare
-                        jedisCluster.set(keyPresDrug + "quantity", String.valueOf(quantity));
-                        return createPrescribedDrugDTO(idDrug, quantity, keyPresDrug);
-                    }
-                }
-            }
-            throw new NotFoundException("Not found any drug with id "+idDrug+" into an inactive prescription");
-
-        } catch (JedisConnectionException e) {
-            throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
-        } catch (JedisDataException e) {
-            throw new RuntimeException("Data error with redis: " + e.getMessage(), e);
-        } catch (JedisException e) {
-            throw new RuntimeException("Generic error with redis: " + e.getMessage(), e);
-        } catch (Exception e) {
-            throw new RuntimeException("Generic server error: " + e.getMessage(), e);
-        }
-    }
-
-    public PrescribedDrugDTO deletePrescribedDrug(String doctorCode, String patientCode, int idDrug) throws UnauthorizedException, NotFoundException {
-        try {
-            if (!this.isValidDoctor(doctorCode, patientCode))
-                throw new UnauthorizedException("The patient " + patientCode + " has another family doctor.");
-
-            PrescribedDrugDTO prescribedDrug;
-            for(int i=1; i<=redisHelper.nEntities(jedisCluster, this.pres); i++) {
-                // cerco l'unica prescrizione inattiva con timestamp false
-                String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
-                if (jedisCluster.exists(keyPres + "timestamp") &&
-                    !Objects.equals(jedisCluster.get(keyPres + "timestamp"), "false")) {
-
-                    // l'id della prescrizione inattiva è i, adesso devo cercare il farmaco da eliminare
-                    for(int j=1; j<=redisHelper.nEntities(jedisCluster, this.presDrug); j++) {
-                        String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
-                        if(jedisCluster.exists(keyPresDrug + "id")){
-                            if(idDrug == Integer.parseInt(jedisCluster.get(keyPresDrug + "id"))){
-                                // è il farmaco da rimuovere
-                                // preparo l'oggetto per il ritorno
-                                prescribedDrug = createPrescribedDrugDTO(idDrug, keyPresDrug);
-                                // rimuovo il farmaco dalla prescrizione attiva
-                                jedisCluster.del(keyPresDrug + "id");
-                                jedisCluster.del(keyPresDrug + "info");
-                                jedisCluster.del(keyPresDrug + "quantity");
-                                jedisCluster.del(keyPresDrug + "purchased");
-                                redisHelper.returnIdToPool(jedisCluster, this.presDrug, String.valueOf(i));
-                                return prescribedDrug;
-                            }
-                        }
-                    }
-                    // se qui, allora il farmaco non è stato trovato
-                    throw new NotFoundException("The selected drug "+idDrug+" is not found.");
-                }
-            }
-            // se qui allora non ci sono prescrizioni inattive
-            throw new NotFoundException("Not found any inactive prescription related to patient "+patientCode);
-
-        } catch (JedisConnectionException e) {
-            throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
-        } catch (JedisDataException e) {
-            throw new RuntimeException("Data error with redis: " + e.getMessage(), e);
-        } catch (JedisException e) {
-            throw new RuntimeException("Generic error with redis: " + e.getMessage(), e);
-        } catch (Exception e) {
-            throw new RuntimeException("Generic server error: " + e.getMessage(), e);
-        }
-    }
-
-    public List<PrescriptionDTO> getAllPrescriptions(String patientCode) {
-        try {
-            List<PrescriptionDTO> prescriptions = new ArrayList<>();
-            for (int i=1; i <= redisHelper.nEntities(jedisCluster, this.pres); i++) {
-                String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
-                // Controllare che le prescrizioni siano attive, quindi con timestamp != false
-                if(jedisCluster.exists(keyPres + "timestamp") &&
-                   Objects.equals(jedisCluster.get(keyPres + "timestamp"), "false")){
-                    // allora si tratta di una prescrizione attiva
-                    String timestampString = jedisCluster.get(keyPres + "timestamp");
-                    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-                    LocalDateTime timestamp = LocalDateTime.parse(timestampString, formatter);
-
-                    // cerco all'interno della prescrizione alla ricerca di tutti i farmaci di essa
-                    PrescriptionDTO prescription = new PrescriptionDTO();
-                    prescription.setTimestamp(timestamp);
-                    for(int j=1; j<=redisHelper.nEntities(jedisCluster, this.presDrug); j++) {
-                        String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
-                        if(jedisCluster.exists(keyPresDrug + "id")){
-                            // allora il farmaco è relativo a quella prescrizione dell'utente
-                            prescription.addPrescribedDrug(createPrescribedDrugDTO(keyPresDrug));
-                        }
-                    }
-                    prescriptions.add(prescription);
-                }
-            }
-            return prescriptions;
-        } catch (JedisConnectionException e) {
-            throw new RuntimeException("Connection error with redis: " + e.getMessage(), e);
-        } catch (JedisDataException e) {
-            throw new RuntimeException("Data error with redis: " + e.getMessage(), e);
-        } catch (JedisException e) {
-            throw new RuntimeException("Generic error with redis: " + e.getMessage(), e);
-        } catch (Exception e) {
-            throw new RuntimeException("Generic server error: " + e.getMessage(), e);
-        }
-    }
-
     private boolean isValidDoctor(String doctorCode, String patientCode){
-        String patKey = "pat: " + patientCode + ":" + doctorCode;
+        String patKey = "pat: " + patientCode + ":doc";
         return Objects.equals(doctorCode, jedisCluster.get(patKey));
     }
 

@@ -1,17 +1,19 @@
 package it.unipi.EasyDrugServer.dto;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-public class ValidResponse {
+@Getter
+public class ResponseDTO {
     private final int status;
     private Object data;
 
-    public ValidResponse(HttpStatus status, Object data) {
+    public ResponseDTO(HttpStatus status, Object data) {
         this.status = status.value();
         this.data = data;
     }
 
-    public ValidResponse(HttpStatus status) {
+    public ResponseDTO(HttpStatus status) {
         this.status = status.value();
     }
 }
