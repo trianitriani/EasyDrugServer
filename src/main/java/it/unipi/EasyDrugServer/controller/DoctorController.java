@@ -29,7 +29,7 @@ public class DoctorController {
      * @return ResponseEntity<ResponseDTO>
      */
     @GetMapping("/{docCode}/home/patients/{patCode}")
-    public ResponseEntity<ResponseDTO> saveInactivePrescribedDrug(@PathVariable String docCode,
+    public ResponseEntity<ResponseDTO> getAllPrescriptions(@PathVariable String docCode,
                                                                   @PathVariable String patCode){
         DoctorHomeDTO doctorHomeDTO = new DoctorHomeDTO();
         // Ottenere il carrello della prescrizione inattiva
