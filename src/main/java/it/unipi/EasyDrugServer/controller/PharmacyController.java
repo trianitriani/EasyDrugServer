@@ -3,6 +3,8 @@ package it.unipi.EasyDrugServer.controller;
 import it.unipi.EasyDrugServer.dto.PharmacyHomeDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
+import it.unipi.EasyDrugServer.exception.BadRequestException;
+import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.service.PharmacyService;
@@ -10,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisException;
 
 import java.util.List;
 
@@ -28,9 +32,19 @@ public class PharmacyController {
      */
     @GetMapping("/home/patients/{patCode}")
     public ResponseEntity<ResponseDTO> viewPharmacyHome(@PathVariable String patCode){
-        PharmacyHomeDTO pharmacyHomeDTO = pharmacyService.viewPharmacyHome(patCode);
-        ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacyHomeDTO);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        try {
+            PharmacyHomeDTO pharmacyHomeDTO = pharmacyService.viewPharmacyHome(patCode);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacyHomeDTO);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
     }
 
     /**
@@ -44,9 +58,20 @@ public class PharmacyController {
     @PostMapping("/patients/{patCode}/cart/drugs")
     public ResponseEntity<ResponseDTO> savePurchaseDrug(@PathVariable String patCode,
                                                         @RequestBody PurchaseDrugDTO drug){
-        PurchaseDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(patCode, drug);
-        ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, purchaseDrug);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        try {
+            PurchaseDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(patCode, drug);
+            ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, purchaseDrug);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+
     }
 
     /**
@@ -57,10 +82,23 @@ public class PharmacyController {
      * @return ResponseEntity<ResponseDTO>
      */
     @DeleteMapping("/patients/{patCode}/cart/drugs/{idDrug}")
-    public ResponseEntity<ResponseDTO> deletePurchaseDrug(@PathVariable String patCode, @PathVariable int idDrug){
-        PurchaseDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(patCode, idDrug);
-        ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity<ResponseDTO> deletePurchaseDrug(@PathVariable String patCode,
+                                                          @PathVariable int idDrug){
+        try {
+            PurchaseDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(patCode, idDrug);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (NotFoundException e) {
+            return exceptionHandler.handleNotFoundException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
     }
 
     /**
@@ -72,16 +110,24 @@ public class PharmacyController {
      * @return ResponseEntity<?>
      */
     @PatchMapping("/patients/{patCode}/cart/drugs/{idDrug}")
-    public ResponseEntity<ResponseDTO> modifyPurchaseDrugQuantity(@PathVariable String patCode, @PathVariable int idDrug,
-                                                        @RequestBody int quantity){
+    public ResponseEntity<ResponseDTO> modifyPurchaseDrugQuantity(@PathVariable String patCode,
+                                                                  @PathVariable int idDrug,
+                                                                  @RequestBody int quantity){
         try {
             PurchaseDrugDTO purchaseDrug = pharmacyService.modifyPurchaseDrugQuantity(patCode, idDrug, quantity);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
         } catch (NotFoundException e) {
             return exceptionHandler.handleNotFoundException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
         }
-
     }
 
     /**
@@ -94,8 +140,20 @@ public class PharmacyController {
      */
     @PatchMapping("/patients/{patCode}/cart/checkout")
     public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable String patCode){
-        List<PurchaseDrugDTO> purchaseCart = pharmacyService.confirmPurchaseCart(patCode);
-        ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseCart);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        try {
+            List<PurchaseDrugDTO> purchaseCart = pharmacyService.confirmPurchaseCart(patCode);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseCart);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (ForbiddenException e) {
+            return exceptionHandler.handleForbiddenException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
     }
 }

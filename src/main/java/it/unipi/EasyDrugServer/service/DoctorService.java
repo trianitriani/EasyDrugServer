@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
 public class DoctorService {
@@ -20,6 +22,10 @@ public class DoctorService {
     }
 
     public PrescribedDrugDTO saveInactivePrescribedDrug(String doctorCode, String patientCode, PrescribedDrugDTO drug) {
+        if(Objects.equals(drug.getName(), ""))
+            throw new BadRequestException("Name of the drug can not be null");
+        if(drug.getQuantity() < 1)
+            throw new BadRequestException("Quantity can not be lower than one");
         return prescriptionRedisRepository.saveInactivePrescribedDrug(doctorCode, patientCode, drug);
     }
 
@@ -31,7 +37,7 @@ public class DoctorService {
         if(quantity == 0)
             return prescriptionRedisRepository.deleteInactivePrescribedDrug(doctorCode, patientCode, idDrug);
         else if(quantity < 0)
-            throw new BadRequestException("You can not insert a negative quantity.");
+            throw new BadRequestException("Quantity can not lower that zero.");
         return prescriptionRedisRepository.modifyInactivePrescribedDrugQuantity(doctorCode, patientCode, idDrug, quantity);
     }
 

@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import redis.clients.jedis.exceptions.JedisException;
 
 // @ControllerAdvice(basePackages = "it.unipi.EasyDrugServer.controller")
 @Component
@@ -42,16 +43,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ResponseDTO> handleRuntimeException(RuntimeException ex) {
-        logger.warn("RuntimeException: {}", ex.getMessage());
-        ResponseDTO error = new ResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<ResponseDTO> handleRedisException(JedisException ex, HttpStatus status){
+        logger.warn("RedisException: {}", ex.getMessage());
+        ResponseDTO error = new ResponseDTO(status, ex.getMessage());
+        return new ResponseEntity<>(error, status);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore gestito globalmente");
+    public ResponseEntity<ResponseDTO> handleException(Exception ex) {
+        logger.warn("Exception: {}", ex.getMessage());
+        ResponseDTO error = new ResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 }

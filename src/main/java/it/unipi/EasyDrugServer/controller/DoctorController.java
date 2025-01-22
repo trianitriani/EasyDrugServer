@@ -4,13 +4,15 @@ import it.unipi.EasyDrugServer.dto.DoctorHomeDTO;
 import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
-import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
+import it.unipi.EasyDrugServer.exception.*;
 import it.unipi.EasyDrugServer.service.DoctorService;
 import it.unipi.EasyDrugServer.service.PatientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisException;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -29,15 +31,27 @@ public class DoctorController {
      * @return ResponseEntity<ResponseDTO>
      */
     @GetMapping("/{docCode}/home/patients/{patCode}")
-    public ResponseEntity<ResponseDTO> getAllPrescriptions(@PathVariable String docCode,
-                                                                  @PathVariable String patCode){
-        DoctorHomeDTO doctorHomeDTO = new DoctorHomeDTO();
-        // Ottenere il carrello della prescrizione inattiva
-        doctorHomeDTO.setInactivePrescription(doctorService.getInactivePrescription(docCode, patCode));
-        // Ottenere la lista delle prescrizioni attive
-        doctorHomeDTO.setActivePrescriptions(patientService.getAllActivePrescriptions(patCode));
-        ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctorHomeDTO);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity<ResponseDTO> viewDoctorHome(@PathVariable String docCode,
+                                                      @PathVariable String patCode){
+        try {
+            DoctorHomeDTO doctorHomeDTO = new DoctorHomeDTO();
+            // Ottenere il carrello della prescrizione inattiva
+            doctorHomeDTO.setInactivePrescription(doctorService.getInactivePrescription(docCode, patCode));
+            // Ottenere la lista delle prescrizioni attive
+            doctorHomeDTO.setActivePrescriptions(patientService.getAllActivePrescriptions(patCode));
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctorHomeDTO);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (UnauthorizedException e){
+            return exceptionHandler.handleUnauthorizedException(e);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
     }
 
     /**
@@ -51,9 +65,21 @@ public class DoctorController {
     @PostMapping("/{docCode}/patients/{patCode}/cart/drugs")
     public ResponseEntity<ResponseDTO> saveInactivePrescribedDrug(@PathVariable String docCode, @PathVariable String patCode,
                                                                   @RequestBody PrescribedDrugDTO drug){
-        PrescribedDrugDTO prescribedDrugDTO = doctorService.saveInactivePrescribedDrug(docCode, patCode, drug);
-        ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, prescribedDrugDTO);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        try {
+            PrescribedDrugDTO prescribedDrugDTO = doctorService.saveInactivePrescribedDrug(docCode, patCode, drug);
+            ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, prescribedDrugDTO);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (UnauthorizedException e){
+            return exceptionHandler.handleUnauthorizedException(e);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
     }
 
     /**
@@ -69,9 +95,21 @@ public class DoctorController {
     public ResponseEntity<ResponseDTO> deleteInactivePrescribedDrug(@PathVariable String docCode,
                                                                     @PathVariable String patCode,
                                                                     @PathVariable int drugId){
-        PrescribedDrugDTO prescribedDrugDTO = doctorService.deleteInactivePrescribedDrug(docCode, patCode, drugId);
-        ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        try {
+            PrescribedDrugDTO prescribedDrugDTO = doctorService.deleteInactivePrescribedDrug(docCode, patCode, drugId);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (UnauthorizedException e){
+            return exceptionHandler.handleUnauthorizedException(e);
+        } catch (NotFoundException e){
+            return exceptionHandler.handleNotFoundException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
     }
 
     /**
@@ -88,9 +126,23 @@ public class DoctorController {
                                                                             @PathVariable String patCode,
                                                                             @PathVariable int drugId,
                                                                             @RequestBody int quantity){
-        PrescribedDrugDTO prescribedDrugDTO = doctorService.modifyInactivePrescribedDrugQuantity(docCode, patCode, drugId, quantity);
-        ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        try {
+            PrescribedDrugDTO prescribedDrugDTO = doctorService.modifyInactivePrescribedDrugQuantity(docCode, patCode, drugId, quantity);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (UnauthorizedException e){
+            return exceptionHandler.handleUnauthorizedException(e);
+        } catch (NotFoundException e){
+            return exceptionHandler.handleNotFoundException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
     }
 
     /**
@@ -104,9 +156,22 @@ public class DoctorController {
     @PatchMapping("/{docCode}/patients/{patCode}/cart/activate")
     public ResponseEntity<ResponseDTO> activatePrescription(@PathVariable String docCode,
                                                             @PathVariable String patCode){
-        PrescriptionDTO prescriptionDTO = doctorService.activatePrescription(docCode, patCode);
-        ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescriptionDTO);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        try {
+            PrescriptionDTO prescriptionDTO = doctorService.activatePrescription(docCode, patCode);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescriptionDTO);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (ForbiddenException e){
+            return exceptionHandler.handleForbiddenException(e);
+        } catch (UnauthorizedException e){
+            return exceptionHandler.handleUnauthorizedException(e);
+        } catch (JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (JedisException e){
+            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+
     }
 
 
