@@ -3,27 +3,25 @@ package it.unipi.EasyDrugServer.model;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
 @Data
 public class Drug {
-private int id;                                     // unique code of the product
-    private String name;                            // name of the product
-    private double price;                           // price of the product
-    private LocalDateTime timestamp;
 
-    // [ only related to prescriptions or purchase ]
-    private int quantity;                           // quantity of the product
-    private LocalDateTime prescriptionTimestamp;    // if is not null, indicate the relative prescription
-
-    // [ only related to prescriptions ]
-    private boolean purchased;                      // Indicates that a specific prescribed drug is already purchased
-
-    public Drug() {
-
-    }
-
+    @Id
+    private int id;
+    private String name;
+    private double price;
+    private String company;
+    private String activeIngredient;
+    private String iupac;
+    private String smiles;
+    private boolean onPrescription;
+    private List<Indication> indications;
+    private List<SideEffect> sideEffect;
 }

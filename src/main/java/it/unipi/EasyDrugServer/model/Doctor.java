@@ -4,12 +4,12 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
-import java.util.List;
+
 
 @Getter
 @Setter
 @Data
-public class Patient {
+public class Doctor {
 
     @Id
     private String identifyCode;
@@ -21,5 +21,5 @@ public class Patient {
     private String surname;
     private String dateOfBirth;
     private String taxCode;
-    private List<LatestPurchase> latestPurchasedDrugs;
+    private String graduationCertificate ;
 }
