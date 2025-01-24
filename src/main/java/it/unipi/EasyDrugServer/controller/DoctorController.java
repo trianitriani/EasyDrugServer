@@ -1,10 +1,8 @@
 package it.unipi.EasyDrugServer.controller;
 
-import it.unipi.EasyDrugServer.dto.DoctorHomeDTO;
-import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
-import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
-import it.unipi.EasyDrugServer.dto.ResponseDTO;
+import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.*;
+import it.unipi.EasyDrugServer.model.Doctor;
 import it.unipi.EasyDrugServer.service.DoctorService;
 import it.unipi.EasyDrugServer.service.PatientService;
 import lombok.RequiredArgsConstructor;

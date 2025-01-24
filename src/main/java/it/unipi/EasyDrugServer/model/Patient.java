@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -19,7 +21,7 @@ public class Patient {
     private String region;
     private String name;
     private String surname;
-    private String dateOfBirth;
+    private Date dateOfBirth;
     private String taxCode;
     private List<LatestPurchase> latestPurchasedDrugs;
 }

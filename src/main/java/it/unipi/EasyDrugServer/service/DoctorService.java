@@ -2,8 +2,6 @@ package it.unipi.EasyDrugServer.service;
 
 import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
-import it.unipi.EasyDrugServer.exception.ForbiddenException;
-import it.unipi.EasyDrugServer.exception.UnauthorizedException;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import lombok.RequiredArgsConstructor;
 // import org.apache.coyote.BadRequestException;
@@ -44,4 +42,5 @@ public class DoctorService {
     public PrescriptionDTO activatePrescription(String doctorCode, String patientCode) {
         return prescriptionRedisRepository.activatePrescription(doctorCode, patientCode);
     }
+
 }
