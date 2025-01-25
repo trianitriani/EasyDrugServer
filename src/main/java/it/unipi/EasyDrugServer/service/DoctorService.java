@@ -2,6 +2,10 @@ package it.unipi.EasyDrugServer.service;
 
 import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
+import it.unipi.EasyDrugServer.exception.NotFoundException;
+import it.unipi.EasyDrugServer.model.Doctor;
+import it.unipi.EasyDrugServer.model.Patient;
+import it.unipi.EasyDrugServer.repository.mongo.DoctorRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import lombok.RequiredArgsConstructor;
 // import org.apache.coyote.BadRequestException;
@@ -9,11 +13,13 @@ import org.springframework.stereotype.Service;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class DoctorService {
     private final PrescriptionRedisRepository prescriptionRedisRepository;
+    private final DoctorRepository doctorRepository;
 
     public PrescriptionDTO getInactivePrescription(String doctorCode, String patientCode) {
         return prescriptionRedisRepository.getInactivePrescription(doctorCode, patientCode);
@@ -41,6 +47,25 @@ public class DoctorService {
 
     public PrescriptionDTO activatePrescription(String doctorCode, String patientCode) {
         return prescriptionRedisRepository.activatePrescription(doctorCode, patientCode);
+    }
+
+    public Doctor getDoctorById(String id) {
+        Optional<Doctor> optDoctor = doctorRepository.findById(id);
+        if(optDoctor.isPresent())
+            return optDoctor.get();
+        throw new NotFoundException("Doctor "+id+" does not exists");
+    }
+
+    public void modifyDoctor(Doctor doctor) {
+        if(doctorRepository.existsById(doctor.getIdentifyCode())) {
+            doctorRepository.save(doctor);
+        } else throw new NotFoundException("Researcher "+doctor.getIdentifyCode()+" does not exists");
+    }
+
+    public void deleteDoctor(Doctor doctor) {
+        if(doctorRepository.existsById(doctor.getIdentifyCode())) {
+            doctorRepository.delete(doctor);
+        } else throw new NotFoundException("Researcher "+doctor.getIdentifyCode()+" does not exists");
     }
 
 }

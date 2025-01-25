@@ -3,6 +3,8 @@ package it.unipi.EasyDrugServer.controller;
 import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.*;
 import it.unipi.EasyDrugServer.model.Doctor;
+import it.unipi.EasyDrugServer.model.Patient;
+import it.unipi.EasyDrugServer.repository.mongo.DoctorRepository;
 import it.unipi.EasyDrugServer.service.DoctorService;
 import it.unipi.EasyDrugServer.service.PatientService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,45 @@ public class DoctorController {
     private final DoctorService doctorService;
     private final PatientService patientService;
     private final GlobalExceptionHandler exceptionHandler;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseDTO> getDoctorById(String id){
+        try {
+            Doctor doctor = doctorService.getDoctorById(id);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctor);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @PutMapping()
+    public ResponseEntity<ResponseDTO> modifyDoctor(Doctor doctor){
+        try {
+            doctorService.modifyDoctor(doctor);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctor);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<ResponseDTO> deleteDoctor(Doctor doctor){
+        try {
+            doctorService.deleteDoctor(doctor);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctor);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
 
     /**
      * ## DOCTOR ##

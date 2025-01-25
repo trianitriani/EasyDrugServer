@@ -4,6 +4,7 @@ import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
+import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.service.PatientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,45 @@ import java.util.List;
 public class PatientController {
     private final PatientService patientService;
     private final GlobalExceptionHandler exceptionHandler;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseDTO> getPatientById(String id){
+        try {
+            Patient patient = patientService.getPatientById(id);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @PutMapping()
+    public ResponseEntity<ResponseDTO> modifyPatient(Patient patient){
+        try {
+            patientService.modifyPatient(patient);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<ResponseDTO> deletePatient(Patient patient){
+        try {
+            patientService.deletePatient(patient);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
 
     /**
      * ## PATIENT ##

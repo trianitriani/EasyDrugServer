@@ -7,6 +7,8 @@ import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
+import it.unipi.EasyDrugServer.model.Pharmacy;
+import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.service.PharmacyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -152,6 +154,45 @@ public class PharmacyController {
             return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
         } catch (JedisException e){
             return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @PutMapping()
+    public ResponseEntity<ResponseDTO> modifyPharmacy(Pharmacy pharmacy){
+        try {
+            pharmacyService.modifyPharmacy(pharmacy);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacy);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<ResponseDTO> deletePharmacy(Pharmacy pharmacy){
+        try {
+            pharmacyService.deletePharmacy(pharmacy);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacy);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseDTO> getPharmacyById(String id){
+        try {
+            Pharmacy pharmacy = pharmacyService.getPharmacyById(id);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacy);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
