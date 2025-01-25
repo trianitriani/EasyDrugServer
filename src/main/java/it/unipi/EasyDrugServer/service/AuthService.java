@@ -16,10 +16,10 @@ import it.unipi.EasyDrugServer.repository.mongo.DoctorRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PatientRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.repository.mongo.ResearcherRepository;
+import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
-
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +40,7 @@ public class AuthService {
                 // inserimento paziente sul document
                 Patient patient = new Patient();
                 patient.setIdentifyCode("P" + user.getTaxCode());
+                patient.setPassword(PasswordHasher.hash(user.getPassword()));
                 patient.setName(user.getName());
                 patient.setSurname(user.getSurname());
                 patient.setDateOfBirth(user.getDateOfBirth());
@@ -58,6 +59,7 @@ public class AuthService {
                 // inserimento paziente sul document
                 Doctor doctor = new Doctor();
                 doctor.setIdentifyCode("P" + user.getTaxCode());
+                doctor.setPassword(PasswordHasher.hash(user.getPassword()));
                 doctor.setName(user.getName());
                 doctor.setSurname(user.getSurname());
                 doctor.setDateOfBirth(user.getDateOfBirth());
@@ -76,6 +78,7 @@ public class AuthService {
                 // inserimento ricercatore sul document
                 Researcher researcher = new Researcher();
                 researcher.setIdentifyCode("R" + user.getTaxCode());
+                researcher.setPassword(PasswordHasher.hash(user.getPassword()));
                 researcher.setName(user.getName());
                 researcher.setSurname(user.getSurname());
                 researcher.setDateOfBirth(user.getDateOfBirth());
@@ -93,6 +96,8 @@ public class AuthService {
                     throw new ForbiddenException("Pharmacy already exists");
                 // Inserimento nel document
                 Pharmacy pharmacy = new Pharmacy();
+                // l'id deve essere incrementale
+                pharmacy.setPassword(PasswordHasher.hash(user.getPassword()));
                 pharmacy.setAddress(user.getAddress());
                 pharmacy.setName(user.getName());
                 pharmacy.setMunicipality(user.getMunicipality());
@@ -122,7 +127,7 @@ public class AuthService {
                 throw new NotFoundException("Pharmacy does not exists");
 
             Pharmacy pharmacy = optionalPharmacy.get();
-            if(!pharmacy.getPassword().equals(psw))
+            if(!PasswordHasher.verifyPassword(psw, pharmacy.getPassword()))
                 throw new UnauthorizedException("Wrong password");
 
             // se arrivo qui il login è corretto
@@ -139,14 +144,13 @@ public class AuthService {
                         throw new NotFoundException("Patient does not exists");
 
                     Patient patient = optionalPatient.get();
-                    if(!patient.getPassword().equals(psw))
+                    if(!PasswordHasher.verifyPassword(psw, patient.getPassword()))
                         throw new UnauthorizedException("Wrong password");
 
                     // se arrivo qui il login è corretto
                     sessionUserDTO.setIdentifyCode(identifyCode);
                     sessionUserDTO.setName(patient.getName());
                     sessionUserDTO.setType(UserType.PATIENT);
-
                     break;
                 case 'D':
                     // login doctor
@@ -155,7 +159,7 @@ public class AuthService {
                         throw new NotFoundException("Doctor does not exists");
 
                     Doctor doctor = optionalDoctor.get();
-                    if(!doctor.getPassword().equals(psw))
+                    if(!PasswordHasher.verifyPassword(psw, doctor.getPassword()))
                         throw new UnauthorizedException("Wrong password");
 
                     // se arrivo qui il login è corretto
@@ -170,13 +174,12 @@ public class AuthService {
                         throw new NotFoundException("Researcher does not exists");
 
                     Researcher researcher = optionalResearcher.get();
-                    if(!researcher.getPassword().equals(psw))
+                    if(!PasswordHasher.verifyPassword(psw, researcher.getPassword()))
                         throw new UnauthorizedException("Wrong password");
 
                     sessionUserDTO.setIdentifyCode(identifyCode);
                     sessionUserDTO.setName(researcher.getName());
                     sessionUserDTO.setType(UserType.RESEARCHER);
-
                     break;
                 default:
                     // identifyCode sbagliato

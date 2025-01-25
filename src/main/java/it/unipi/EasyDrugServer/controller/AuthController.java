@@ -25,7 +25,7 @@ public class AuthController {
     private final GlobalExceptionHandler exceptionHandler;
 
     @PostMapping("/signup")
-    private ResponseEntity<ResponseDTO> signup(@RequestBody SignupUserDTO user) {
+    public ResponseEntity<ResponseDTO> signup(@RequestBody SignupUserDTO user) {
         try {
             SessionUserDTO sessionUserDTO = authService.signup(user);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, sessionUserDTO);
@@ -42,7 +42,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    private ResponseEntity<ResponseDTO> login(@RequestBody LoginUserDTO user){
+    public ResponseEntity<ResponseDTO> login(@RequestBody LoginUserDTO user){
         try {
             SessionUserDTO sessionUserDTO = authService.login(user);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, sessionUserDTO);
@@ -57,6 +57,4 @@ public class AuthController {
             return exceptionHandler.handleException(e);
         }
     }
-
-
 }
