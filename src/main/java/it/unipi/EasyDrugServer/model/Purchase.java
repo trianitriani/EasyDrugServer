@@ -5,18 +5,20 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 public class Purchase {
 
     @Id
-    private Integer id;
+    private String id;
+    private String drugId;
     private String drugName;
     private int quantity;
-    private LocalDate purchaseDate;
+    private LocalDateTime purchaseTimestamp;
     private String region;
     private String patientCode;
-    private LocalDate prescriptionDate;
+    private LocalDateTime prescriptionTimestamp;
     private double price;
 }

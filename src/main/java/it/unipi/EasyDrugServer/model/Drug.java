@@ -14,7 +14,7 @@ import java.util.List;
 public class Drug {
 
     @Id
-    private Integer id;
+    private int id;
     private String name;
     private double price;
     private String company;

@@ -23,5 +23,6 @@ public class Patient {
     private String surname;
     private Date dateOfBirth;
     private String taxCode;
-    private List<LatestPurchase> latestPurchasedDrugs;
+    private String identifyCodeDoctor;
+    private List<LatestPurchase> latestPurchased;
 }

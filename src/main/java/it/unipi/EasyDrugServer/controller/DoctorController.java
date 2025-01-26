@@ -3,8 +3,6 @@ package it.unipi.EasyDrugServer.controller;
 import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.*;
 import it.unipi.EasyDrugServer.model.Doctor;
-import it.unipi.EasyDrugServer.model.Patient;
-import it.unipi.EasyDrugServer.repository.mongo.DoctorRepository;
 import it.unipi.EasyDrugServer.service.DoctorService;
 import it.unipi.EasyDrugServer.service.PatientService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -23,7 +24,7 @@ public class DoctorController {
     private final GlobalExceptionHandler exceptionHandler;
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO> getDoctorById(String id){
+    public ResponseEntity<ResponseDTO> getDoctorById(@PathVariable String id){
         try {
             Doctor doctor = doctorService.getDoctorById(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctor);
@@ -36,7 +37,7 @@ public class DoctorController {
     }
 
     @PutMapping()
-    public ResponseEntity<ResponseDTO> modifyDoctor(Doctor doctor){
+    public ResponseEntity<ResponseDTO> modifyDoctor(@RequestBody Doctor doctor){
         try {
             doctorService.modifyDoctor(doctor);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctor);
@@ -48,11 +49,52 @@ public class DoctorController {
         }
     }
 
-    @DeleteMapping()
-    public ResponseEntity<ResponseDTO> deleteDoctor(Doctor doctor){
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ResponseDTO> deleteDoctor(@PathVariable String id){
         try {
-            doctorService.deleteDoctor(doctor);
+            Doctor doctor = doctorService.deleteDoctor(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctor);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/latest")
+    public ResponseEntity<ResponseDTO> getLatestPrescriptions(@PathVariable String id_doc,
+                                                             @PathVariable String id_pat){
+        try {
+            List<PrescriptionDTO> prescriptions = doctorService.getLatestPrescriptions(id_doc, id_pat);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescriptions);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/from/{from}/to/{to}")
+    public ResponseEntity<ResponseDTO> getPrescription(@PathVariable String id_doc, @PathVariable String id_pat,
+                                                       @PathVariable LocalDate from, @PathVariable LocalDate to){
+        try {
+            List<PrescriptionDTO> purchases = doctorService.getPrescriptionsFromTo(id_doc, id_pat, from, to);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @GetMapping("/{id}/patients")
+    public ResponseEntity<ResponseDTO> getOwnPatients(@PathVariable String id){
+        try {
+            List<SimplePatientDTO> simplePatientDTO = doctorService.getOwnPatients(id);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, simplePatientDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);

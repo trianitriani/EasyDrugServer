@@ -4,6 +4,7 @@ import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
+import it.unipi.EasyDrugServer.model.LatestPurchase;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.service.PatientService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -23,7 +26,7 @@ public class PatientController {
     private final GlobalExceptionHandler exceptionHandler;
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO> getPatientById(String id){
+    public ResponseEntity<ResponseDTO> getPatientById(@PathVariable String id){
         try {
             Patient patient = patientService.getPatientById(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient);
@@ -36,7 +39,7 @@ public class PatientController {
     }
 
     @PutMapping()
-    public ResponseEntity<ResponseDTO> modifyPatient(Patient patient){
+    public ResponseEntity<ResponseDTO> modifyPatient(@RequestBody Patient patient){
         try {
             patientService.modifyPatient(patient);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient);
@@ -48,11 +51,38 @@ public class PatientController {
         }
     }
 
-    @DeleteMapping()
-    public ResponseEntity<ResponseDTO> deletePatient(Patient patient){
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ResponseDTO> deletePatient(@PathVariable String id){
         try {
-            patientService.deletePatient(patient);
+            Patient patient = patientService.deletePatient(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @GetMapping("/{id}/purchases/latest")
+    public ResponseEntity<ResponseDTO> getLatestPurchases(@PathVariable String id){
+        try {
+            List<LatestPurchase> purchases = patientService.getLatestPurchases(id);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @GetMapping("/{id}/purchases/from/{from}/to/{to}")
+    public ResponseEntity<ResponseDTO> getPurchasesFromTo(@PathVariable String id,
+                                                          @PathVariable LocalDate from, @PathVariable LocalDate to){
+        try {
+            List<LatestPurchase> purchases = patientService.getPurchasesFromTo(id, from, to);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
