@@ -1,16 +1,18 @@
 package it.unipi.EasyDrugServer.controller;
 
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
+import it.unipi.EasyDrugServer.dto.TopDrugDTO;
+import it.unipi.EasyDrugServer.dto.TopRareDiseaseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
-import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.model.Researcher;
-import it.unipi.EasyDrugServer.service.PatientService;
 import it.unipi.EasyDrugServer.service.ResearcherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
+import java.util.List;
 
 
 @RestController
@@ -53,6 +55,34 @@ public class ResearcherController {
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, researcher);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @GetMapping("/purchases/top/{top}/from/{from}/to/{to}")
+    public ResponseEntity<ResponseDTO> getTopPurchases(@PathVariable int top, @PathVariable LocalDate from,
+                                                       @PathVariable LocalDate to){
+        try{
+            List<TopDrugDTO> topDrugs = researcherService.getTopPurchases(top, from, to);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, topDrugs);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e) {
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    // Il ricercatore può vedere per quali malattie ci sono meno farmaci (top 15) e mostrare quanti farmaci e quali farmaci per ognuna.
+    @GetMapping("/diseases/less-drugs/top/{top}")
+    public ResponseEntity<ResponseDTO> getDiseasesWithLessDrugs(@PathVariable int top){
+        try{
+            List<TopRareDiseaseDTO> diseases = researcherService.getDiseasesWithLessDrugs(top);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, diseases);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e) {
             return exceptionHandler.handleBadRequestException(e);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
