@@ -6,12 +6,10 @@ import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.LatestDrug;
 import it.unipi.EasyDrugServer.model.LatestPurchase;
 import it.unipi.EasyDrugServer.model.Patient;
-import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.model.Purchase;
 import it.unipi.EasyDrugServer.repository.mongo.PatientRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
-import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +56,7 @@ public class PatientService extends UserService {
 
         LocalDateTime fromTime = from.atStartOfDay();
         LocalDateTime toTime = to.atTime(23, 59, 59);
-        List<Purchase> purchases = purchaseRepository.findByPatientCodeAndPurchaseDateBetween(id, fromTime, toTime);;
+        List<Purchase> purchases = purchaseRepository.findByPatientCodeAndPurchaseTimestampBetween(id, fromTime, toTime);;
         HashMap<LocalDateTime, List<LatestDrug>> hashPurchases = new HashMap<>();
         List<LatestPurchase> latestPurchases = new ArrayList<>();
         // Analizzare tutti gli acquisti e ottenere una hashmap con chiave timestamp di acquisto e

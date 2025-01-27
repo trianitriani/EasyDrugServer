@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface PurchaseRepository extends MongoRepository<Purchase, String> {
     // Query per trovare i Purchase di un paziente tra due date
-    List<Purchase> findByPatientCodeAndPurchaseDateBetween(String patientCode, LocalDateTime startDate, LocalDateTime endDate);
+    List<Purchase> findByPatientCodeAndPurchaseTimestampBetween(String patientCode, LocalDateTime startDate, LocalDateTime endDate);
 
     @Aggregation(pipeline = {
             "{ $match: { drugId: ?0 } }",

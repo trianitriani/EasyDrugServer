@@ -6,7 +6,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class PrescribedDrugDTO {
-    private String id;
+    private int id;
     private String name;
     private double price;
     private int quantity;

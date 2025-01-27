@@ -90,7 +90,7 @@ public class DoctorService extends UserService {
                 LocalDateTime timestamp = latestDrug.getPrescribedTimestamp();
                 if(timestamp == null) continue;
                 PrescribedDrugDTO drug = new PrescribedDrugDTO();
-                drug.setId(latestDrug.getId());
+                drug.setId(Integer.parseInt(latestDrug.getId()));
                 drug.setName(latestDrug.getName());
                 drug.setPrice(latestDrug.getPrice());
                 drug.setPurchased(true);
@@ -120,14 +120,14 @@ public class DoctorService extends UserService {
 
         LocalDateTime fromTime = from.atStartOfDay();
         LocalDateTime toTime = to.atTime(23, 59, 59);
-        List<Purchase> purchases = purchaseRepository.findByPatientCodeAndPurchaseDateBetween(id_pat, fromTime, toTime);;
+        List<Purchase> purchases = purchaseRepository.findByPatientCodeAndPurchaseTimestampBetween(id_pat, fromTime, toTime);;
         HashMap<LocalDateTime, PrescriptionDTO> hashPurchases = new HashMap<>();
         // Analizzare tutti gli acquisti e ottenere una hashmap con chiave timestamp di acquisto e
         // farmaci acquistati
         for(Purchase purch : purchases) {
             if(purch.getPrescriptionTimestamp() == null) continue;
             PrescribedDrugDTO drug = new PrescribedDrugDTO();
-            drug.setId(purch.getDrugId());
+            drug.setId(Integer.parseInt(purch.getDrugId()));
             drug.setName(purch.getDrugName());
             drug.setQuantity(purch.getQuantity());
             drug.setPrice(purch.getPrice());
