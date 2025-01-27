@@ -21,4 +21,5 @@ public interface PatientRepository extends MongoRepository<Patient, String> {
     List<PatientDoctorRatioDTO> getPatientsToDoctorsRatio(@Param("order") int order);
 
 
+
 }

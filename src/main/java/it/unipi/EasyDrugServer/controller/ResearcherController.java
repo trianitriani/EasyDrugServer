@@ -1,5 +1,7 @@
 package it.unipi.EasyDrugServer.controller;
 
+import com.mongodb.MongoException;
+import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.DrugDistributionDTO;
 import it.unipi.EasyDrugServer.dto.Order;
 import it.unipi.EasyDrugServer.dto.PatientDoctorRatioDTO;
@@ -35,6 +37,10 @@ public class ResearcherController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -48,6 +54,10 @@ public class ResearcherController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -61,18 +71,32 @@ public class ResearcherController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
     }
 
     @GetMapping("/ratios/patients-to-doctors/order/{order}")
-    public ResponseEntity<ResponseDTO> getPatientsToDoctorsRatio(@PathVariable Order order){
+    public ResponseEntity<ResponseDTO> getPatientsToDoctorsRatio(@PathVariable Order order) {
         try {
             List<PatientDoctorRatioDTO> list = researcherService.getPatientsToDoctorsRatio(order);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, list);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (BadRequestException e){
+        } catch (BadRequestException e) {
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
     @GetMapping("/purchases/top/{top}/from/{from}/to/{to}")
     public ResponseEntity<ResponseDTO> getTopPurchases(@PathVariable int top, @PathVariable LocalDate from,
                                                        @PathVariable LocalDate to){
@@ -82,6 +106,10 @@ public class ResearcherController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e) {
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -94,7 +122,17 @@ public class ResearcherController {
             List<DrugDistributionDTO> list = researcherService.getDistributionByDrug(id_drug, order);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, list);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (BadRequestException e){
+        } catch (BadRequestException e) {
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
     // Il ricercatore può vedere per quali malattie ci sono meno farmaci (top 15) e mostrare quanti farmaci e quali farmaci per ognuna.
     @GetMapping("/diseases/less-drugs/top/{top}")
     public ResponseEntity<ResponseDTO> getDiseasesWithLessDrugs(@PathVariable int top){
@@ -104,6 +142,10 @@ public class ResearcherController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e) {
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
