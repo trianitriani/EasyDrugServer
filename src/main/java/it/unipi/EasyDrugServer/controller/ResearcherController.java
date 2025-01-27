@@ -10,6 +10,7 @@ import it.unipi.EasyDrugServer.dto.TopDrugDTO;
 import it.unipi.EasyDrugServer.dto.TopRareDiseaseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
+import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.service.ResearcherService;
 import lombok.RequiredArgsConstructor;
@@ -122,6 +123,8 @@ public class ResearcherController {
             List<DrugDistributionDTO> list = researcherService.getDistributionByDrug(id_drug, order);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, list);
             return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (NotFoundException e) {
+            return exceptionHandler.handleNotFoundException(e);
         } catch (BadRequestException e) {
             return exceptionHandler.handleBadRequestException(e);
         } catch (MongoSocketException e) {
@@ -150,4 +153,6 @@ public class ResearcherController {
             return exceptionHandler.handleException(e);
         }
     }
+
+
 }

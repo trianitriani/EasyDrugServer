@@ -14,6 +14,7 @@ import it.unipi.EasyDrugServer.dto.TopRareDiseaseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Researcher;
+import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.mongo.ResearcherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -31,7 +32,9 @@ import java.util.Optional;
 public class ResearcherService extends UserService {
     private final ResearcherRepository researcherRepository;
     private final PatientRepository patientRepository;
+    private final PurchaseRepository purchaseRepository;
     private MongoTemplate mongoTemplate;
+
 
     public Researcher getResearcherById(String id) {
         return (Researcher) getUserIfExists(id, UserType.RESEARCHER);
@@ -58,7 +61,11 @@ public class ResearcherService extends UserService {
     }
 
     public List<DrugDistributionDTO> getDistributionByDrug(String idDrug, Order order) {
-
+        return switch (order) {
+            case ASC -> purchaseRepository.getDistributionByDrug(idDrug, 1);
+            case DESC -> purchaseRepository.getDistributionByDrug(idDrug, -1);
+            default -> throw new BadRequestException("The order is invalid");
+        };
     }
 
     public List<TopDrugDTO> getTopPurchases(int top, LocalDate from, LocalDate to){
