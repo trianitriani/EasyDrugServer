@@ -16,11 +16,14 @@ public interface PurchaseRepository extends MongoRepository<Purchase, String> {
     @Aggregation(pipeline = {
             "{ $match: { drugId: ?0 } }",
             "{ $group: { _id: '$region', numberOfSaledDrugs: { $sum: '$quantity' } } }",
-            "{ $group: { _id: null, " +
+            "{ $group: { " +
+                    "_id: null, " +
                     "regionalSales: { $push: { region: '$_id', numberOfSaledDrugs: '$numberOfSaledDrugs' } }, " +
                     "numberOfSaledDrugsInItaly: { $sum: '$numberOfSaledDrugs' } } }",
             "{ $unwind: '$regionalSales' }",
-            "{ $project: { _id: 0, region: '$regionalSales.region', " +
+            "{ $project: { " +
+                    "_id: 0, " +
+                    "region: '$regionalSales.region', " +
                     "totalQuantity: '$regionalSales.numberOfSaledDrugs', " +
                     "percentage: { $multiply: [ { $divide: ['$regionalSales.numberOfSaledDrugs', '$numberOfSaledDrugsInItaly'] }, 100 ] } } }",
             "{ $sort: { percentage: ?1 } }"
