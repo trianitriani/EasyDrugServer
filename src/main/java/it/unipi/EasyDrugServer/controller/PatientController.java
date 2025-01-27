@@ -1,5 +1,7 @@
 package it.unipi.EasyDrugServer.controller;
 
+import com.mongodb.MongoException;
+import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
@@ -31,8 +33,12 @@ public class PatientController {
             Patient patient = patientService.getPatientById(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (BadRequestException e){
+        } catch (BadRequestException e) {
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -46,6 +52,10 @@ public class PatientController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -59,6 +69,10 @@ public class PatientController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -72,6 +86,10 @@ public class PatientController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -86,6 +104,10 @@ public class PatientController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }

@@ -1,5 +1,7 @@
 package it.unipi.EasyDrugServer.controller;
 
+import com.mongodb.MongoException;
+import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.LoginUserDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.dto.SessionUserDTO;
@@ -14,8 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.exceptions.JedisException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,10 +32,10 @@ public class AuthController {
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
-        } catch (JedisConnectionException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
-        } catch (JedisException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -49,10 +49,10 @@ public class AuthController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
-        } catch (JedisConnectionException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
-        } catch (JedisException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }

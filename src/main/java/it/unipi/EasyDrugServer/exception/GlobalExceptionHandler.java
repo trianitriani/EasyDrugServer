@@ -1,5 +1,6 @@
 package it.unipi.EasyDrugServer.exception;
 
+import com.mongodb.MongoException;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,12 @@ public class GlobalExceptionHandler {
 
     public ResponseEntity<ResponseDTO> handleRedisException(JedisException ex, HttpStatus status){
         logger.warn("RedisException: {}", ex.getMessage());
+        ResponseDTO error = new ResponseDTO(status, ex.getMessage());
+        return new ResponseEntity<>(error, status);
+    }
+
+    public ResponseEntity<ResponseDTO> handleMongoDBException(MongoException ex, HttpStatus status){
+        logger.warn("MongoException: {}", ex.getMessage());
         ResponseDTO error = new ResponseDTO(status, ex.getMessage());
         return new ResponseEntity<>(error, status);
     }

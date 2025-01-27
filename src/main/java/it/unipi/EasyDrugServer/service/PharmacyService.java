@@ -2,15 +2,15 @@ package it.unipi.EasyDrugServer.service;
 
 import it.unipi.EasyDrugServer.dto.PharmacyHomeDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
+import it.unipi.EasyDrugServer.dto.UserType;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
-import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.model.Pharmacy;
-import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class PharmacyService {
+public class PharmacyService extends UserService {
     private final PurchaseCartRedisRepository purchaseCartRedisRepository;
     private final PrescriptionRedisRepository prescriptionRedisRepository;
     private final PharmacyRepository pharmacyRepository;
@@ -58,9 +58,7 @@ public class PharmacyService {
     }
 
     public Pharmacy getPharmacyById(String id) {
-        Optional<Pharmacy> optPharmacy = pharmacyRepository.findById(id);
-        if(optPharmacy.isPresent()) return optPharmacy.get();
-        throw new NotFoundException("Patient "+id+" does not exists");
+        return (Pharmacy) getUserIfExists(id, UserType.PHARMACY);
     }
 
     public void modifyPharmacy(Pharmacy pharmacy) {
@@ -69,10 +67,10 @@ public class PharmacyService {
         } else throw new NotFoundException("Researcher "+pharmacy.getIdentifyCode()+" does not exists");
     }
 
-    public void deletePharmacy(Pharmacy pharmacy) {
-        if(pharmacyRepository.existsById(pharmacy.getIdentifyCode())) {
-            pharmacyRepository.delete(pharmacy);
-        } else throw new NotFoundException("Researcher "+pharmacy.getIdentifyCode()+" does not exists");
+    public Pharmacy deletePharmacy(String id) {
+        Pharmacy pharmacy = getPharmacyById(id);
+        pharmacyRepository.deleteById(id);
+        return pharmacy;
     }
 
 }

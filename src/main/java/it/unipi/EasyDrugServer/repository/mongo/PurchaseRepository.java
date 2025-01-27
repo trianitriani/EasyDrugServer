@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface PurchaseRepository extends MongoRepository<Purchase, Integer> {
+public interface PurchaseRepository extends MongoRepository<Purchase, String> {
     // Query per trovare i Purchase di un paziente tra due date
     List<Purchase> findByPatientCodeAndPurchaseDateBetween(String patientCode, LocalDateTime startDate, LocalDateTime endDate);
 }

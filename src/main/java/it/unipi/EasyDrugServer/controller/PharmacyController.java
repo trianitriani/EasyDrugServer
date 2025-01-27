@@ -1,5 +1,7 @@
 package it.unipi.EasyDrugServer.controller;
 
+import com.mongodb.MongoException;
+import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.PharmacyHomeDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
@@ -167,19 +169,27 @@ public class PharmacyController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
     }
 
-    @DeleteMapping()
-    public ResponseEntity<ResponseDTO> deletePharmacy(Pharmacy pharmacy){
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ResponseDTO> deletePharmacy(String id){
         try {
-            pharmacyService.deletePharmacy(pharmacy);
+            Pharmacy pharmacy = pharmacyService.deletePharmacy(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacy);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -193,6 +203,10 @@ public class PharmacyController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
