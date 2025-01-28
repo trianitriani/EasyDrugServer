@@ -14,27 +14,24 @@ import java.util.Set;
 
 @Configuration
 public class RedisConfig {
-
-    private JedisCluster jedisCluster;
+    private Jedis jedis;
+    private String host = "localhost";
+    private Integer port = 6379;
 
     @Bean
-    public JedisCluster jedisCluster() {
-        Set<HostAndPort> jedisClusterNodes = new HashSet<>();
-        jedisClusterNodes.add(new HostAndPort("127.0.0.1", 7001));
-        jedisClusterNodes.add(new HostAndPort("127.0.0.1", 7002));
-        jedisClusterNodes.add(new HostAndPort("127.0.0.1", 7003));
-        this.jedisCluster = new JedisCluster(jedisClusterNodes);
-        return this.jedisCluster;
+    public Jedis jedis() {
+        this.jedis = new Jedis(host, port);
+        return this.jedis;
     }
 
     @PreDestroy
-    public void shutdownJedisCluster() {
-        if (jedisCluster != null) {
+    public void shutdownJedis() {
+        if (jedis != null) {
             try {
-                jedisCluster.close();
-                System.out.println("JedisCluster chiuso correttamente.");
+                jedis.close();
+                System.out.println("Jedis chiuso correttamente.");
             } catch (Exception e) {
-                System.err.println("Errore durante la chiusura di JedisCluster: " + e.getMessage());
+                System.err.println("Errore durante la chiusura di Jedis: " + e.getMessage());
             }
         }
     }

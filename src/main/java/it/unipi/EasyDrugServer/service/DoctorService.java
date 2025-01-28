@@ -31,32 +31,32 @@ public class DoctorService extends UserService {
     private final PurchaseRepository purchaseRepository;
     private final PatientRepository patientRepository;
 
-    public PrescriptionDTO getInactivePrescription(String doctorCode, String patientCode) {
-        return prescriptionRedisRepository.getInactivePrescription(doctorCode, patientCode);
+    public PrescriptionDTO getInactivePrescription(String patientCode) {
+        return prescriptionRedisRepository.getInactivePrescription(patientCode);
     }
 
-    public PrescribedDrugDTO saveInactivePrescribedDrug(String doctorCode, String patientCode, PrescribedDrugDTO drug) {
+    public PrescribedDrugDTO saveInactivePrescribedDrug(String patientCode, PrescribedDrugDTO drug) {
         if(Objects.equals(drug.getName(), ""))
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)
             throw new BadRequestException("Quantity can not be lower than one");
-        return prescriptionRedisRepository.saveInactivePrescribedDrug(doctorCode, patientCode, drug);
+        return prescriptionRedisRepository.insertInactivePrescribedDrug(patientCode, drug);
     }
 
-    public PrescribedDrugDTO deleteInactivePrescribedDrug(String doctorCode, String patientCode, int idDrug) {
-        return prescriptionRedisRepository.deleteInactivePrescribedDrug(doctorCode, patientCode, idDrug);
+    public PrescribedDrugDTO deleteInactivePrescribedDrug(String patientCode, int idDrug) {
+        return prescriptionRedisRepository.deleteInactivePrescribedDrug(patientCode, idDrug);
     }
 
-    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String doctorCode, String patientCode, int idDrug, int quantity) {
+    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String patientCode, int idDrug, int quantity) {
         if(quantity == 0)
-            return prescriptionRedisRepository.deleteInactivePrescribedDrug(doctorCode, patientCode, idDrug);
+            return prescriptionRedisRepository.deleteInactivePrescribedDrug(patientCode, idDrug);
         else if(quantity < 0)
             throw new BadRequestException("Quantity can not lower that zero.");
-        return prescriptionRedisRepository.modifyInactivePrescribedDrugQuantity(doctorCode, patientCode, idDrug, quantity);
+        return prescriptionRedisRepository.modifyInactivePrescribedDrugQuantity(patientCode, idDrug, quantity);
     }
 
-    public PrescriptionDTO activatePrescription(String doctorCode, String patientCode) {
-        return prescriptionRedisRepository.activatePrescription(doctorCode, patientCode);
+    public PrescriptionDTO activatePrescription(String patientCode) {
+        return prescriptionRedisRepository.activatePrescription(patientCode);
     }
 
     public Doctor getDoctorById(String id) {

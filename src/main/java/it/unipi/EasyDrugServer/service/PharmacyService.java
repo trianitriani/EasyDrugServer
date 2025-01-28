@@ -10,12 +10,10 @@ import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +36,7 @@ public class PharmacyService extends UserService {
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)
             throw new BadRequestException("Quantity can not be lower than one");
-        return purchaseCartRedisRepository.savePurchaseDrug(patientCode, drug);
+        return purchaseCartRedisRepository.insertPurchaseDrug(patientCode, drug);
     }
 
     public PurchaseDrugDTO deletePurchaseDrug(String patientCode, int idDrug) {
