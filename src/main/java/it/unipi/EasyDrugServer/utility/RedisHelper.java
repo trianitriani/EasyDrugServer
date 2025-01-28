@@ -29,17 +29,14 @@ public class RedisHelper {
         }
         return id;
     }
-
+    
     public void returnIdToPool(Transaction transaction, String entity, String id){
         transaction.lpush("available_"+entity+"_ids", id);
     }
-    
+
     public int nEntities(Jedis jedis, String entity){
         String n = jedis.get("global:"+entity+"_counter");
-        if(n == null){
-            jedis.set("global:"+entity+"_counter", "0");
-            return 0;
-        }
+        if(n == null) return 0;
         return Integer.parseInt(n);
     }
 

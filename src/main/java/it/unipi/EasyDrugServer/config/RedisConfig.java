@@ -20,8 +20,8 @@ public class RedisConfig {
 
     @Bean
     public Jedis jedis() {
-        this.jedis = new Jedis(host, port);
-        return this.jedis;
+        jedis = new Jedis(host, port);
+        return jedis;
     }
 
     @PreDestroy
