@@ -114,7 +114,7 @@ public class PurchaseCartRedisRepository {
         }
         throw new NotFoundException("Impossibile delete the drug: patient "+patientCode+" has not drug with id "+idDrug+" in the cart.");
     }
-    
+
     public List<PurchaseDrugDTO> confirmPurchaseCart(String patientCode){
         HashMap<String, List<Integer>> prescribedDrugs = new HashMap<>();
         List<PurchaseDrugDTO> purchaseDrugs = new ArrayList<>();
