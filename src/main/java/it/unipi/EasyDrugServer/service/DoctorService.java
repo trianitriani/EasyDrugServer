@@ -100,10 +100,10 @@ public class DoctorService extends UserService {
                     prescriptionDTO.setTimestamp(timestamp);
                     List<PrescribedDrugDTO> prescribedDrugs = new ArrayList<>();
                     prescribedDrugs.add(drug);
-                    prescriptionDTO.setPrescriptedDrugs(prescribedDrugs);
+                    prescriptionDTO.setPrescribedDrugs(prescribedDrugs);
                     prescriptionsHash.put(timestamp, prescriptionDTO);
                 } else {
-                    prescriptionsHash.get(timestamp).getPrescriptedDrugs().add(drug);
+                    prescriptionsHash.get(timestamp).getPrescribedDrugs().add(drug);
                 }
             }
         }
@@ -136,10 +136,10 @@ public class DoctorService extends UserService {
                 List<PrescribedDrugDTO> drugs = new ArrayList<>();
                 drugs.add(drug);
                 prescriptionDTO.setTimestamp(purch.getPurchaseTimestamp());
-                prescriptionDTO.setPrescriptedDrugs(drugs);
+                prescriptionDTO.setPrescribedDrugs(drugs);
                 hashPurchases.put(purch.getPurchaseTimestamp(), prescriptionDTO);
             } else {
-                hashPurchases.get(purch.getPurchaseTimestamp()).getPrescriptedDrugs().add(drug);
+                hashPurchases.get(purch.getPurchaseTimestamp()).getPrescribedDrugs().add(drug);
             }
         }
         return (List<PrescriptionDTO>) hashPurchases.values();

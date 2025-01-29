@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Setter
@@ -12,17 +13,17 @@ import java.util.List;
 @Data
 public class PrescriptionDTO {
     private LocalDateTime timestamp;
-    private List<PrescribedDrugDTO> prescriptedDrugs;
+    private List<PrescribedDrugDTO> prescribedDrugs;
 
     public PrescriptionDTO(){
-
+        prescribedDrugs = new ArrayList<>();
     }
 
     public void addPrescribedDrug(PrescribedDrugDTO drug){
-        prescriptedDrugs.add(drug);
+        prescribedDrugs.add(drug);
     }
 
-    public boolean isEmpty(){
-        return prescriptedDrugs.isEmpty();
+    public boolean checkIfEmpty(){
+        return prescribedDrugs.isEmpty();
     }
 }

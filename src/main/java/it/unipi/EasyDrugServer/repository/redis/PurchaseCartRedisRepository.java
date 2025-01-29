@@ -67,7 +67,7 @@ public class PurchaseCartRedisRepository {
         transaction.set(key + "info", String.valueOf(info));
         transaction.set(key + "quantity", String.valueOf(quantity));
 
-        // expire of one hour for delete a object into purchase cart
+        // expire of one hour for delete an object into purchase cart
         transaction.expire(key + "id", this.hour);
         transaction.expire(key + "info", this.hour);
         transaction.expire(key + "quantity", this.hour);
@@ -118,12 +118,11 @@ public class PurchaseCartRedisRepository {
     public List<PurchaseDrugDTO> confirmPurchaseCart(String patientCode){
         HashMap<String, List<Integer>> prescribedDrugs = new HashMap<>();
         List<PurchaseDrugDTO> purchaseDrugs = new ArrayList<>();
-        List<String> purchToDelete = new ArrayList<>();
-        List<String> presDrugToDelete = new ArrayList<>();
+        HashMap<String, Integer> purchToDelete = new HashMap<>();
+        HashMap<String, Integer> presDrugToDelete = new HashMap<>();
         List<String> presDrugPurchased = new ArrayList<>();
-        List<String> presToDelete = new ArrayList<>();
+        HashMap<String, Integer> presToDelete = new HashMap<>();
         HashMap<String, Integer> presToModify = new HashMap<>();
-        Transaction transaction = jedis.multi();
         // cerco tutti i farmaci che sono nel carrello e si riferiscono al paziente selezionato
         for(int i=1; i<=redisHelper.nEntities(jedis, this.entity); i++){
             String keyPurch = this.entity + ":" + i + ":" + patientCode + ":";
@@ -140,11 +139,7 @@ public class PurchaseCartRedisRepository {
                     prescribedDrugs.get(timestampString).add(id);
                 }
                 // elimino dal key value il farmaco nel carrello
-                purchToDelete.add(keyPurch);
-                transaction.del(keyPurch + "id");
-                transaction.del(keyPurch + "info");
-                transaction.del(keyPurch + "quantity");
-                redisHelper.returnIdToPool(transaction, this.entity, String.valueOf(i));
+                purchToDelete.put(keyPurch, i);
             }
         }
         // adesso per ogni prescrizione che contiene farmaci acquistati vado a modificare il db
@@ -173,33 +168,59 @@ public class PurchaseCartRedisRepository {
                         if(drugs.contains(id)){
                             if (ended){
                                 // Allora vado a eliminare quel farmaco
-                                presDrugToDelete.add(presDrugKey);
-                                transaction.del(presDrugKey + "id");
-                                transaction.del(presDrugKey + "info");
-                                transaction.del(presDrugKey + "quantity");
-                                transaction.del(presDrugKey + "purchased");
-                                redisHelper.returnIdToPool(transaction, "pres-drug", Integer.toString(k));
+                                presDrugToDelete.put(presDrugKey, k);
                             } else {
                                 presDrugPurchased.add(presDrugKey);
-                                transaction.set(presDrugKey + "purchased", "true");
                             }
                         }
                     }
                 }
-                if(ended) {
-                    presToDelete.add(presKey);
-                    transaction.del(presKey + "timestamp");
-                    transaction.del(presKey + "toPurchase");
-                    redisHelper.returnIdToPool(transaction, "pres", Integer.toString(j));
-                } else {
+                if(ended)
+                    presToDelete.put(presKey, j);
+                else {
                     toPurchase -= nPurchased;
                     presToModify.put(presKey, toPurchase);
-                    transaction.set(presKey + "toPurchase", String.valueOf(toPurchase));
                 }
             }
         }
         if(purchaseDrugs.isEmpty())
             throw new ForbiddenException("You can not complete the payment if a cart is empty");
+
+        // effettuiamo le modifiche nel db
+        Transaction transaction = jedis.multi();
+
+        // delete purchase drug into the cart
+        for(Map.Entry<String, Integer> entry : purchToDelete.entrySet()){
+            transaction.del(entry.getKey() + "id");
+            transaction.del(entry.getKey() + "info");
+            transaction.del(entry.getKey() + "quantity");
+            redisHelper.returnIdToPool(transaction, this.entity, String.valueOf(entry.getValue()));
+        }
+
+        // delete purchase drug into prescriptions that are sold
+        for(Map.Entry<String, Integer> entry : presDrugToDelete.entrySet()){
+            transaction.del(entry.getKey() + "id");
+            transaction.del(entry.getKey() + "info");
+            transaction.del(entry.getKey() + "quantity");
+            transaction.del(entry.getKey() + "purchased");
+            redisHelper.returnIdToPool(transaction, "pres-drug", Integer.toString(entry.getValue()));
+        }
+
+        // setting purchased to a drug into a prescription that is sold
+        for(String presDrugKey : presDrugPurchased){
+            transaction.set(presDrugKey + "purchased", "true");
+        }
+
+        // delete prescription if is terminated (all drugs are sold)
+        for(Map.Entry<String, Integer> entry : presToDelete.entrySet()){
+            transaction.del(entry.getKey() + "timestamp");
+            transaction.del(entry.getKey() + "toPurchase");
+            redisHelper.returnIdToPool(transaction, "pres", Integer.toString(entry.getValue()));
+        }
+
+        for(Map.Entry<String, Integer> entry : presToModify.entrySet()){
+            transaction.set(entry.getKey() + "toPurchase", String.valueOf(entry.getValue()));
+        }
 
         List<Object> result = transaction.exec();
         if(result == null)
