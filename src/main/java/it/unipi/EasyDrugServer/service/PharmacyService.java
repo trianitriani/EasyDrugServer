@@ -12,6 +12,7 @@ import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,13 +40,13 @@ public class PharmacyService extends UserService {
         return purchaseCartRedisRepository.insertPurchaseDrug(patientCode, drug);
     }
 
-    public PurchaseDrugDTO deletePurchaseDrug(String patientCode, int idDrug) {
-        return purchaseCartRedisRepository.deletePurchaseDrug(patientCode, idDrug);
+    public PurchaseDrugDTO deletePurchaseDrug(String patientCode, int idDrug, LocalDateTime prescriptionTimestamp) {
+        return purchaseCartRedisRepository.deletePurchaseDrug(patientCode, idDrug, String.valueOf(prescriptionTimestamp));
     }
 
     public PurchaseDrugDTO modifyPurchaseDrugQuantity(String patientCode, int idDrug, int quantity) {
         if(quantity == 0)
-            return purchaseCartRedisRepository.deletePurchaseDrug(patientCode, idDrug);
+            return purchaseCartRedisRepository.deletePurchaseDrug(patientCode, idDrug, "");
         else if(quantity < 0)
             throw new BadRequestException("Quantity can not lower that zero.");
         return purchaseCartRedisRepository.modifyPurchaseDrugQuantity(patientCode, idDrug, quantity);

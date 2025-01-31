@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -66,8 +67,10 @@ public class PharmacyController {
             PurchaseDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(patCode, drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (BadRequestException e){
+        } catch (BadRequestException e) {
             return exceptionHandler.handleBadRequestException(e);
+        } catch (ForbiddenException e){
+            return exceptionHandler.handleForbiddenException(e);
         } catch (JedisConnectionException e){
             return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
         } catch (JedisException e){
@@ -87,9 +90,10 @@ public class PharmacyController {
      */
     @DeleteMapping("/patients/{patCode}/cart/drugs/{idDrug}")
     public ResponseEntity<ResponseDTO> deletePurchaseDrug(@PathVariable String patCode,
-                                                          @PathVariable int idDrug){
+                                                          @PathVariable int idDrug,
+                                                          @RequestBody(required = false) LocalDateTime prescriptionTimestamp){
         try {
-            PurchaseDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(patCode, idDrug);
+            PurchaseDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(patCode, idDrug, prescriptionTimestamp);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

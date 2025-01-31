@@ -6,13 +6,11 @@ import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
-import it.unipi.EasyDrugServer.exception.UnauthorizedException;
 import it.unipi.EasyDrugServer.utility.RedisHelper;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Repository;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisException;
 
@@ -107,16 +105,22 @@ public class PrescriptionRedisRepository {
         int i;
         for(i=1; i<=redisHelper.nEntities(jedis, this.pres); i++){
             presKey = this.pres + ":" + i + ":" + patientCode + ":";
-            if(jedis.exists(presKey + "timestamp")){
-                String timestamp = jedis.get(presKey + "timestamp");
-                if(!Objects.equals(timestamp, "")) continue;
+            if(jedis.exists(presKey + "timestamp") && Objects.equals(jedis.get(presKey + "timestamp"), "")){
                 // trovato l'id della prescrizione inattiva devo inserire all'interno
                 // della prescrizione un nuovo farmaco
                 found = true;
+
+                // in one prescription there can not be twice the same drug
+                for(int j=1; j<=redisHelper.nEntities(jedis, this.presDrug); j++){
+                    String presDrugKey = this.presDrug + ":" + j + ":" + i + ":";
+                    if(jedis.exists(presDrugKey + "id") &&
+                            Objects.equals(jedis.get(presDrugKey + "id"), String.valueOf(drug.getId())))
+                        throw new ForbiddenException("Drug "+drug.getId()+" is already into the prescription cart");
+                }
                 break;
             }
         }
-        
+
         // se la prescrizione inattiva non esiste, devo crearla
         if(!found){
             int id_pres = Integer.parseInt(redisHelper.getReusableId(jedis, this.pres));

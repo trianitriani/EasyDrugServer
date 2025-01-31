@@ -173,8 +173,8 @@ public class DoctorController {
             PrescribedDrugDTO prescribedDrugDTO = doctorService.saveInactivePrescribedDrug(patCode, drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, prescribedDrugDTO);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (UnauthorizedException e){
-            return exceptionHandler.handleUnauthorizedException(e);
+        } catch (ForbiddenException e){
+            return exceptionHandler.handleForbiddenException(e);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
         } catch (JedisConnectionException e){
@@ -201,8 +201,6 @@ public class DoctorController {
             PrescribedDrugDTO prescribedDrugDTO = doctorService.deleteInactivePrescribedDrug(patCode, drugId);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (UnauthorizedException e){
-            return exceptionHandler.handleUnauthorizedException(e);
         } catch (NotFoundException e){
             return exceptionHandler.handleNotFoundException(e);
         } catch (JedisConnectionException e){
@@ -232,8 +230,6 @@ public class DoctorController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
-        } catch (UnauthorizedException e){
-            return exceptionHandler.handleUnauthorizedException(e);
         } catch (NotFoundException e){
             return exceptionHandler.handleNotFoundException(e);
         } catch (JedisConnectionException e){
@@ -260,8 +256,6 @@ public class DoctorController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (ForbiddenException e){
             return exceptionHandler.handleForbiddenException(e);
-        } catch (UnauthorizedException e){
-            return exceptionHandler.handleUnauthorizedException(e);
         } catch (JedisConnectionException e){
             return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
         } catch (JedisException e){
