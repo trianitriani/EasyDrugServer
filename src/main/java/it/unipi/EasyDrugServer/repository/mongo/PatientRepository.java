@@ -7,10 +7,11 @@ import it.unipi.EasyDrugServer.model.Patient;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-
+import org.springframework.stereotype.Repository;
+@Repository
 public interface PatientRepository extends MongoRepository<Patient, String> {
 
-    List<Patient> findByIdentifyCodeDoctor(String id);
+    List<Patient> findByFamilyDoctorCode(String id);
 
     @Aggregation(pipeline = {
             "{ $group: { _id: '$comune', nPatients: { $sum: 1 }, distDoctors: { $addToSet: '$doctorCode' } } }",
@@ -19,7 +20,5 @@ public interface PatientRepository extends MongoRepository<Patient, String> {
             "{ $sort: { ratio: ?0 } }"
     })
     List<PatientDoctorRatioDTO> getPatientsToDoctorsRatio(@Param("order") int order);
-
-
 
 }

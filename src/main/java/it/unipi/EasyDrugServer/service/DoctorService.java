@@ -80,18 +80,18 @@ public class DoctorService extends UserService {
             throw new NotFoundException("Doctor "+id_doc+" does not exists");
 
         Patient patient = (Patient) getUserIfExists(id_pat, UserType.PATIENT);
-        if(!Objects.equals(patient.getIdentifyCodeDoctor(), id_doc))
+        if(!Objects.equals(patient.getFamilyDoctorCode(), id_doc))
             throw new UnauthorizedException("You are not authorized to access this patient");
 
-        List<LatestPurchase> latestPurchased = patient.getLatestPurchased();
+        List<LatestPurchase> latestPurchased = patient.getLatestPurchasedDrugs();
         HashMap<LocalDateTime, PrescriptionDTO> prescriptionsHash = new HashMap<>();
         for(LatestPurchase latestPurchase : latestPurchased) {
             for(LatestDrug latestDrug : latestPurchase.getDrugs()){
-                LocalDateTime timestamp = latestDrug.getPrescribedTimestamp();
+                LocalDateTime timestamp = latestDrug.getPrescriptionDate();
                 if(timestamp == null) continue;
                 PrescribedDrugDTO drug = new PrescribedDrugDTO();
-                drug.setId(Integer.parseInt(latestDrug.getId()));
-                drug.setName(latestDrug.getName());
+                drug.setId(Integer.parseInt(latestDrug.getDrugId()));
+                drug.setName(latestDrug.getDrugName());
                 drug.setPrice(latestDrug.getPrice());
                 drug.setPurchased(true);
                 drug.setQuantity(latestDrug.getQuantity());
@@ -115,31 +115,31 @@ public class DoctorService extends UserService {
             throw new NotFoundException("Doctor "+id_doc+" does not exists");
 
         Patient patient = (Patient) getUserIfExists(id_pat, UserType.PATIENT);
-        if(!Objects.equals(patient.getIdentifyCodeDoctor(), id_doc))
+        if(!Objects.equals(patient.getFamilyDoctorCode(), id_doc))
             throw new UnauthorizedException("You are not authorized to access this patient");
 
         LocalDateTime fromTime = from.atStartOfDay();
         LocalDateTime toTime = to.atTime(23, 59, 59);
-        List<Purchase> purchases = purchaseRepository.findByPatientCodeAndPurchaseTimestampBetween(id_pat, fromTime, toTime);;
+        List<Purchase> purchases = purchaseRepository.findByPatientCodeAndPurchaseDateBetween(id_pat, fromTime, toTime);;
         HashMap<LocalDateTime, PrescriptionDTO> hashPurchases = new HashMap<>();
         // Analizzare tutti gli acquisti e ottenere una hashmap con chiave timestamp di acquisto e
         // farmaci acquistati
         for(Purchase purch : purchases) {
-            if(purch.getPrescriptionTimestamp() == null) continue;
+            if(purch.getPrescriptionDate() == null) continue;
             PrescribedDrugDTO drug = new PrescribedDrugDTO();
             drug.setId(Integer.parseInt(purch.getDrugId()));
-            drug.setName(purch.getDrugName());
+            drug.setName(purch.getName());
             drug.setQuantity(purch.getQuantity());
             drug.setPrice(purch.getPrice());
-            if(!hashPurchases.containsKey(purch.getPurchaseTimestamp())){
+            if(!hashPurchases.containsKey(purch.getPurchaseDate())){
                 PrescriptionDTO prescriptionDTO = new PrescriptionDTO();
                 List<PrescribedDrugDTO> drugs = new ArrayList<>();
                 drugs.add(drug);
-                prescriptionDTO.setTimestamp(purch.getPurchaseTimestamp());
+                prescriptionDTO.setTimestamp(purch.getPurchaseDate());
                 prescriptionDTO.setPrescribedDrugs(drugs);
-                hashPurchases.put(purch.getPurchaseTimestamp(), prescriptionDTO);
+                hashPurchases.put(purch.getPurchaseDate(), prescriptionDTO);
             } else {
-                hashPurchases.get(purch.getPurchaseTimestamp()).getPrescribedDrugs().add(drug);
+                hashPurchases.get(purch.getPurchaseDate()).getPrescribedDrugs().add(drug);
             }
         }
         return (List<PrescriptionDTO>) hashPurchases.values();
@@ -149,7 +149,7 @@ public class DoctorService extends UserService {
         if(!doctorRepository.existsById(id))
             throw new NotFoundException("Doctor "+id+" does not exists");
 
-        List<Patient> patients = patientRepository.findByIdentifyCodeDoctor(id);
+        List<Patient> patients = patientRepository.findByFamilyDoctorCode(id);
         List<SimplePatientDTO> patientDTOs = new ArrayList<>();
         for(Patient patient : patients){
             SimplePatientDTO patientDTO = new SimplePatientDTO();

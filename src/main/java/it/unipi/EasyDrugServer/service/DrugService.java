@@ -18,19 +18,19 @@ public class DrugService {
     private final DrugRepository drugRepository;
 
     public Drug getDrugById(Integer id) {
-        Optional<Drug> optDrug = drugRepository.findById(id);
+        Optional<Drug> optDrug = drugRepository.findByDrugId(id);
         if(optDrug.isPresent()) return optDrug.get();
         throw new NotFoundException("Drug "+id+" does not exists");
     }
 
     public void modifyDrug(Drug drug) {
-        if(drugRepository.existsById(drug.getId())) {
+        if(drugRepository.existsByDrugId(drug.getDrugId())) {
             drugRepository.save(drug);
-        } else throw new NotFoundException("Researcher "+ drug.getId() +" does not exists");
+        } else throw new NotFoundException("Researcher "+ drug.getDrugId() +" does not exists");
     }
 
-    public Drug deleteDrug(int id) {
-        Optional<Drug> optDrug = drugRepository.findById(id);
+    public Drug deleteDrug(Integer id) {
+        Optional<Drug> optDrug = drugRepository.findByDrugId(id);
         if(optDrug.isPresent()) {
             Drug drug = optDrug.get();
             drugRepository.deleteById(id);
@@ -43,12 +43,12 @@ public class DrugService {
     }
     
     public List<SimpleDrugDTO> getDrugsThatContain(String name) {
-        List<Drug> drugs = drugRepository.findByNameContainingIgnoreCase(name);
+        List<Drug> drugs = drugRepository.findByDrugNameContainingIgnoreCase(name);
         return getSimpleDrugsByDrugs(drugs);
     }
 
     public List<SimpleDrugDTO> getDrugsByIndication(String name) {
-        List<Drug> drugs = drugRepository.findByIndicationsName(name);
+        List<Drug> drugs = drugRepository.findByIndicationsIndicationName(name);
         return getSimpleDrugsByDrugs(drugs);
     }
 
@@ -56,8 +56,8 @@ public class DrugService {
         List<SimpleDrugDTO> simpleDrugs = new ArrayList<>();
         for(Drug drug: drugs){
             SimpleDrugDTO simpleDrugDTO = new SimpleDrugDTO();
-            simpleDrugDTO.setId(drug.getId());
-            simpleDrugDTO.setName(drug.getName());
+            simpleDrugDTO.setId(drug.getDrugId());
+            simpleDrugDTO.setName(drug.getDrugName());
             simpleDrugs.add(simpleDrugDTO);
         }
         return simpleDrugs;

@@ -12,7 +12,7 @@ import java.util.Arrays;
 
 @Configuration
 public class MongoConfig {
-
+/*
     @Bean
     public MongoClient mongoClient() {
         ClusterSettings clusterSettings = ClusterSettings.builder()
@@ -28,5 +28,5 @@ public class MongoConfig {
                 .build();
 
         return MongoClients.create(settings);
-    }
+    } */
 }

@@ -5,8 +5,11 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
 
+import org.springframework.stereotype.Repository;
+
+@Repository
 public interface PharmacyRepository extends MongoRepository<Pharmacy, String> {
 
-    Optional<Object> findByNameAndAddressAndMunicipality(String name, String address, String municipality);
+    Optional<Object> findByNameAndAddressAndCity(String name, String address, String city);
 
 }

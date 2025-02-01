@@ -8,10 +8,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+import org.springframework.stereotype.Repository;
+@Repository
 public interface PurchaseRepository extends MongoRepository<Purchase, String> {
     // Query per trovare i Purchase di un paziente tra due date
-    List<Purchase> findByPatientCodeAndPurchaseTimestampBetween(String patientCode, LocalDateTime startDate, LocalDateTime endDate);
+    List<Purchase> findByPatientCodeAndPurchaseDateBetween(String patientCode, LocalDateTime startDate, LocalDateTime endDate);
 
     @Aggregation(pipeline = {
             "{ $match: { drugId: ?0 } }",

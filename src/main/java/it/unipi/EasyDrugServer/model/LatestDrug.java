@@ -10,9 +10,10 @@ import java.time.LocalDateTime;
 @Setter
 @Data
 public class LatestDrug {
-    private String id;
-    private String name;
+    private String drugId;
+    private String drugName;
     private int quantity;
     private double price;
-    private LocalDateTime prescribedTimestamp;
+    private LocalDateTime prescriptionDate;
 }
+

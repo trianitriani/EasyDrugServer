@@ -14,10 +14,12 @@ public class Pharmacy {
     private String identifyCode;
     private String name;
     private String password;
+    private String VATnumber;
     private String address;
-    private String municipality;
-    private String province;
+    private String city;
+    private String district;
     private String region;
-    private String vatNumber;
     private String ownerTaxCode;
 }
+
+

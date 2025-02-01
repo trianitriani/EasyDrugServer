@@ -47,7 +47,7 @@ public class PatientService extends UserService {
     }
 
     public List<LatestPurchase> getLatestPurchases(String id) {
-        return ((Patient) getUserIfExists(id, UserType.PATIENT)).getLatestPurchased();
+        return ((Patient) getUserIfExists(id, UserType.PATIENT)).getLatestPurchasedDrugs();
     }
 
     public List<LatestPurchase> getPurchasesFromTo(String id, LocalDate from, LocalDate to) {
@@ -56,24 +56,24 @@ public class PatientService extends UserService {
 
         LocalDateTime fromTime = from.atStartOfDay();
         LocalDateTime toTime = to.atTime(23, 59, 59);
-        List<Purchase> purchases = purchaseRepository.findByPatientCodeAndPurchaseTimestampBetween(id, fromTime, toTime);;
+        List<Purchase> purchases = purchaseRepository.findByPatientCodeAndPurchaseDateBetween(id, fromTime, toTime);;
         HashMap<LocalDateTime, List<LatestDrug>> hashPurchases = new HashMap<>();
         List<LatestPurchase> latestPurchases = new ArrayList<>();
         // Analizzare tutti gli acquisti e ottenere una hashmap con chiave timestamp di acquisto e
         // farmaci acquistati
         for(Purchase purch : purchases) {
             LatestDrug drug = new LatestDrug();
-            drug.setId(purch.getDrugId());
-            drug.setName(purch.getDrugName());
-            drug.setPrescribedTimestamp(purch.getPrescriptionTimestamp());
+            drug.setDrugId(purch.getDrugId());
+            drug.setDrugName(purch.getName());
+            drug.setPrescriptionDate(purch.getPrescriptionDate());
             drug.setQuantity(purch.getQuantity());
             drug.setPrice(purch.getPrice());
-            if(!hashPurchases.containsKey(purch.getPurchaseTimestamp())){
+            if(!hashPurchases.containsKey(purch.getPurchaseDate())){
                 List<LatestDrug> latestDrugs = new ArrayList<>();
                 latestDrugs.add(drug);
-                hashPurchases.put(purch.getPurchaseTimestamp(), latestDrugs);
+                hashPurchases.put(purch.getPurchaseDate(), latestDrugs);
             } else {
-                hashPurchases.get(purch.getPurchaseTimestamp()).add(drug);
+                hashPurchases.get(purch.getPurchaseDate()).add(drug);
             }
         }
         // Inserire tutti gli acquisti nell'ordine corretto come lo vuole il client

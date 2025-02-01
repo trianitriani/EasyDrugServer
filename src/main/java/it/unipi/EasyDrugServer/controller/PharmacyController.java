@@ -147,9 +147,10 @@ public class PharmacyController {
      * @return ResponseEntity<ResponseDTO>
      */
     @PatchMapping("/patients/{patCode}/cart/checkout")
-    public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable String patCode){
+    public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable String patCode,
+                                                       @RequestBody String pharmacyRegion){
         try {
-            List<PurchaseDrugDTO> purchaseCart = pharmacyService.confirmPurchaseCart(patCode);
+            List<PurchaseDrugDTO> purchaseCart = pharmacyService.confirmPurchaseCart(patCode, pharmacyRegion);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseCart);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

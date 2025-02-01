@@ -14,3 +14,7 @@ public class LatestPurchase {
     private LocalDateTime timestamp;
     private List<LatestDrug> drugs;
 }
+
+
+
+

@@ -44,8 +44,8 @@ public class AuthService {
                 patient.setName(user.getName());
                 patient.setSurname(user.getSurname());
                 patient.setDateOfBirth(user.getDateOfBirth());
-                patient.setMunicipality(user.getMunicipality());
-                patient.setProvince(user.getProvince());
+                patient.setCity(user.getMunicipality());
+                patient.setDistrict(user.getProvince());
                 patient.setRegion(user.getRegion());
                 patient.setTaxCode(user.getTaxCode());
                 patientRepository.save(patient);
@@ -63,11 +63,11 @@ public class AuthService {
                 doctor.setName(user.getName());
                 doctor.setSurname(user.getSurname());
                 doctor.setDateOfBirth(user.getDateOfBirth());
-                doctor.setMunicipality(user.getMunicipality());
-                doctor.setProvince(user.getProvince());
+                doctor.setCity(user.getMunicipality());
+                doctor.setDistrict(user.getProvince());
                 doctor.setRegion(user.getRegion());
                 doctor.setTaxCode(user.getTaxCode());
-                doctor.setGraduationCertificate(user.getCertificate());
+                doctor.setDoctorRegisterCode(user.getCertificate());
                 doctorRepository.save(doctor);
                 sessionUserDTO.setName(doctor.getName());
                 sessionUserDTO.setIdentifyCode(doctor.getIdentifyCode());
@@ -82,17 +82,17 @@ public class AuthService {
                 researcher.setName(user.getName());
                 researcher.setSurname(user.getSurname());
                 researcher.setDateOfBirth(user.getDateOfBirth());
-                researcher.setMunicipality(user.getMunicipality());
-                researcher.setProvince(user.getProvince());
+                researcher.setCity(user.getMunicipality());
+                researcher.setDistrict(user.getProvince());
                 researcher.setRegion(user.getRegion());
                 researcher.setTaxCode(user.getTaxCode());
-                researcher.setDoctoralCertificate(user.getCertificate());
+                researcher.setResearcherRegisterCode(user.getCertificate());
                 researcherRepository.save(researcher);
                 sessionUserDTO.setName(researcher.getName());
                 sessionUserDTO.setIdentifyCode(researcher.getIdentifyCode());
                 break;
             case PHARMACY:
-                if(pharmacyRepository.findByNameAndAddressAndMunicipality(user.getName(), user.getAddress(), user.getMunicipality()).isPresent())
+                if(pharmacyRepository.findByNameAndAddressAndCity(user.getName(), user.getAddress(), user.getMunicipality()).isPresent())
                     throw new ForbiddenException("Pharmacy already exists");
                 // Inserimento nel document
                 Pharmacy pharmacy = new Pharmacy();
@@ -100,11 +100,11 @@ public class AuthService {
                 pharmacy.setPassword(PasswordHasher.hash(user.getPassword()));
                 pharmacy.setAddress(user.getAddress());
                 pharmacy.setName(user.getName());
-                pharmacy.setMunicipality(user.getMunicipality());
-                pharmacy.setProvince(user.getProvince());
+                pharmacy.setCity(user.getMunicipality());
+                pharmacy.setDistrict(user.getProvince());
                 pharmacy.setRegion(user.getRegion());
                 pharmacy.setOwnerTaxCode(user.getTaxCode());
-                pharmacy.setVatNumber(user.getVatNumber());
+                pharmacy.setVATnumber(user.getVatNumber());
                 pharmacyRepository.save(pharmacy);
                 sessionUserDTO.setName(pharmacy.getName());
                 sessionUserDTO.setIdentifyCode(pharmacy.getIdentifyCode());
