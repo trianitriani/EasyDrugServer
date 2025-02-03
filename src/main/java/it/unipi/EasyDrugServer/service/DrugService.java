@@ -47,6 +47,16 @@ public class DrugService {
         return getSimpleDrugsByDrugs(drugs);
     }
 
+    public List<SimpleDrugDTO> getDrugsPurchasableThatContain(String name) {
+        List<Drug> drugs = drugRepository.findByDrugNameContainingIgnoreCaseAndOnPrescriptionFalse(name);
+        return getSimpleDrugsByDrugs(drugs);
+    }
+
+    public List<SimpleDrugDTO> getDrugsOnPrescriptionThatContain(String name) {
+        List<Drug> drugs = drugRepository.findByDrugNameContainingIgnoreCaseAndOnPrescriptionTrue(name);
+        return getSimpleDrugsByDrugs(drugs);
+    }
+
     public List<SimpleDrugDTO> getDrugsByIndication(String name) {
         List<Drug> drugs = drugRepository.findByIndicationsIndicationName(name);
         return getSimpleDrugsByDrugs(drugs);
@@ -62,4 +72,7 @@ public class DrugService {
         }
         return simpleDrugs;
     }
+
+
+
 }

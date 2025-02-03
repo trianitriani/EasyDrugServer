@@ -91,11 +91,41 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    
     @GetMapping("/search/{name}")
     public ResponseEntity<ResponseDTO> getDrugsThatContain(@PathVariable String name){
         try {
             List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsThatContain(name);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @GetMapping("/search/{name}/purchasable")
+    public ResponseEntity<ResponseDTO> getDrugsPurchasableThatContain(@PathVariable String name){
+        try {
+            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsPurchasableThatContain(name);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @GetMapping("/search/{name}/on-prescription")
+    public ResponseEntity<ResponseDTO> getDrugsOnPrescriptionThatContain(@PathVariable String name){
+        try {
+            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsOnPrescriptionThatContain(name);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MongoSocketException e) {
