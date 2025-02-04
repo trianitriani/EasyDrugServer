@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SimpleDrugDTO {
-    private int id;
+    private double id;
     private String name;
 }

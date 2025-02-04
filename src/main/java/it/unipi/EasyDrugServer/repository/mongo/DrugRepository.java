@@ -15,9 +15,9 @@ public interface DrugRepository extends MongoRepository<Drug, Integer> {
 
     List<Drug> findByIndicationsIndicationName(String name);
 
-    boolean existsByDrugId(int drugId);
+    // boolean existsByDrugId(int drugId);
 
-    Optional<Drug> findByDrugId(Integer id);
+    // Optional<Drug> findByDrugId(Integer id);
 
     List<Drug> findByDrugNameContainingIgnoreCaseAndOnPrescriptionFalse(String name);
 

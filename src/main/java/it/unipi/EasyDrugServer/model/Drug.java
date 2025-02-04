@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -14,10 +15,11 @@ import java.util.List;
 @Setter
 @Data
 @Document(collection = "drugs")
+@TypeAlias("Drug")
 public class Drug {
 
     @Id
-    private int drugId;
+    private int id;
     private String drugName;
     private double price;
     private String company;
@@ -30,7 +32,7 @@ public class Drug {
     private List<Indication> indications;
 
     @Field("sideEffects")
-    private List<SideEffect> sideEffect;
+    private List<SideEffect> sideEffects;
     private String family;
 }
 

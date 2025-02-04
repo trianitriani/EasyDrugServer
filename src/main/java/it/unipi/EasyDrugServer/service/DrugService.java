@@ -6,36 +6,44 @@ import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Drug;
 import it.unipi.EasyDrugServer.repository.mongo.DrugRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+
 @Service
 @RequiredArgsConstructor
 public class DrugService {
     private final DrugRepository drugRepository;
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
-    public Drug getDrugById(Integer id) {
-        Optional<Drug> optDrug = drugRepository.findByDrugId(id);
+    public Drug getDrugById(int id) {
+        Optional<Drug> optDrug = drugRepository.findById(id);
         if(optDrug.isPresent()) return optDrug.get();
         throw new NotFoundException("Drug "+id+" does not exists");
     }
 
     public void modifyDrug(Drug drug) {
-        if(drugRepository.existsByDrugId(drug.getDrugId())) {
+        if(drugRepository.existsById(drug.getId())) {
             drugRepository.save(drug);
-        } else throw new NotFoundException("Researcher "+ drug.getDrugId() +" does not exists");
+        } else throw new NotFoundException("Drug "+ drug.getId() +" does not exists");
     }
 
-    public Drug deleteDrug(Integer id) {
-        Optional<Drug> optDrug = drugRepository.findByDrugId(id);
+    public Drug deleteDrug(int id) {
+        Optional<Drug> optDrug = drugRepository.findById(id);
         if(optDrug.isPresent()) {
+            System.out.println(optDrug);
             Drug drug = optDrug.get();
             drugRepository.deleteById(id);
             return drug;
-        } else throw new NotFoundException("Researcher "+ id+" does not exists");
+        } else throw new NotFoundException("Drug "+ id+" does not exists");
     }
 
     public void insertDrug(Drug drug) {
@@ -66,7 +74,7 @@ public class DrugService {
         List<SimpleDrugDTO> simpleDrugs = new ArrayList<>();
         for(Drug drug: drugs){
             SimpleDrugDTO simpleDrugDTO = new SimpleDrugDTO();
-            simpleDrugDTO.setId(drug.getDrugId());
+            simpleDrugDTO.setId(drug.getId());
             simpleDrugDTO.setName(drug.getDrugName());
             simpleDrugs.add(simpleDrugDTO);
         }
