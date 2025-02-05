@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Setter
 @Data
 public class LatestDrug {
-    private String drugId;
+    private int drugId;
     private String drugName;
     private int quantity;
     private double price;

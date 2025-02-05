@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 @Repository
-public interface PurchaseRepository extends MongoRepository<Purchase, String> {
+public interface PurchaseRepository extends MongoRepository<Purchase, Integer> {
     // Query per trovare i Purchase di un paziente tra due date
     List<Purchase> findByPatientCodeAndPurchaseDateBetween(String patientCode, LocalDateTime startDate, LocalDateTime endDate);
 

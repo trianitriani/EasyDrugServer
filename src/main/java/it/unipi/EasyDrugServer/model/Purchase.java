@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class Purchase {
 
     @Id
-    private String id;      // campo _id di MongoDB
+    private Integer id;      // campo _id di MongoDB
     private String drugId;
     private String name;
     private int quantity;

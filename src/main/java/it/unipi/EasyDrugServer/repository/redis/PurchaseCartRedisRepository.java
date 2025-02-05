@@ -2,6 +2,7 @@ package it.unipi.EasyDrugServer.repository.redis;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import it.unipi.EasyDrugServer.dto.ConfirmPurchaseCartDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
@@ -137,7 +138,7 @@ public class PurchaseCartRedisRepository {
                 "has no drug with id "+idDrug+" in the cart.");
     }
 
-    public List<PurchaseDrugDTO> confirmPurchaseCart(String patientCode){
+    public ConfirmPurchaseCartDTO confirmPurchaseCart(String patientCode){
         HashMap<String, List<Integer>> prescribedDrugs = new HashMap<>();
         List<PurchaseDrugDTO> purchaseDrugs = new ArrayList<>();
         HashMap<String, Integer> purchToDelete = new HashMap<>();
@@ -208,6 +209,8 @@ public class PurchaseCartRedisRepository {
         if(purchaseDrugs.isEmpty())
             throw new ForbiddenException("You can not complete the payment if a cart is empty");
 
+        // *************************************************** //
+
         // effettuiamo le modifiche nel db
         Transaction transaction = jedis.multi();
 
@@ -244,11 +247,17 @@ public class PurchaseCartRedisRepository {
             transaction.set(entry.getKey() + "toPurchase", String.valueOf(entry.getValue()));
         }
 
+        /*
         List<Object> result = transaction.exec();
         if(result == null)
             throw new JedisException("Error in the transaction");
 
-        return purchaseDrugs;
+         */
+
+        ConfirmPurchaseCartDTO confirmPurchaseCartDTO = new ConfirmPurchaseCartDTO();
+        confirmPurchaseCartDTO.setPurchaseDrugs(purchaseDrugs);
+        confirmPurchaseCartDTO.setTransaction(transaction);
+        return confirmPurchaseCartDTO;
     }
 
     private PurchaseDrugDTO createPurchaseDrugDTO(String key) {

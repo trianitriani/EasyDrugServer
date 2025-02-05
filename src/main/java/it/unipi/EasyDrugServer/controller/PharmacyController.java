@@ -150,7 +150,7 @@ public class PharmacyController {
     public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable String patCode,
                                                        @RequestBody String pharmacyRegion){
         try {
-            List<PurchaseDrugDTO> purchaseCart = pharmacyService.confirmPurchaseCart(patCode, pharmacyRegion);
+            List<PurchaseDrugDTO> purchaseCart = pharmacyService.confirmPurchase(patCode, pharmacyRegion);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseCart);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

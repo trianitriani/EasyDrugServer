@@ -1,8 +1,6 @@
 package it.unipi.EasyDrugServer.service;
 
-import it.unipi.EasyDrugServer.dto.PharmacyHomeDTO;
-import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
-import it.unipi.EasyDrugServer.dto.UserType;
+import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.*;
@@ -12,12 +10,14 @@ import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -26,6 +26,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.transaction.TransactionSystemException;
+import org.springframework.transaction.annotation.Transactional;
+import redis.clients.jedis.exceptions.JedisException;
 
 @Service
 @RequiredArgsConstructor
@@ -68,14 +71,9 @@ public class PharmacyService extends UserService {
         return purchaseCartRedisRepository.modifyPurchaseDrugQuantity(patientCode, idDrug, quantity);
     }
 
-    @Retryable(
-            retryFor = {Exception.class}, // Ritenta in caso di errore generico
-            maxAttempts = 3, // Massimo 3 tentativi
-            backoff = @Backoff(delay = 2000) // Attesa di 2 secondi tra i tentativi
-    )
-    public List<PurchaseDrugDTO> confirmPurchaseCart(String patientCode, String pharmacyRegion) {
-        List<PurchaseDrugDTO> purchasedDrugs = purchaseCartRedisRepository.confirmPurchaseCart(patientCode);
-        List<Purchase> purchasesList = new ArrayList<>();
+    private void insertPurchases(String patientCode, String pharmacyRegion, List<PurchaseDrugDTO> purchasedDrugs){
+        List<Integer> prescribedDrugsId =  new ArrayList<>();
+        List<Integer> purchaseDrugsId =  new ArrayList<>();
         LocalDateTime currentTimestamp = LocalDateTime.now();
         LatestPurchase latestPurchase = new LatestPurchase();
 
@@ -92,32 +90,88 @@ public class PharmacyService extends UserService {
             purchase.setRegion(pharmacyRegion);
 
             // inserisco nella collezione purchase il farmaco acquistato
-            purchaseRepository.save(purchase);
+            Integer idPurchase = purchaseRepository.save(purchase).getId();
+            purchaseDrugsId.add(idPurchase);
+            if(purchase.getPrescriptionDate() != null) prescribedDrugsId.add(idPurchase);
 
             // creo, per ogni farmaco acquistato, il documento da inserire nella collezione patients
             LatestDrug latestDrug = new LatestDrug();
-            latestDrug.setDrugId(String.valueOf(purchaseDrugDTO.getId()));
+            latestDrug.setDrugId(purchaseDrugDTO.getId());
             latestDrug.setDrugName(purchaseDrugDTO.getName());
             latestDrug.setQuantity(purchaseDrugDTO.getQuantity());
             latestDrug.setPrice(purchaseDrugDTO.getPrice());
             latestDrug.setPrescriptionDate(purchaseDrugDTO.getPrescriptionTimestamp());
-
             latestPurchase.getDrugs().add(latestDrug);
         }
 
         latestPurchase.setTimestamp(currentTimestamp);
 
-        // inserisco nella collezione patient il farmaco acquistato
-        Query query = new Query(Criteria.where("identifyCode").is(patientCode));
+        // seleziono il paziente col codice in esame
+        Query query = new Query(Criteria.where("_id").is(patientCode));
 
-        // Rimuove l'ultimo elemento e aggiunge il nuovo in prima posizione
-        Update update = new Update()
-                .pop("latestPurchasedDrugs", Update.Position.LAST) // Rimuove l'ultimo elemento
-                .push("latestPurchasedDrugs").atPosition(0).value(latestPurchase); // Aggiunge in prima posizione
+        // Rimuove l'ultimo elemento e aggiunge il nuovo in prima posizione se ha già 5 farmaci
+        Optional<Patient> optPatient = patientRepository.findById(patientCode);
+        Patient patient;
+        int nDrugs = 0;
+        if(optPatient.isPresent()) {
+            patient = optPatient.get();
+            nDrugs = patient.getLatestPurchasedDrugs().size();
+        }
 
+        Update update;
+        if(nDrugs >= 5) {
+            update = new Update()
+                    .pop("latestPurchasedDrugs", Update.Position.LAST) // Rimuove l'ultimo elemento
+                    .push("latestPurchasedDrugs").atPosition(0).value(latestPurchase);
+
+        }
+        else{
+            update = new Update()
+                    .push("latestPurchasedDrugs").atPosition(0).value(latestPurchase);
+
+        }
         mongoTemplate.updateFirst(query, update, Patient.class);
 
-        return purchasedDrugs;
+        // aggiorno le liste "purchases" e "prescriptions"
+        for(Integer id : purchaseDrugsId){
+            update = new Update().push("purchases").value(id);
+            mongoTemplate.updateFirst(query, update, Patient.class);
+        }
+
+        for(Integer id : prescribedDrugsId){
+            update = new Update().push("prescriptions").value(id);
+            mongoTemplate.updateFirst(query, update, Patient.class);
+        }
+    }
+
+    @Retryable(
+            retryFor = { DataAccessException.class, TransactionSystemException.class },
+            maxAttempts = 3, // Massimo 3 tentativi
+            backoff = @Backoff(delay = 2000) // Attesa di 2 secondi tra i tentativi
+    )
+    @Transactional
+    public List<PurchaseDrugDTO> confirmPurchase(String patientCode, String pharmacyRegion) {
+        try {
+            ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(patientCode);
+            List<PurchaseDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
+
+            // eseguiamo la transazione di MongoDB
+            insertPurchases(patientCode, pharmacyRegion, purchasedDrugs);
+
+            // eseguiamo la transazione di Redis
+            List<Object> result = confirmPurchaseCartDTO.getTransaction().exec();
+            if (result == null)
+                throw new JedisException("Error in the transaction");
+            return purchasedDrugs;
+        } catch (DataAccessException e) {
+
+        } catch (TransactionSystemException e) {
+
+        } catch(Exception e) {
+            // faccio la discard per Redis
+
+            throw e;
+        }
     }
 
     public Pharmacy getPharmacyById(String id) {
