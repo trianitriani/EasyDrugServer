@@ -10,9 +10,6 @@ public class PasswordHasher {
 
     public static boolean verifyPassword(String plainPassword, String hashedPassword) {
         // Verifica se la password in chiaro corrisponde all'hash
-        if (hashedPassword.startsWith("$2b$")) {
-            hashedPassword = "$2a$" + hashedPassword.substring(4);
-        }
         return BCrypt.checkpw(plainPassword, hashedPassword);
     }
 }

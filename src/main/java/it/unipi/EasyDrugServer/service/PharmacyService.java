@@ -11,6 +11,7 @@ import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
@@ -75,8 +76,8 @@ public class PharmacyService {
     }
 
     private void insertPurchases(String patientCode, String pharmacyRegion, List<PurchaseDrugDTO> purchasedDrugs){
-        List<Integer> prescribedDrugsId =  new ArrayList<>();
-        List<Integer> purchaseDrugsId =  new ArrayList<>();
+        List<ObjectId> prescribedDrugsId =  new ArrayList<>();
+        List<ObjectId> purchaseDrugsId =  new ArrayList<>();
         LocalDateTime currentTimestamp = LocalDateTime.now();
         LatestPurchase latestPurchase = new LatestPurchase();
 
@@ -92,7 +93,7 @@ public class PharmacyService {
             purchase.setRegion(pharmacyRegion);
 
             // inserisco nella collezione purchase il farmaco acquistato
-            Integer idPurchase = purchaseRepository.save(purchase).getId();
+            ObjectId idPurchase = purchaseRepository.save(purchase).getId();
             purchaseDrugsId.add(idPurchase);
             if(purchase.getPrescriptionDate() != null) prescribedDrugsId.add(idPurchase);
 
@@ -135,12 +136,12 @@ public class PharmacyService {
         mongoTemplate.updateFirst(query, update, Patient.class);
 
         // aggiorno le liste "purchases" e "prescriptions"
-        for(Integer id : purchaseDrugsId){
+        for(ObjectId id : purchaseDrugsId){
             update = new Update().push("purchases").value(id);
             mongoTemplate.updateFirst(query, update, Patient.class);
         }
 
-        for(Integer id : prescribedDrugsId){
+        for(ObjectId id : prescribedDrugsId){
             update = new Update().push("prescriptions").value(id);
             mongoTemplate.updateFirst(query, update, Patient.class);
         }

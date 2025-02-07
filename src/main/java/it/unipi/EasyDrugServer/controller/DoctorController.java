@@ -75,9 +75,10 @@ public class DoctorController {
         }
     }
 
+    /*
     @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/latest")
     public ResponseEntity<ResponseDTO> getLatestPrescriptions(@PathVariable String id_doc,
-                                                             @PathVariable String id_pat){
+                                                              @PathVariable String id_pat){
         try {
             List<PrescriptionDTO> prescriptions = doctorService.getLatestPrescriptions(id_doc, id_pat);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescriptions);
@@ -91,13 +92,13 @@ public class DoctorController {
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
-    }
+    }*/
 
-    @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/from/{lastViewedId}")
+    @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/from/{nAlreadyViewed}")
     public ResponseEntity<ResponseDTO> getNextPrescriptions(@PathVariable String id_doc, @PathVariable String id_pat,
-                                                       @PathVariable Integer lastViewedId){
+                                                            @PathVariable Integer nAlreadyViewed){
         try {
-            List<PrescribedDrugDTO> purchases = doctorService.getNextPrescriptionDrugs(id_doc, id_pat, lastViewedId);
+            List<PrescriptionDTO> purchases = doctorService.getNextPrescriptionDrugs(id_doc, id_pat, nAlreadyViewed);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

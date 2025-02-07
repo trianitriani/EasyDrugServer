@@ -3,6 +3,7 @@ package it.unipi.EasyDrugServer.model;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.types.ObjectId;
 
 import java.time.LocalDateTime;
 
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @Data
 public class LatestDrug {
-    private int drugId;
+    private ObjectId drugId;
     private String drugName;
     private int quantity;
     private double price;

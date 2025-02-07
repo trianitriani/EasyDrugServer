@@ -1,9 +1,11 @@
 package it.unipi.EasyDrugServer.service;
 
+import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.UserType;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
+import it.unipi.EasyDrugServer.model.LatestDrug;
 import it.unipi.EasyDrugServer.model.LatestPurchase;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.model.Purchase;
@@ -18,7 +20,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,7 +68,7 @@ public class PatientService {
         return ((Patient) userService.getUserIfExists(id, UserType.PATIENT)).getLatestPurchasedDrugs();
     }
 
-    public List<PurchaseDrugDTO> getNextPurchaseDrugs(String id_pat, int lastViewedId) {
+    public List<LatestPurchase> getNextPurchaseDrugs(String id_pat, int lastViewedId) {
         if(!patientRepository.existsById(id_pat))
             throw new NotFoundException("Patient "+id_pat+" does not exist");
 
@@ -79,59 +83,30 @@ public class PatientService {
         List<Integer> idToView = purchasesId.subList(startIndex, endIndex);
 
         for(int purchId: idToView){
-            Query query = new Query();
-            query.addCriteria(
-                    Criteria.where("id").is(purchId)
-            );
-
-            Purchase purchase = mongoTemplate.findOne(query, Purchase.class);
-            Optional<Purchase> optPurch = Optional.ofNullable(purchase);
-            if(optPurch.isPresent())
-                purchases.add(optPurch.get());
+            Optional<Purchase> optPurch = purchaseRepository.findById(purchId);
+            optPurch.ifPresent(purchases::add);
         }
 
         // salvo tutti i farmaci prescritti, in ordine inverso, perché almeno l'utente li vede dal più recente al meno recente
-        List<PurchaseDrugDTO> purchasedDrugs = new ArrayList<>();
+        HashMap<LocalDateTime, LatestPurchase> hashPurchases = new HashMap<>();
         for(int i=purchases.size()-1; i>=0; i--){
-            PurchaseDrugDTO purchasedDrugDTO = new PurchaseDrugDTO();
-            purchasedDrugDTO.setId(purchases.get(i).getId());
-            purchasedDrugDTO.setName(purchases.get(i).getName());
-            purchasedDrugDTO.setQuantity(purchases.get(i).getQuantity());
-            purchasedDrugDTO.setPrice(purchases.get(i).getPrice());
-            purchasedDrugDTO.setPrescriptionTimestamp(purchases.get(i).getPrescriptionDate());
-            purchasedDrugs.add(purchasedDrugDTO);
-        }
-        return purchasedDrugs;
-
-        /*
-        HashMap<LocalDateTime, List<LatestDrug>> hashPurchases = new HashMap<>();
-        List<LatestPurchase> latestPurchases = new ArrayList<>();
-        // Analizzare tutti gli acquisti e ottenere una hashmap con chiave timestamp di acquisto e
-        // farmaci acquistati
-        for(Purchase purch : purchases) {
-            LatestDrug drug = new LatestDrug();
-            drug.setDrugId(purch.getDrugId());
-            drug.setDrugName(purch.getName());
-            drug.setPrescriptionDate(purch.getPrescriptionDate());
-            drug.setQuantity(purch.getQuantity());
-            drug.setPrice(purch.getPrice());
+            LatestDrug latestDrug = new LatestDrug();
+            Purchase purch = purchases.get(i);
+            latestDrug.setDrugId(purch.getId());
+            latestDrug.setDrugName(purch.getName());
+            latestDrug.setQuantity(purch.getQuantity());
+            latestDrug.setPrice(purch.getPrice());
+            latestDrug.setPrescriptionDate(purch.getPrescriptionDate());
             if(!hashPurchases.containsKey(purch.getPurchaseDate())){
-                List<LatestDrug> latestDrugs = new ArrayList<>();
-                latestDrugs.add(drug);
-                hashPurchases.put(purch.getPurchaseDate(), latestDrugs);
-            } else {
-                hashPurchases.get(purch.getPurchaseDate()).add(drug);
-            }
+                LatestPurchase latestPurchase = new LatestPurchase();
+                List<LatestDrug> drugs = new ArrayList<>();
+                drugs.add(latestDrug);
+                latestPurchase.setTimestamp(purch.getPurchaseDate());
+                latestPurchase.setDrugs(drugs);
+                hashPurchases.put(purch.getPurchaseDate(), latestPurchase);
+            } else
+                hashPurchases.get(purch.getPurchaseDate()).getDrugs().add(latestDrug);
         }
-        // Inserire tutti gli acquisti nell'ordine corretto come lo vuole il client
-        for (HashMap.Entry<LocalDateTime, List<LatestDrug>> entry : hashPurchases.entrySet()) {
-            LatestPurchase purchase = new LatestPurchase();
-            purchase.setTimestamp(entry.getKey());
-            purchase.setDrugs(entry.getValue());
-            latestPurchases.add(purchase);
-        }
-        return latestPurchases;
-
-         */
+        return (List<LatestPurchase>) hashPurchases.values();
     }
 }
