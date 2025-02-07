@@ -45,8 +45,8 @@ public class DoctorController {
     @PutMapping()
     public ResponseEntity<ResponseDTO> modifyDoctor(@RequestBody Doctor doctor){
         try {
-            doctorService.modifyDoctor(doctor);
-            ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctor);
+            Doctor doctor_ = doctorService.modifyDoctor(doctor);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctor_);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
@@ -94,11 +94,11 @@ public class DoctorController {
         }
     }
 
-    @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/from/{from}/to/{to}")
-    public ResponseEntity<ResponseDTO> getPrescription(@PathVariable String id_doc, @PathVariable String id_pat,
-                                                       @PathVariable LocalDate from, @PathVariable LocalDate to){
+    @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/from/{lastViewedId}")
+    public ResponseEntity<ResponseDTO> getNextPrescriptions(@PathVariable String id_doc, @PathVariable String id_pat,
+                                                       @PathVariable Integer lastViewedId){
         try {
-            List<PrescriptionDTO> purchases = doctorService.getPrescriptionsFromTo(id_doc, id_pat, from, to);
+            List<PrescribedDrugDTO> purchases = doctorService.getNextPrescriptions(id_doc, id_pat, lastViewedId);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -112,10 +112,10 @@ public class DoctorController {
         }
     }
 
-    @GetMapping("/{id}/patients")
-    public ResponseEntity<ResponseDTO> getOwnPatients(@PathVariable String id){
+    @GetMapping("/{id}/patients/surname/{patSurname}")
+    public ResponseEntity<ResponseDTO> getOwnPatients(@PathVariable String id, @PathVariable String patSurname){
         try {
-            List<SimplePatientDTO> simplePatientDTO = doctorService.getOwnPatients(id);
+            List<SimplePatientDTO> simplePatientDTO = doctorService.getOwnPatients(id, patSurname);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, simplePatientDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -131,7 +131,7 @@ public class DoctorController {
 
     /**
      * ## DOCTOR ##
-     * Method to view both the cart of new prescription and a list of active prescriptions
+     * Method to view both the cart of prescription and a list of active prescriptions
      * related to a specific patient
      * @param patCode code of patient
      * @return ResponseEntity<ResponseDTO>

@@ -39,7 +39,7 @@ public class AuthService {
                     throw new ForbiddenException("Patient already exists");
                 // inserimento paziente sul document
                 Patient patient = new Patient();
-                patient.setIdentifyCode("P" + user.getTaxCode());
+                patient.setId("P" + user.getTaxCode());
                 patient.setPassword(PasswordHasher.hash(user.getPassword()));
                 patient.setName(user.getName());
                 patient.setSurname(user.getSurname());
@@ -50,7 +50,7 @@ public class AuthService {
                 patient.setTaxCode(user.getTaxCode());
                 patientRepository.save(patient);
                 sessionUserDTO.setName(patient.getName());
-                sessionUserDTO.setIdentifyCode(patient.getIdentifyCode());
+                sessionUserDTO.setIdentifyCode(patient.getId());
                 break;
             case DOCTOR:
                 // controllare che non esista già un paziente con lo stesso codice
@@ -58,7 +58,7 @@ public class AuthService {
                     throw new ForbiddenException("Doctor already exists");
                 // inserimento paziente sul document
                 Doctor doctor = new Doctor();
-                doctor.setIdentifyCode("P" + user.getTaxCode());
+                doctor.setId("P" + user.getTaxCode());
                 doctor.setPassword(PasswordHasher.hash(user.getPassword()));
                 doctor.setName(user.getName());
                 doctor.setSurname(user.getSurname());
@@ -70,14 +70,14 @@ public class AuthService {
                 doctor.setDoctorRegisterCode(user.getCertificate());
                 doctorRepository.save(doctor);
                 sessionUserDTO.setName(doctor.getName());
-                sessionUserDTO.setIdentifyCode(doctor.getIdentifyCode());
+                sessionUserDTO.setIdentifyCode(doctor.getId());
                 break;
             case RESEARCHER:
                 if(researcherRepository.findById("R"+user.getTaxCode()).isPresent())
                     throw new ForbiddenException("Researcher already exists");
                 // inserimento ricercatore sul document
                 Researcher researcher = new Researcher();
-                researcher.setIdentifyCode("R" + user.getTaxCode());
+                researcher.setId("R" + user.getTaxCode());
                 researcher.setPassword(PasswordHasher.hash(user.getPassword()));
                 researcher.setName(user.getName());
                 researcher.setSurname(user.getSurname());
@@ -89,7 +89,7 @@ public class AuthService {
                 researcher.setResearcherRegisterCode(user.getCertificate());
                 researcherRepository.save(researcher);
                 sessionUserDTO.setName(researcher.getName());
-                sessionUserDTO.setIdentifyCode(researcher.getIdentifyCode());
+                sessionUserDTO.setIdentifyCode(researcher.getId());
                 break;
             case PHARMACY:
                 if(pharmacyRepository.findByNameAndAddressAndCity(user.getName(), user.getAddress(), user.getMunicipality()).isPresent())
@@ -107,7 +107,7 @@ public class AuthService {
                 pharmacy.setVATnumber(user.getVatNumber());
                 pharmacyRepository.save(pharmacy);
                 sessionUserDTO.setName(pharmacy.getName());
-                sessionUserDTO.setIdentifyCode(pharmacy.getIdentifyCode());
+                sessionUserDTO.setIdentifyCode(pharmacy.getId());
                 break;
             default:
                 throw new BadRequestException("User type not supported ");

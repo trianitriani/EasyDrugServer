@@ -11,14 +11,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PatientRepository extends MongoRepository<Patient, String> {
 
-    List<Patient> findByFamilyDoctorCode(String id);
+    List<Patient> findByDoctorCode(String id);
 
     @Aggregation(pipeline = {
-            "{ $group: { _id: '$comune', nPatients: { $sum: 1 }, distDoctors: { $addToSet: '$doctorCode' } } }",
-            "{ $project: { municipality: '$_id', nPatients: 1, nDoctors: { $size: '$distDoctors' } } }",
-            "{ $project: { municipality: 1, ratio: { $divide: ['$nPatients', '$nDoctors'] } } }",
+            "{ $group: { _id: '$city', nPatients: { $sum: 1 }, distDoctors: { $addToSet: '$doctorCode' } } }",
+            "{ $project: { city: '$_id', nPatients: 1, nDoctors: { $size: '$distDoctors' } } }",
+            "{ $project: { city: 1, ratio: { $divide: ['$nPatients', '$nDoctors'] } } }",
             "{ $sort: { ratio: ?0 } }"
     })
     List<PatientDoctorRatioDTO> getPatientsToDoctorsRatio(@Param("order") int order);
 
+    List<Patient> findBySurnameContainingIgnoreCaseAndDoctorCode(String id, String patSurname);
 }

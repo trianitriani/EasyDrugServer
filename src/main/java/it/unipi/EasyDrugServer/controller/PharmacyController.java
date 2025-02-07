@@ -167,10 +167,10 @@ public class PharmacyController {
     }
 
     @PutMapping()
-    public ResponseEntity<ResponseDTO> modifyPharmacy(Pharmacy pharmacy){
+    public ResponseEntity<ResponseDTO> modifyPharmacy(@RequestBody Pharmacy pharmacy){
         try {
-            pharmacyService.modifyPharmacy(pharmacy);
-            ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacy);
+            Pharmacy pharmacy_ = pharmacyService.modifyPharmacy(pharmacy);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacy_);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
@@ -184,7 +184,7 @@ public class PharmacyController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResponseDTO> deletePharmacy(String id){
+    public ResponseEntity<ResponseDTO> deletePharmacy(@PathVariable String id){
         try {
             Pharmacy pharmacy = pharmacyService.deletePharmacy(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacy);
@@ -201,7 +201,7 @@ public class PharmacyController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO> getPharmacyById(String id){
+    public ResponseEntity<ResponseDTO> getPharmacyById(@PathVariable String id){
         try {
             Pharmacy pharmacy = pharmacyService.getPharmacyById(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacy);

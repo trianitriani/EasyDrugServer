@@ -29,10 +29,9 @@ public class Drug {
     private boolean onPrescription;
 
     @Field("indications")
-    private List<Indication> indications;
+    private List<String> indications;
 
     @Field("sideEffects")
     private List<SideEffect> sideEffects;
-    private String family;
 }
 

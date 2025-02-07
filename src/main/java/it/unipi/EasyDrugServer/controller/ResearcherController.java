@@ -33,8 +33,8 @@ public class ResearcherController {
     @PutMapping()
     public ResponseEntity<ResponseDTO> modifyResearcher(Researcher researcher){
         try {
-            researcherService.modifyResearcher(researcher);
-            ResponseDTO response = new ResponseDTO(HttpStatus.OK, researcher);
+            Researcher researcher_ = researcherService.modifyResearcher(researcher);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, researcher_);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);

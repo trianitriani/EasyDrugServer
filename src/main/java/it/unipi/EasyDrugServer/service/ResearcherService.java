@@ -16,11 +16,13 @@ import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.mongo.ResearcherRepository;
+import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -29,7 +31,8 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class ResearcherService extends UserService {
+public class ResearcherService {
+    private final UserService userService;
     private final ResearcherRepository researcherRepository;
     private final PatientRepository patientRepository;
     private final PurchaseRepository purchaseRepository;
@@ -37,13 +40,19 @@ public class ResearcherService extends UserService {
 
 
     public Researcher getResearcherById(String id) {
-        return (Researcher) getUserIfExists(id, UserType.RESEARCHER);
+        return (Researcher) userService.getUserIfExists(id, UserType.RESEARCHER);
     }
 
-    public void modifyResearcher(Researcher researcher) {
-        if(researcherRepository.existsById(researcher.getIdentifyCode())) {
-            researcherRepository.save(researcher);
-        } else throw new NotFoundException("Researcher "+researcher.getIdentifyCode()+" does not exists");
+    public Researcher modifyResearcher(Researcher researcher) {
+        if(researcherRepository.existsById(researcher.getId())) {
+            Researcher researcher_ = getResearcherById(researcher.getId());
+            researcher_.setDistrict(researcher.getDistrict());
+            researcher_.setCity(researcher.getCity());
+            researcher_.setRegion(researcher.getRegion());
+            researcher_.setPassword(PasswordHasher.hash(researcher.getPassword()));
+            researcherRepository.save(researcher_);
+            return researcher_;
+        } else throw new NotFoundException("Researcher "+researcher.getId()+" does not exists");
     }
 
     public Researcher deleteResearcher(String id) {

@@ -19,7 +19,7 @@ public class SignupUserDTO {
 
     // for patient, doctor, researcher
     private String surname;
-    private Date dateOfBirth;
+    private String dateOfBirth;
 
     // for doctor, researcher
     private String certificate;

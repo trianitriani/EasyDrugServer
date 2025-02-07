@@ -8,10 +8,8 @@ import lombok.Setter;
 @Getter
 @Data
 public class SideEffect {
-    private String sideEffectId;
     private String sideEffectName;
     private double frequence;
-    private String emaDocument;
 }
 
 

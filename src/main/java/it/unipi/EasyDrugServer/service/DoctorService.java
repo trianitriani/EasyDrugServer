@@ -11,25 +11,31 @@ import it.unipi.EasyDrugServer.repository.mongo.DoctorRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PatientRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
+import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
 // import org.apache.coyote.BadRequestException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class DoctorService extends UserService {
+public class DoctorService {
+    private final UserService userService;
     private final PrescriptionRedisRepository prescriptionRedisRepository;
     private final DoctorRepository doctorRepository;
     private final PurchaseRepository purchaseRepository;
     private final PatientRepository patientRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     public PrescriptionDTO getInactivePrescription(String patientCode) {
         return prescriptionRedisRepository.getInactivePrescription(patientCode);
@@ -60,13 +66,19 @@ public class DoctorService extends UserService {
     }
 
     public Doctor getDoctorById(String id) {
-        return (Doctor) getUserIfExists(id, UserType.DOCTOR);
+        return (Doctor) userService.getUserIfExists(id, UserType.DOCTOR);
     }
 
-    public void modifyDoctor(Doctor doctor) {
-        if(doctorRepository.existsById(doctor.getIdentifyCode())) {
-            doctorRepository.save(doctor);
-        } else throw new NotFoundException("Doctor "+doctor.getIdentifyCode()+" does not exists");
+    public Doctor modifyDoctor(Doctor doctor) {
+        if(doctorRepository.existsById(doctor.getId())) {
+            Doctor doctor_ = getDoctorById((doctor.getId()));
+            doctor_.setCity(doctor.getCity());
+            doctor_.setDistrict(doctor.getDistrict());
+            doctor_.setRegion(doctor.getRegion());
+            doctor_.setPassword(PasswordHasher.hash(doctor.getPassword()));
+            doctorRepository.save(doctor_);
+            return doctor_;
+        } else throw new NotFoundException("Doctor "+doctor.getId()+" does not exists");
     }
 
     public Doctor deleteDoctor(String id) {
@@ -79,8 +91,8 @@ public class DoctorService extends UserService {
         if(!doctorRepository.existsById(id_doc))
             throw new NotFoundException("Doctor "+id_doc+" does not exists");
 
-        Patient patient = (Patient) getUserIfExists(id_pat, UserType.PATIENT);
-        if(!Objects.equals(patient.getFamilyDoctorCode(), id_doc))
+        Patient patient = (Patient) userService.getUserIfExists(id_pat, UserType.PATIENT);
+        if(!Objects.equals(patient.getDoctorCode(), id_doc))
             throw new UnauthorizedException("You are not authorized to access this patient");
 
         List<LatestPurchase> latestPurchased = patient.getLatestPurchasedDrugs();
@@ -90,7 +102,7 @@ public class DoctorService extends UserService {
                 LocalDateTime timestamp = latestDrug.getPrescriptionDate();
                 if(timestamp == null) continue;
                 PrescribedDrugDTO drug = new PrescribedDrugDTO();
-                drug.setId(Integer.parseInt(latestDrug.getDrugId()));
+                drug.setId(Integer.parseInt(String.valueOf(latestDrug.getDrugId())));
                 drug.setName(latestDrug.getDrugName());
                 drug.setPrice(latestDrug.getPrice());
                 drug.setPurchased(true);
@@ -110,24 +122,58 @@ public class DoctorService extends UserService {
         return (List<PrescriptionDTO>) prescriptionsHash.values();
     }
 
-    public List<PrescriptionDTO> getPrescriptionsFromTo(String id_doc, String id_pat, LocalDate from, LocalDate to) {
+    public List<PrescribedDrugDTO> getNextPrescriptions(String id_doc, String id_pat, int lastViewedId) {
         if(!doctorRepository.existsById(id_doc))
-            throw new NotFoundException("Doctor "+id_doc+" does not exists");
+            throw new NotFoundException("Doctor "+id_doc+" does not exist");
 
-        Patient patient = (Patient) getUserIfExists(id_pat, UserType.PATIENT);
-        if(!Objects.equals(patient.getFamilyDoctorCode(), id_doc))
+        Patient patient = (Patient) userService.getUserIfExists(id_pat, UserType.PATIENT);
+        System.out.println(patient.getDoctorCode() + "  " + id_doc);
+        if(!Objects.equals(patient.getDoctorCode(), id_doc))
             throw new UnauthorizedException("You are not authorized to access this patient");
 
-        LocalDateTime fromTime = from.atStartOfDay();
-        LocalDateTime toTime = to.atTime(23, 59, 59);
-        List<Purchase> purchases = purchaseRepository.findByPatientCodeAndPurchaseDateBetween(id_pat, fromTime, toTime);;
+        Optional<Patient> optPatient = patientRepository.findById(id_pat);
+        List<Integer> prescriptionsId = new ArrayList<>();
+        List<Purchase> prescriptions = new ArrayList<>();
+        if(optPatient.isPresent())
+            prescriptionsId = optPatient.get().getPrescriptions();
+
+        int startIndex = Math.max(0, lastViewedId - 10);
+        int endIndex = Math.min(lastViewedId, prescriptionsId.size());
+        List<Integer> idToView = prescriptionsId.subList(startIndex, endIndex);
+
+        for(int prescId: idToView){
+            Query query = new Query();
+            query.addCriteria(
+                    Criteria.where("id").is(prescId)
+            );
+
+            Purchase purchase = mongoTemplate.findOne(query, Purchase.class);
+            Optional<Purchase> optPurch = Optional.ofNullable(purchase);
+            if(optPurch.isPresent())
+                prescriptions.add(optPurch.get());
+        }
+
+        // salvo tutti i farmaci prescritti, in ordine inverso, perché almeno l'utente li vede dal più recente al meno recente
+        List<PrescribedDrugDTO> prescribedDrugs = new ArrayList<>();
+        for(int i=prescriptions.size()-1; i>=0; i--){
+            PrescribedDrugDTO prescribedDrugDTO = new PrescribedDrugDTO();
+            prescribedDrugDTO.setId(prescriptions.get(i).getId());
+            prescribedDrugDTO.setName(prescriptions.get(i).getName());
+            prescribedDrugDTO.setQuantity(prescriptions.get(i).getQuantity());
+            prescribedDrugDTO.setPrice(prescriptions.get(i).getPrice());
+            prescribedDrugDTO.setPurchased(true);
+            prescribedDrugs.add(prescribedDrugDTO);
+        }
+        return prescribedDrugs;
+
+        /*
         HashMap<LocalDateTime, PrescriptionDTO> hashPurchases = new HashMap<>();
         // Analizzare tutti gli acquisti e ottenere una hashmap con chiave timestamp di acquisto e
         // farmaci acquistati
-        for(Purchase purch : purchases) {
+        for(Purchase purch : prescriptions) {
             if(purch.getPrescriptionDate() == null) continue;
             PrescribedDrugDTO drug = new PrescribedDrugDTO();
-            drug.setId(Integer.parseInt(purch.getDrugId()));
+            drug.setId(purch.getDrugId());
             drug.setName(purch.getName());
             drug.setQuantity(purch.getQuantity());
             drug.setPrice(purch.getPrice());
@@ -143,17 +189,19 @@ public class DoctorService extends UserService {
             }
         }
         return (List<PrescriptionDTO>) hashPurchases.values();
+
+         */
     }
 
-    public List<SimplePatientDTO> getOwnPatients(String id) {
+    public List<SimplePatientDTO> getOwnPatients(String id, String patSurname) {
         if(!doctorRepository.existsById(id))
             throw new NotFoundException("Doctor "+id+" does not exists");
 
-        List<Patient> patients = patientRepository.findByFamilyDoctorCode(id);
+        List<Patient> patients = patientRepository.findBySurnameContainingIgnoreCaseAndDoctorCode(id, patSurname);
         List<SimplePatientDTO> patientDTOs = new ArrayList<>();
         for(Patient patient : patients){
             SimplePatientDTO patientDTO = new SimplePatientDTO();
-            patientDTO.setId(patient.getIdentifyCode());
+            patientDTO.setId(patient.getId());
             patientDTO.setName(patient.getName());
             patientDTO.setSurname(patient.getSurname());
             patientDTOs.add(patientDTO);

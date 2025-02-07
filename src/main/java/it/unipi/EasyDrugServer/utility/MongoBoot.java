@@ -19,7 +19,44 @@ public class MongoBoot {
         return processBuilder.start();
     }
 
-    private static void 
+    private static void insertCollection(String collectionName, MongoDatabase database) throws IOException {
+        // 3. Creazione della collezione (se non esiste)
+        boolean collectionExists = false;
+        for (String name : database.listCollectionNames()) {
+            if (name.equals(collectionName)) {
+                collectionExists = true;
+                break;
+            }
+        }
+        if (!collectionExists) {
+            database.createCollection(collectionName);
+            System.out.println("Collezione " + collectionName + " creata!");
+        }
+
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+
+        // 4. Importazione dei dati solo se la collezione è vuota
+        if (collection.countDocuments() == 0) {
+            System.out.println("Importazione dati...");
+            //  Caricare il JSON da resources/dbFiles
+            InputStream inputStream = MongoBoot.class.getClassLoader()
+                    .getResourceAsStream("dbFiles/" + collectionName + ".json");
+            if (inputStream == null) {
+                throw new RuntimeException("File " + collectionName + ".json non trovato in resources/dbFiles!");
+            }
+
+            // Convertire InputStream in Stringa
+            String jsonContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+
+            Gson gson = new Gson();
+            List<Document> documents = Arrays.asList(gson.fromJson(jsonContent, Document[].class));
+
+            collection.insertMany(documents);
+            System.out.println("Importazione " + collectionName + " completata!");
+        } else {
+            System.out.println("Dati di " + collectionName + " già presenti, nessuna importazione necessaria.");
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         /*
@@ -36,7 +73,7 @@ public class MongoBoot {
 
         List<Process> processes = new ArrayList<>();
 
-        // Avvia i nodi del replica set
+        // Avvia i nodi del cluster
         processes.add(startProcess("mongod --replSet rs0 --port 27018 --bind_ip localhost --dbpath c:\\MongoDB\\data\\r1 --oplogSize 200"));
         processes.add(startProcess("mongod --replSet rs0 --port 27019 --bind_ip localhost --dbpath c:\\MongoDB\\data\\r2 --oplogSize 200"));
         processes.add(startProcess("mongod --replSet rs0 --port 27020 --bind_ip localhost --dbpath c:\\MongoDB\\data\\r3 --oplogSize 200"));
@@ -56,42 +93,13 @@ public class MongoBoot {
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("EasyDrugDB");
 
+            insertCollection("drugs", database);
+            insertCollection("doctors", database);
+            insertCollection("patients", database);
+            insertCollection("pharmacies", database);
+            insertCollection("purchases", database);
+            insertCollection("researchers", database);
 
-            // 3. Creazione della collezione (se non esiste)
-            boolean collectionExists = false;
-            for (String name : database.listCollectionNames()) {
-                if (name.equals("drugs")) {
-                    collectionExists = true;
-                    break;
-                }
-            }
-            if (!collectionExists) {
-                database.createCollection("drugs");
-                System.out.println("Collezione creata!");
-            }
-
-            MongoCollection<Document> collection = database.getCollection("drugs");
-
-            // 4. Importazione dei dati solo se la collezione è vuota
-            if (collection.countDocuments() == 0) {
-                System.out.println("Importazione dati...");
-                //  Caricare il JSON da resources/dbFiles
-                InputStream inputStream = MongoBoot.class.getClassLoader().getResourceAsStream("dbFiles/drugs.json");
-                if (inputStream == null) {
-                    throw new RuntimeException("File JSON non trovato in resources/dbFiles!");
-                }
-
-                // Convertire InputStream in Stringa
-                String jsonContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-
-                Gson gson = new Gson();
-                List<Document> documents = Arrays.asList(gson.fromJson(jsonContent, Document[].class));
-
-                collection.insertMany(documents);
-                System.out.println("Importazione completata!");
-            } else {
-                System.out.println("Dati già presenti, nessuna importazione necessaria.");
-            }
         }
     }
 

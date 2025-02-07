@@ -11,7 +11,7 @@ import org.springframework.data.annotation.Id;
 @Data
 public class Pharmacy {
     @Id
-    private String identifyCode;
+    private String id;
     private String name;
     private String password;
     private String VATnumber;

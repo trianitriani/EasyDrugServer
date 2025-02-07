@@ -9,6 +9,7 @@ import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
+import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -28,11 +29,13 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.annotation.Transactional;
+import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisException;
 
 @Service
 @RequiredArgsConstructor
-public class PharmacyService extends UserService {
+public class PharmacyService {
+    private final UserService userService;
     private final PurchaseCartRedisRepository purchaseCartRedisRepository;
     private final PrescriptionRedisRepository prescriptionRedisRepository;
     private final PharmacyRepository pharmacyRepository;
@@ -80,12 +83,11 @@ public class PharmacyService extends UserService {
         for(PurchaseDrugDTO purchaseDrugDTO : purchasedDrugs){
             // creo, per ogni farmaco acquistato, il documento da inserire nella collezione purchases
             Purchase purchase = new Purchase();
-            purchase.setDrugId(String.valueOf(purchaseDrugDTO.getId()));
+            purchase.setDrugId(purchaseDrugDTO.getId());
             purchase.setName(purchaseDrugDTO.getName());
             purchase.setQuantity(purchaseDrugDTO.getQuantity());
             purchase.setPrice(purchaseDrugDTO.getPrice());
             purchase.setPrescriptionDate(purchaseDrugDTO.getPrescriptionTimestamp());
-            purchase.setPatientCode(patientCode);
             purchase.setPurchaseDate(currentTimestamp);
             purchase.setRegion(pharmacyRegion);
 
@@ -146,11 +148,12 @@ public class PharmacyService extends UserService {
 
     @Retryable(
             retryFor = { DataAccessException.class, TransactionSystemException.class },
-            maxAttempts = 3, // Massimo 3 tentativi
-            backoff = @Backoff(delay = 2000) // Attesa di 2 secondi tra i tentativi
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000)
     )
     @Transactional
     public List<PurchaseDrugDTO> confirmPurchase(String patientCode, String pharmacyRegion) {
+        Transaction transaction = null;
         try {
             ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(patientCode);
             List<PurchaseDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
@@ -159,29 +162,35 @@ public class PharmacyService extends UserService {
             insertPurchases(patientCode, pharmacyRegion, purchasedDrugs);
 
             // eseguiamo la transazione di Redis
-            List<Object> result = confirmPurchaseCartDTO.getTransaction().exec();
+            transaction = confirmPurchaseCartDTO.getTransaction();
+            List<Object> result = transaction.exec();
             if (result == null)
                 throw new JedisException("Error in the transaction");
+
             return purchasedDrugs;
-        } catch (DataAccessException e) {
-
-        } catch (TransactionSystemException e) {
-
+        } catch (JedisException e) {
+            if (transaction != null)
+                transaction.discard();
+            throw new TransactionSystemException("Jedis error!");
         } catch(Exception e) {
-            // faccio la discard per Redis
-
+            if (transaction != null)
+                transaction.discard();
             throw e;
         }
     }
 
     public Pharmacy getPharmacyById(String id) {
-        return (Pharmacy) getUserIfExists(id, UserType.PHARMACY);
+        return (Pharmacy) userService.getUserIfExists(id, UserType.PHARMACY);
     }
 
-    public void modifyPharmacy(Pharmacy pharmacy) {
-        if(pharmacyRepository.existsById(pharmacy.getIdentifyCode())) {
-            pharmacyRepository.save(pharmacy);
-        } else throw new NotFoundException("Researcher "+pharmacy.getIdentifyCode()+" does not exists");
+    public Pharmacy modifyPharmacy(Pharmacy pharmacy) {
+        if(pharmacyRepository.existsById(pharmacy.getId())) {
+            Pharmacy pharmacy_ = getPharmacyById(pharmacy.getId());
+            pharmacy_.setOwnerTaxCode(pharmacy.getOwnerTaxCode());
+            pharmacy_.setPassword(PasswordHasher.hash(pharmacy.getPassword()));
+            pharmacyRepository.save(pharmacy_);
+            return pharmacy_;
+        } else throw new NotFoundException("Researcher "+pharmacy.getId()+" does not exists");
     }
 
     public Pharmacy deletePharmacy(String id) {

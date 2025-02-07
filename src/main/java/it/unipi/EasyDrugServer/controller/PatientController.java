@@ -3,6 +3,7 @@ package it.unipi.EasyDrugServer.controller;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
+import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
@@ -47,8 +48,8 @@ public class PatientController {
     @PutMapping()
     public ResponseEntity<ResponseDTO> modifyPatient(@RequestBody Patient patient){
         try {
-            patientService.modifyPatient(patient);
-            ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient);
+            Patient patient_ = patientService.modifyPatient(patient);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient_);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
@@ -95,11 +96,11 @@ public class PatientController {
         }
     }
 
-    @GetMapping("/{id}/purchases/from/{from}/to/{to}")
-    public ResponseEntity<ResponseDTO> getPurchasesFromTo(@PathVariable String id,
-                                                          @PathVariable LocalDate from, @PathVariable LocalDate to){
+    @GetMapping("/{id}/purchases/from/{lastViewedId}")
+    public ResponseEntity<ResponseDTO> getNextPurchases(@PathVariable String id,
+                                                          @PathVariable Integer lastViewedId){
         try {
-            List<LatestPurchase> purchases = patientService.getPurchasesFromTo(id, from, to);
+            List<PurchaseDrugDTO> purchases = patientService.getNextPurchases(id, lastViewedId);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

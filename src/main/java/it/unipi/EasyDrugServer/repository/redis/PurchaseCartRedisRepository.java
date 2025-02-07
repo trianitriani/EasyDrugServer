@@ -247,13 +247,6 @@ public class PurchaseCartRedisRepository {
             transaction.set(entry.getKey() + "toPurchase", String.valueOf(entry.getValue()));
         }
 
-        /*
-        List<Object> result = transaction.exec();
-        if(result == null)
-            throw new JedisException("Error in the transaction");
-
-         */
-
         ConfirmPurchaseCartDTO confirmPurchaseCartDTO = new ConfirmPurchaseCartDTO();
         confirmPurchaseCartDTO.setPurchaseDrugs(purchaseDrugs);
         confirmPurchaseCartDTO.setTransaction(transaction);

@@ -39,7 +39,7 @@ public class PurchaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO> getPurchaseById(String id){
+    public ResponseEntity<ResponseDTO> getPurchaseById(Integer id){
         try {
             Purchase purchase = purchaseService.getPurchaseById(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchase);
@@ -73,7 +73,7 @@ public class PurchaseController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResponseDTO> deletePurchase(String id){
+    public ResponseEntity<ResponseDTO> deletePurchase(Integer id){
         try {
             Purchase purchase = purchaseService.deletePurchase(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchase);

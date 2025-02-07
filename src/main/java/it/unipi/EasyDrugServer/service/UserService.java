@@ -17,33 +17,34 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 import java.util.Optional;
 
-@Component
 @RequiredArgsConstructor
 @Service
 public class UserService {
-    private static PatientRepository patientRepository;
-    private static DoctorRepository doctorRepository;
-    private static ResearcherRepository researcherRepository;
-    private static PharmacyRepository pharmacyRepository;
+    private final PatientRepository patientRepository;
+    private final DoctorRepository doctorRepository;
+    private final ResearcherRepository researcherRepository;
+    private final PharmacyRepository pharmacyRepository;
 
     protected Object getUserIfExists(String id, UserType type) {
         switch (type) {
             case PATIENT:
                 Optional<Patient> optPatient = patientRepository.findById(id);
                 if(optPatient.isPresent()) return optPatient.get();
-                throw new NotFoundException("Patient "+id+" does not exists");
+                throw new NotFoundException("Patient "+id+" does not exist");
             case DOCTOR:
                 Optional<Doctor> optDoctor = doctorRepository.findById(id);
                 if(optDoctor.isPresent()) return optDoctor.get();
-                throw new NotFoundException("Doctor "+id+" does not exists");
+                throw new NotFoundException("Doctor "+id+" does not exist");
             case RESEARCHER:
                 Optional<Researcher> optResearcher = researcherRepository.findById(id);
                 if(optResearcher.isPresent()) return optResearcher.get();
-                throw new NotFoundException("Researcher "+id+" does not exists");
+                throw new NotFoundException("Researcher "+id+" does not exist");
             case PHARMACY:
+                System.out.println(id.getClass().getName());
                 Optional<Pharmacy> optPharmacy = pharmacyRepository.findById(id);
+                System.out.println(optPharmacy);
                 if(optPharmacy.isPresent()) return optPharmacy.get();
-                throw new NotFoundException("Pharmacy "+id+" does not exists");
+                throw new NotFoundException("Pharmacy "+id+" does not exist");
             default:
                 return null;
         }

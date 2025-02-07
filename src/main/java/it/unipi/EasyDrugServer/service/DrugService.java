@@ -2,14 +2,13 @@ package it.unipi.EasyDrugServer.service;
 
 
 import it.unipi.EasyDrugServer.dto.SimpleDrugDTO;
+import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Drug;
 import it.unipi.EasyDrugServer.repository.mongo.DrugRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,13 +26,13 @@ public class DrugService {
     public Drug getDrugById(int id) {
         Optional<Drug> optDrug = drugRepository.findById(id);
         if(optDrug.isPresent()) return optDrug.get();
-        throw new NotFoundException("Drug "+id+" does not exists");
+        throw new NotFoundException("Drug "+id+" does not exist");
     }
 
     public void modifyDrug(Drug drug) {
         if(drugRepository.existsById(drug.getId())) {
             drugRepository.save(drug);
-        } else throw new NotFoundException("Drug "+ drug.getId() +" does not exists");
+        } else throw new NotFoundException("Drug "+ drug.getId() +" does not exist");
     }
 
     public Drug deleteDrug(int id) {
@@ -47,7 +46,10 @@ public class DrugService {
     }
 
     public void insertDrug(Drug drug) {
-        drugRepository.save(drug);
+        if(!drugRepository.existsById(drug.getId()))
+            drugRepository.save(drug);
+        else
+            throw new ForbiddenException("Drug " + drug.getId() + " already exists");
     }
     
     public List<SimpleDrugDTO> getDrugsThatContain(String name) {
@@ -66,7 +68,7 @@ public class DrugService {
     }
 
     public List<SimpleDrugDTO> getDrugsByIndication(String name) {
-        List<Drug> drugs = drugRepository.findByIndicationsIndicationName(name);
+        List<Drug> drugs = drugRepository.findByIndicationsContaining(name);
         return getSimpleDrugsByDrugs(drugs);
     }
 
