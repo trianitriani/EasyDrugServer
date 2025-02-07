@@ -4,6 +4,7 @@ import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Purchase;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -18,7 +19,7 @@ public class PurchaseService {
         purchaseRepository.save(purchase);
     }
 
-    public Purchase getPurchaseById(int id) {
+    public Purchase getPurchaseById(ObjectId id) {
         Optional<Purchase> optPurchase = purchaseRepository.findById(id);
         if(optPurchase.isPresent())
             return optPurchase.get();
@@ -31,7 +32,7 @@ public class PurchaseService {
         } else throw new NotFoundException("Purchase "+ purchase.getId() +" does not exists");
     }
 
-    public Purchase deletePurchase(int id) {
+    public Purchase deletePurchase(ObjectId id) {
         Purchase purchase = getPurchaseById(id);
         purchaseRepository.deleteById(id);
         return purchase;

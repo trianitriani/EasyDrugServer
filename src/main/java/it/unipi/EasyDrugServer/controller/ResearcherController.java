@@ -2,18 +2,14 @@ package it.unipi.EasyDrugServer.controller;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
-import it.unipi.EasyDrugServer.dto.DrugDistributionDTO;
-import it.unipi.EasyDrugServer.dto.Order;
-import it.unipi.EasyDrugServer.dto.PatientDoctorRatioDTO;
-import it.unipi.EasyDrugServer.dto.ResponseDTO;
-import it.unipi.EasyDrugServer.dto.TopDrugDTO;
-import it.unipi.EasyDrugServer.dto.TopRareDiseaseDTO;
+import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.service.ResearcherService;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -99,7 +95,8 @@ public class ResearcherController {
     }
 
     @GetMapping("/purchases/top/{top}/from/{from}/to/{to}")
-    public ResponseEntity<ResponseDTO> getTopPurchases(@PathVariable int top, @PathVariable LocalDate from,
+    public ResponseEntity<ResponseDTO> getTopPurchases(@PathVariable int top,
+                                                       @PathVariable LocalDate from,
                                                        @PathVariable LocalDate to){
         try{
             List<TopDrugDTO> topDrugs = researcherService.getTopPurchases(top, from, to);
@@ -117,7 +114,7 @@ public class ResearcherController {
     }
 
     @GetMapping("/drugs/{id_drug}/distribution/order/{order}")
-    public ResponseEntity<ResponseDTO> getDistributionByDrug(@PathVariable String id_drug,
+    public ResponseEntity<ResponseDTO> getDistributionByDrug(@PathVariable ObjectId id_drug,
                                                              @PathVariable Order order){
         try {
             List<DrugDistributionDTO> list = researcherService.getDistributionByDrug(id_drug, order);
@@ -136,11 +133,12 @@ public class ResearcherController {
         }
     }
 
-    // Il ricercatore può vedere per quali malattie ci sono meno farmaci (top 15) e mostrare quanti farmaci e quali farmaci per ognuna.
-    @GetMapping("/diseases/less-drugs/top/{top}")
-    public ResponseEntity<ResponseDTO> getDiseasesWithLessDrugs(@PathVariable int top){
+    // Il ricercatore può vedere per quali indicazioni ci sono meno farmaci (top 15) e
+    // mostrare quanti farmaci e quali farmaci per ognuna.
+    @GetMapping("/indications/less-drugs/top/{top}")
+    public ResponseEntity<ResponseDTO> getIndicationsWithLessDrugs(@PathVariable int top){
         try{
-            List<TopRareDiseaseDTO> diseases = researcherService.getDiseasesWithLessDrugs(top);
+            List<TopRareIndicationDTO> diseases = researcherService.getIndicationsWithLessDrugs(top);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, diseases);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e) {

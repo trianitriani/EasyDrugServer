@@ -5,6 +5,7 @@ import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.*;
 import it.unipi.EasyDrugServer.model.Doctor;
+import it.unipi.EasyDrugServer.model.LatestPurchase;
 import it.unipi.EasyDrugServer.service.DoctorService;
 import it.unipi.EasyDrugServer.service.PatientService;
 import lombok.RequiredArgsConstructor;
@@ -95,10 +96,11 @@ public class DoctorController {
     }*/
 
     @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/from/{nAlreadyViewed}")
-    public ResponseEntity<ResponseDTO> getNextPrescriptions(@PathVariable String id_doc, @PathVariable String id_pat,
+    public ResponseEntity<ResponseDTO> getNextPrescriptions(@PathVariable String id_doc,
+                                                            @PathVariable String id_pat,
                                                             @PathVariable Integer nAlreadyViewed){
         try {
-            List<PrescriptionDTO> purchases = doctorService.getNextPrescriptionDrugs(id_doc, id_pat, nAlreadyViewed);
+            List<LatestPurchase> purchases = doctorService.getNextPrescriptionDrugs(id_doc, id_pat, nAlreadyViewed);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

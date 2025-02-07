@@ -7,6 +7,7 @@ import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Drug;
 import it.unipi.EasyDrugServer.repository.mongo.DrugRepository;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class DrugService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    public Drug getDrugById(int id) {
+    public Drug getDrugById(ObjectId id) {
         Optional<Drug> optDrug = drugRepository.findById(id);
         if(optDrug.isPresent()) return optDrug.get();
         throw new NotFoundException("Drug "+id+" does not exist");
@@ -35,7 +36,7 @@ public class DrugService {
         } else throw new NotFoundException("Drug "+ drug.getId() +" does not exist");
     }
 
-    public Drug deleteDrug(int id) {
+    public Drug deleteDrug(ObjectId id) {
         Optional<Drug> optDrug = drugRepository.findById(id);
         if(optDrug.isPresent()) {
             System.out.println(optDrug);

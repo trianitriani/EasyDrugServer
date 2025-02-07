@@ -12,6 +12,7 @@ import it.unipi.EasyDrugServer.model.Purchase;
 import it.unipi.EasyDrugServer.service.DrugService;
 import it.unipi.EasyDrugServer.service.PurchaseService;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class PurchaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO> getPurchaseById(Integer id){
+    public ResponseEntity<ResponseDTO> getPurchaseById(ObjectId id){
         try {
             Purchase purchase = purchaseService.getPurchaseById(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchase);
@@ -73,7 +74,7 @@ public class PurchaseController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResponseDTO> deletePurchase(Integer id){
+    public ResponseEntity<ResponseDTO> deletePurchase(ObjectId id){
         try {
             Purchase purchase = purchaseService.deletePurchase(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchase);

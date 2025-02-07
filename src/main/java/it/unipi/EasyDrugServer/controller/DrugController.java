@@ -9,6 +9,7 @@ import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
 import it.unipi.EasyDrugServer.model.Drug;
 import it.unipi.EasyDrugServer.service.DrugService;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -55,7 +56,7 @@ public class DrugController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResponseDTO> deleteDrug(@PathVariable int id){
+    public ResponseEntity<ResponseDTO> deleteDrug(@PathVariable ObjectId id){
         try {
             Drug drug = drugService.deleteDrug(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drug);
@@ -72,7 +73,7 @@ public class DrugController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO> getDrugById(@PathVariable int id){
+    public ResponseEntity<ResponseDTO> getDrugById(@PathVariable ObjectId id){
         try {
             Drug drug = drugService.getDrugById(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drug);

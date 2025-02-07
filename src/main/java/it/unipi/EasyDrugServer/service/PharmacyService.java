@@ -75,6 +75,7 @@ public class PharmacyService {
         return purchaseCartRedisRepository.modifyPurchaseDrugQuantity(patientCode, idDrug, quantity);
     }
 
+    // funzione usata per inserire un acquisto di farmaci all'interno di mongo db
     private void insertPurchases(String patientCode, String pharmacyRegion, List<PurchaseDrugDTO> purchasedDrugs){
         List<ObjectId> prescribedDrugsId =  new ArrayList<>();
         List<ObjectId> purchaseDrugsId =  new ArrayList<>();
@@ -84,7 +85,6 @@ public class PharmacyService {
         for(PurchaseDrugDTO purchaseDrugDTO : purchasedDrugs){
             // creo, per ogni farmaco acquistato, il documento da inserire nella collezione purchases
             Purchase purchase = new Purchase();
-            purchase.setDrugId(purchaseDrugDTO.getId());
             purchase.setName(purchaseDrugDTO.getName());
             purchase.setQuantity(purchaseDrugDTO.getQuantity());
             purchase.setPrice(purchaseDrugDTO.getPrice());

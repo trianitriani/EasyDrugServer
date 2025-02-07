@@ -14,6 +14,7 @@ import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -33,6 +34,7 @@ public class PatientService {
     private final PrescriptionRedisRepository prescriptionRedisRepository;
     private final PatientRepository patientRepository;
     private final PurchaseRepository purchaseRepository;
+    private final int N_TO_VIEW = 10;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -68,21 +70,22 @@ public class PatientService {
         return ((Patient) userService.getUserIfExists(id, UserType.PATIENT)).getLatestPurchasedDrugs();
     }
 
-    public List<LatestPurchase> getNextPurchaseDrugs(String id_pat, int lastViewedId) {
+    public List<LatestPurchase> getNextPurchaseDrugs(String id_pat, int nAlreadyViewed) {
         if(!patientRepository.existsById(id_pat))
             throw new NotFoundException("Patient "+id_pat+" does not exist");
 
         Optional<Patient> optPatient = patientRepository.findById(id_pat);
-        List<Integer> purchasesId = new ArrayList<>();
+        List<ObjectId> purchasesId = new ArrayList<>();
         List<Purchase> purchases = new ArrayList<>();
         if(optPatient.isPresent())
             purchasesId = optPatient.get().getPurchases();
 
-        int startIndex = Math.max(0, lastViewedId - 10);
-        int endIndex = Math.min(lastViewedId, purchasesId.size());
-        List<Integer> idToView = purchasesId.subList(startIndex, endIndex);
+        int startIndex = purchasesId.size() - 1 - nAlreadyViewed;
+        int endIndex = startIndex - N_TO_VIEW;
+        // id of purchased drugs that interest us
+        List<ObjectId> idToView = purchasesId.subList(endIndex, startIndex);
 
-        for(int purchId: idToView){
+        for(ObjectId purchId: idToView){
             Optional<Purchase> optPurch = purchaseRepository.findById(purchId);
             optPurch.ifPresent(purchases::add);
         }

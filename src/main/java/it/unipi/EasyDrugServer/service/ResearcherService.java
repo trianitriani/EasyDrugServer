@@ -1,23 +1,16 @@
 package it.unipi.EasyDrugServer.service;
 
 
-import it.unipi.EasyDrugServer.dto.DrugDistributionDTO;
-import it.unipi.EasyDrugServer.dto.Order;
-import it.unipi.EasyDrugServer.dto.PatientDoctorRatioDTO;
-import it.unipi.EasyDrugServer.dto.UserType;
+import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.repository.mongo.PatientRepository;
-import it.unipi.EasyDrugServer.dto.TopDrugDTO;
-import it.unipi.EasyDrugServer.dto.TopRareDiseaseDTO;
-import it.unipi.EasyDrugServer.exception.BadRequestException;
-import it.unipi.EasyDrugServer.exception.NotFoundException;
-import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.mongo.ResearcherRepository;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
@@ -37,7 +30,6 @@ public class ResearcherService {
     private final PatientRepository patientRepository;
     private final PurchaseRepository purchaseRepository;
     private MongoTemplate mongoTemplate;
-
 
     public Researcher getResearcherById(String id) {
         return (Researcher) userService.getUserIfExists(id, UserType.RESEARCHER);
@@ -69,7 +61,7 @@ public class ResearcherService {
         };
     }
 
-    public List<DrugDistributionDTO> getDistributionByDrug(String idDrug, Order order) {
+    public List<DrugDistributionDTO> getDistributionByDrug(ObjectId idDrug, Order order) {
         return switch (order) {
             case ASC -> purchaseRepository.getDistributionByDrug(idDrug, 1);
             case DESC -> purchaseRepository.getDistributionByDrug(idDrug, -1);
@@ -99,7 +91,7 @@ public class ResearcherService {
         return topPurchases.getMappedResults();
     }
 
-    public List<TopRareDiseaseDTO> getDiseasesWithLessDrugs(int top){
+    public List<TopRareIndicationDTO> getIndicationsWithLessDrugs(int top){
         if(top <= 1)
             throw new BadRequestException("It is impossible to get a top " + top + " purchases");
         Aggregation aggregation = Aggregation.newAggregation(
@@ -118,7 +110,7 @@ public class ResearcherService {
                 Aggregation.limit(top)
         );
 
-        AggregationResults<TopRareDiseaseDTO> diseases = mongoTemplate.aggregate(aggregation, "drugs", TopRareDiseaseDTO.class);
+        AggregationResults<TopRareIndicationDTO> diseases = mongoTemplate.aggregate(aggregation, "drugs", TopRareIndicationDTO.class);
         return diseases.getMappedResults();
     }
 }

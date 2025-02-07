@@ -3,6 +3,7 @@ package it.unipi.EasyDrugServer.model;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.annotation.Collation;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -33,6 +34,6 @@ public class Patient {
     @Field("latestPurchasedDrugs")
     private List<LatestPurchase> latestPurchasedDrugs;
 
-    private List<Integer> purchases;
-    private List<Integer> prescriptions;
+    private List<ObjectId> purchases;
+    private List<ObjectId> prescriptions;
 }
