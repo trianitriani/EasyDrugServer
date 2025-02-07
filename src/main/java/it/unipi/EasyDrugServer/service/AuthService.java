@@ -24,10 +24,10 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private static DoctorRepository doctorRepository;
-    private static PatientRepository patientRepository;
-    private static ResearcherRepository researcherRepository;
-    private static PharmacyRepository pharmacyRepository;
+    private final DoctorRepository doctorRepository;
+    private final PatientRepository patientRepository;
+    private final ResearcherRepository researcherRepository;
+    private final PharmacyRepository pharmacyRepository;
 
     public SessionUserDTO signup(SignupUserDTO user) {
         SessionUserDTO sessionUserDTO = new SessionUserDTO();
@@ -44,13 +44,13 @@ public class AuthService {
                 patient.setName(user.getName());
                 patient.setSurname(user.getSurname());
                 patient.setDateOfBirth(user.getDateOfBirth());
-                patient.setCity(user.getMunicipality());
-                patient.setDistrict(user.getProvince());
+                patient.setCity(user.getCity());
+                patient.setDistrict(user.getDistrict());
                 patient.setRegion(user.getRegion());
                 patient.setTaxCode(user.getTaxCode());
                 patientRepository.save(patient);
                 sessionUserDTO.setName(patient.getName());
-                sessionUserDTO.setIdentifyCode(patient.getId());
+                sessionUserDTO.setId(patient.getId());
                 break;
             case DOCTOR:
                 // controllare che non esista già un paziente con lo stesso codice
@@ -63,14 +63,14 @@ public class AuthService {
                 doctor.setName(user.getName());
                 doctor.setSurname(user.getSurname());
                 doctor.setDateOfBirth(user.getDateOfBirth());
-                doctor.setCity(user.getMunicipality());
-                doctor.setDistrict(user.getProvince());
+                doctor.setCity(user.getCity());
+                doctor.setDistrict(user.getDistrict());
                 doctor.setRegion(user.getRegion());
                 doctor.setTaxCode(user.getTaxCode());
-                doctor.setDoctorRegisterCode(user.getCertificate());
+                doctor.setDoctorRegisterCode(user.getDoctorRegisterCode());
                 doctorRepository.save(doctor);
                 sessionUserDTO.setName(doctor.getName());
-                sessionUserDTO.setIdentifyCode(doctor.getId());
+                sessionUserDTO.setId(doctor.getId());
                 break;
             case RESEARCHER:
                 if(researcherRepository.findById("R"+user.getTaxCode()).isPresent())
@@ -82,17 +82,17 @@ public class AuthService {
                 researcher.setName(user.getName());
                 researcher.setSurname(user.getSurname());
                 researcher.setDateOfBirth(user.getDateOfBirth());
-                researcher.setCity(user.getMunicipality());
-                researcher.setDistrict(user.getProvince());
+                researcher.setCity(user.getCity());
+                researcher.setDistrict(user.getDistrict());
                 researcher.setRegion(user.getRegion());
                 researcher.setTaxCode(user.getTaxCode());
-                researcher.setResearcherRegisterCode(user.getCertificate());
+                researcher.setResearcherRegisterCode(user.getResearcherRegisterCode());
                 researcherRepository.save(researcher);
                 sessionUserDTO.setName(researcher.getName());
-                sessionUserDTO.setIdentifyCode(researcher.getId());
+                sessionUserDTO.setId(researcher.getId());
                 break;
             case PHARMACY:
-                if(pharmacyRepository.findByNameAndAddressAndCity(user.getName(), user.getAddress(), user.getMunicipality()).isPresent())
+                if(pharmacyRepository.findByNameAndAddressAndCity(user.getName(), user.getAddress(), user.getCity()).isPresent())
                     throw new ForbiddenException("Pharmacy already exists");
                 // Inserimento nel document
                 Pharmacy pharmacy = new Pharmacy();
@@ -100,14 +100,14 @@ public class AuthService {
                 pharmacy.setPassword(PasswordHasher.hash(user.getPassword()));
                 pharmacy.setAddress(user.getAddress());
                 pharmacy.setName(user.getName());
-                pharmacy.setCity(user.getMunicipality());
-                pharmacy.setDistrict(user.getProvince());
+                pharmacy.setCity(user.getCity());
+                pharmacy.setDistrict(user.getDistrict());
                 pharmacy.setRegion(user.getRegion());
-                pharmacy.setOwnerTaxCode(user.getTaxCode());
+                pharmacy.setOwnerTaxCode(user.getOwnerTaxCode());
                 pharmacy.setVATnumber(user.getVatNumber());
                 pharmacyRepository.save(pharmacy);
                 sessionUserDTO.setName(pharmacy.getName());
-                sessionUserDTO.setIdentifyCode(pharmacy.getId());
+                sessionUserDTO.setId(pharmacy.getId());
                 break;
             default:
                 throw new BadRequestException("User type not supported ");
@@ -117,8 +117,13 @@ public class AuthService {
 
     public SessionUserDTO login(LoginUserDTO user) {
         SessionUserDTO sessionUserDTO = new SessionUserDTO();
+
+        if (user.getIdentifyCode() == null || user.getIdentifyCode().isEmpty()) {
+            throw new BadRequestException("Identify code cannot be empty");
+        }
+
         String identifyCode = user.getIdentifyCode();
-        String psw = user.getPassword();    // DA HASHARE !!!!!!
+        String psw = user.getPassword();
 
         if(Character.isDigit(identifyCode.charAt(0))){
             // significa che sto effettuando il login di una farmacia
@@ -131,7 +136,7 @@ public class AuthService {
                 throw new UnauthorizedException("Wrong password");
 
             // se arrivo qui il login è corretto
-            sessionUserDTO.setIdentifyCode(identifyCode);
+            sessionUserDTO.setId(identifyCode);
             sessionUserDTO.setName(pharmacy.getName());
             sessionUserDTO.setType(UserType.PHARMACY);
 
@@ -144,11 +149,13 @@ public class AuthService {
                         throw new NotFoundException("Patient does not exists");
 
                     Patient patient = optionalPatient.get();
+                    System.out.println(psw);
+                    System.out.println(patient.getPassword());
                     if(!PasswordHasher.verifyPassword(psw, patient.getPassword()))
                         throw new UnauthorizedException("Wrong password");
 
                     // se arrivo qui il login è corretto
-                    sessionUserDTO.setIdentifyCode(identifyCode);
+                    sessionUserDTO.setId(identifyCode);
                     sessionUserDTO.setName(patient.getName());
                     sessionUserDTO.setType(UserType.PATIENT);
                     break;
@@ -163,7 +170,7 @@ public class AuthService {
                         throw new UnauthorizedException("Wrong password");
 
                     // se arrivo qui il login è corretto
-                    sessionUserDTO.setIdentifyCode(identifyCode);
+                    sessionUserDTO.setId(identifyCode);
                     sessionUserDTO.setName(doctor.getName());
                     sessionUserDTO.setType(UserType.DOCTOR);
                     break;
@@ -177,7 +184,7 @@ public class AuthService {
                     if(!PasswordHasher.verifyPassword(psw, researcher.getPassword()))
                         throw new UnauthorizedException("Wrong password");
 
-                    sessionUserDTO.setIdentifyCode(identifyCode);
+                    sessionUserDTO.setId(identifyCode);
                     sessionUserDTO.setName(researcher.getName());
                     sessionUserDTO.setType(UserType.RESEARCHER);
                     break;

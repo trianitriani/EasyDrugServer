@@ -11,21 +11,23 @@ public class SignupUserDTO {
     // for all
     private UserType type;
     private String password;
-    private String municipality;
-    private String province;
+    private String city;
+    private String district;
     private String region;
-    private String taxCode;
     private String name;
 
     // for patient, doctor, researcher
     private String surname;
     private String dateOfBirth;
+    private String taxCode;
 
     // for doctor, researcher
-    private String certificate;
+    private String doctorRegisterCode;
+    private String researcherRegisterCode;
 
     // for pharmacy
     private String vatNumber;
     private String address;
+    private String ownerTaxCode;
 
 }

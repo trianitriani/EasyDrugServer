@@ -9,7 +9,7 @@ import lombok.Setter;
 @Data
 public class SideEffect {
     private String sideEffectName;
-    private double frequence;
+    private double frequency;
 }
 
 

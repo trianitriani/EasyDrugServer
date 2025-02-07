@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -100,7 +98,7 @@ public class PatientController {
     public ResponseEntity<ResponseDTO> getNextPurchases(@PathVariable String id,
                                                           @PathVariable Integer lastViewedId){
         try {
-            List<PurchaseDrugDTO> purchases = patientService.getNextPurchases(id, lastViewedId);
+            List<PurchaseDrugDTO> purchases = patientService.getNextPurchaseDrugs(id, lastViewedId);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

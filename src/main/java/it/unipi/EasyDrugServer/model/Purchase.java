@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
@@ -16,10 +17,12 @@ import java.time.LocalDateTime;
 public class Purchase {
 
     @Id
-    private Integer id;      // campo _id di MongoDB
+    private Integer id;
     private int drugId;
     private String name;
     private int quantity;
+
+    @Indexed
     private LocalDateTime purchaseDate;
     private String region;
     private LocalDateTime prescriptionDate;

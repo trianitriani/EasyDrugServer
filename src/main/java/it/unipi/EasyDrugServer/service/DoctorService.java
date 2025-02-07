@@ -21,7 +21,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -122,12 +121,11 @@ public class DoctorService {
         return (List<PrescriptionDTO>) prescriptionsHash.values();
     }
 
-    public List<PrescribedDrugDTO> getNextPrescriptions(String id_doc, String id_pat, int lastViewedId) {
+    public List<PrescribedDrugDTO> getNextPrescriptionDrugs(String id_doc, String id_pat, int lastViewedId) {
         if(!doctorRepository.existsById(id_doc))
             throw new NotFoundException("Doctor "+id_doc+" does not exist");
 
         Patient patient = (Patient) userService.getUserIfExists(id_pat, UserType.PATIENT);
-        System.out.println(patient.getDoctorCode() + "  " + id_doc);
         if(!Objects.equals(patient.getDoctorCode(), id_doc))
             throw new UnauthorizedException("You are not authorized to access this patient");
 
@@ -138,7 +136,7 @@ public class DoctorService {
             prescriptionsId = optPatient.get().getPrescriptions();
 
         int startIndex = Math.max(0, lastViewedId - 10);
-        int endIndex = Math.min(lastViewedId, prescriptionsId.size());
+        int endIndex = Math.min(lastViewedId-1, prescriptionsId.size()-1);
         List<Integer> idToView = prescriptionsId.subList(startIndex, endIndex);
 
         for(int prescId: idToView){

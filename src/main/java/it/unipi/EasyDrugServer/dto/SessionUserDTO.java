@@ -7,6 +7,6 @@ import lombok.Setter;
 @Setter
 public class SessionUserDTO {
     private UserType type;
-    private String identifyCode;
+    private String id;
     private String name;
 }

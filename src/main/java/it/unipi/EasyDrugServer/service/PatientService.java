@@ -1,11 +1,9 @@
 package it.unipi.EasyDrugServer.service;
 
-import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.UserType;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
-import it.unipi.EasyDrugServer.model.LatestDrug;
 import it.unipi.EasyDrugServer.model.LatestPurchase;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.model.Purchase;
@@ -20,10 +18,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,7 +64,7 @@ public class PatientService {
         return ((Patient) userService.getUserIfExists(id, UserType.PATIENT)).getLatestPurchasedDrugs();
     }
 
-    public List<PurchaseDrugDTO> getNextPurchases(String id_pat, int lastViewedId) {
+    public List<PurchaseDrugDTO> getNextPurchaseDrugs(String id_pat, int lastViewedId) {
         if(!patientRepository.existsById(id_pat))
             throw new NotFoundException("Patient "+id_pat+" does not exist");
 
