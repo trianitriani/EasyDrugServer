@@ -1,6 +1,5 @@
 package it.unipi.EasyDrugServer.controller;
 
-
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
@@ -8,10 +7,7 @@ import it.unipi.EasyDrugServer.dto.SimpleDrugDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
 import it.unipi.EasyDrugServer.model.Drug;
-import it.unipi.EasyDrugServer.model.Researcher;
-import it.unipi.EasyDrugServer.repository.mongo.DrugRepository;
 import it.unipi.EasyDrugServer.service.DrugService;
-import it.unipi.EasyDrugServer.service.ResearcherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

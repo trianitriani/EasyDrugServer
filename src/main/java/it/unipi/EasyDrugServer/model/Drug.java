@@ -3,6 +3,7 @@ package it.unipi.EasyDrugServer.model;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -19,7 +20,7 @@ import java.util.List;
 public class Drug {
 
     @Id
-    private int id;
+    private ObjectId id;
     private String drugName;
     private double price;
     private String company;

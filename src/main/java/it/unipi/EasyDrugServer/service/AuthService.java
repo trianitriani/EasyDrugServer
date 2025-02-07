@@ -92,11 +92,10 @@ public class AuthService {
                 sessionUserDTO.setId(researcher.getId());
                 break;
             case PHARMACY:
-                if(pharmacyRepository.findByNameAndAddressAndCity(user.getName(), user.getAddress(), user.getCity()).isPresent())
+                if(pharmacyRepository.findById("PH"+user.getVatNumber()).isPresent())
                     throw new ForbiddenException("Pharmacy already exists");
                 // Inserimento nel document
                 Pharmacy pharmacy = new Pharmacy();
-                // l'id deve essere incrementale
                 pharmacy.setPassword(PasswordHasher.hash(user.getPassword()));
                 pharmacy.setAddress(user.getAddress());
                 pharmacy.setName(user.getName());
@@ -105,6 +104,7 @@ public class AuthService {
                 pharmacy.setRegion(user.getRegion());
                 pharmacy.setOwnerTaxCode(user.getOwnerTaxCode());
                 pharmacy.setVATnumber(user.getVatNumber());
+                pharmacy.setId("PH"+user.getVatNumber());
                 pharmacyRepository.save(pharmacy);
                 sessionUserDTO.setName(pharmacy.getName());
                 sessionUserDTO.setId(pharmacy.getId());

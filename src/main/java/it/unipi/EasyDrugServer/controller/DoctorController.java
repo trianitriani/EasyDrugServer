@@ -262,6 +262,5 @@ public class DoctorController {
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
-
     }
 }
