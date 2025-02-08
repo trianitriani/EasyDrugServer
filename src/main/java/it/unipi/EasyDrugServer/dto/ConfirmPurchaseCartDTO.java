@@ -9,6 +9,6 @@ import java.util.List;
 @Getter
 @Setter
 public class ConfirmPurchaseCartDTO {
-    List<PurchaseDrugDTO> purchaseDrugs;
+    List<PurchaseCartDrugDTO> purchaseDrugs;
     Transaction transaction;
 }

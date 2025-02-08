@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.annotation.Collation;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -25,7 +26,10 @@ public class Patient {
     private String district;
     private String region;
     private String name;
+
+    @Indexed
     private String surname;
+
     private String dateOfBirth;
     private String gender;
     private String taxCode;

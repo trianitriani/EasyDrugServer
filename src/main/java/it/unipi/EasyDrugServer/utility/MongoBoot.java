@@ -51,7 +51,17 @@ public class MongoBoot {
             Gson gson = new Gson();
             List<Document> documents = Arrays.asList(gson.fromJson(jsonContent, Document[].class));
 
-            collection.insertMany(documents);
+            final int batchSize = 1500;
+            for (int i = 0; i < documents.size(); i += batchSize) {
+                List<Document> batch = documents.subList(i, Math.min(i + batchSize, documents.size()));
+                try {
+                    collection.insertMany(batch);
+                    System.out.println("Inseriti " + batch.size() + " documenti nella collezione " + collectionName);
+                } catch (Exception e) {
+                    System.err.println("Errore nell'inserimento dei documenti in " + collectionName + ": " + e.getMessage());
+                }
+            }
+
             System.out.println("Importazione " + collectionName + " completata!");
         } else {
             System.out.println("Dati di " + collectionName + " già presenti, nessuna importazione necessaria.");

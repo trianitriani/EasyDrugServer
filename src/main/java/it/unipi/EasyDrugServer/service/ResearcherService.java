@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -41,10 +42,11 @@ public class ResearcherService {
             researcher_.setDistrict(researcher.getDistrict());
             researcher_.setCity(researcher.getCity());
             researcher_.setRegion(researcher.getRegion());
-            researcher_.setPassword(PasswordHasher.hash(researcher.getPassword()));
+            if(!Objects.equals(researcher.getPassword(), ""))
+                researcher_.setPassword(PasswordHasher.hash(researcher.getPassword()));
             researcherRepository.save(researcher_);
             return researcher_;
-        } else throw new NotFoundException("Researcher "+researcher.getId()+" does not exists");
+        } else throw new NotFoundException("Researcher "+researcher.getId()+" does not exist");
     }
 
     public Researcher deleteResearcher(String id) {

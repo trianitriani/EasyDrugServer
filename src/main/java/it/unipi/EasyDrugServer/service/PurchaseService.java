@@ -23,13 +23,13 @@ public class PurchaseService {
         Optional<Purchase> optPurchase = purchaseRepository.findById(id);
         if(optPurchase.isPresent())
             return optPurchase.get();
-        throw new NotFoundException("Purchase "+id+" does not exists");
+        throw new NotFoundException("Purchase "+id+" does not exist");
     }
 
     public void modifyPurchase(Purchase purchase) {
         if(purchaseRepository.existsById(purchase.getId())) {
             purchaseRepository.save(purchase);
-        } else throw new NotFoundException("Purchase "+ purchase.getId() +" does not exists");
+        } else throw new NotFoundException("Purchase "+ purchase.getId() +" does not exist");
     }
 
     public Purchase deletePurchase(ObjectId id) {

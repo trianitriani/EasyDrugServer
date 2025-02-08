@@ -16,16 +16,12 @@ import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -36,15 +32,14 @@ public class PatientService {
     private final PurchaseRepository purchaseRepository;
     private final int N_TO_VIEW = 10;
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
-
     public List<PrescriptionDTO> getAllActivePrescriptions(String patientCode){
         return prescriptionRedisRepository.getAllActivePrescriptions(patientCode);
     }
 
     public Patient getPatientById(String id) {
-        return (Patient) userService.getUserIfExists(id, UserType.PATIENT);
+        Object obj = userService.getUserIfExists(id, UserType.PATIENT);
+        System.out.println("D2: "+obj);
+        return (Patient) obj;
     }
 
     public Patient modifyPatient(Patient patient) {
@@ -54,10 +49,11 @@ public class PatientService {
             patient_.setCity(patient.getCity());
             patient_.setRegion(patient.getRegion());
             patient_.setDoctorCode(patient.getDoctorCode());
-            patient_.setPassword(PasswordHasher.hash(patient.getPassword()));
+            if(!Objects.equals(patient.getPassword(), ""))
+                patient_.setPassword(PasswordHasher.hash(patient.getPassword()));
             patientRepository.save(patient_);
             return patient_;
-        } else throw new NotFoundException("Patient "+patient.getId()+" does not exists");
+        } else throw new NotFoundException("Patient "+patient.getId()+" does not exist");
     }
 
     public Patient deletePatient(String id) {

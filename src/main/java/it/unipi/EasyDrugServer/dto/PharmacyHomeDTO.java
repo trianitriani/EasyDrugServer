@@ -8,7 +8,7 @@ import java.util.List;
 @Getter
 @Setter
 public class PharmacyHomeDTO {
-    private List<PurchaseDrugDTO> purchaseCart;
+    private List<PurchaseCartDrugDTO> purchaseCart;
     private List<PrescriptionDTO> prescriptions;
 
     public PharmacyHomeDTO() {

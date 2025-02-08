@@ -22,8 +22,6 @@ public class Purchase {
     private int drugId;
     private String name;
     private int quantity;
-
-    @Indexed
     private LocalDateTime purchaseDate;
     private String region;
     private LocalDateTime prescriptionDate;

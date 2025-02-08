@@ -3,12 +3,14 @@ package it.unipi.EasyDrugServer.controller;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.PharmacyHomeDTO;
+import it.unipi.EasyDrugServer.dto.PurchaseCartDrugDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
+import it.unipi.EasyDrugServer.model.LatestPurchase;
 import it.unipi.EasyDrugServer.model.Pharmacy;
 import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.service.PharmacyService;
@@ -62,9 +64,9 @@ public class PharmacyController {
      */
     @PostMapping("/patients/{patCode}/cart/drugs")
     public ResponseEntity<ResponseDTO> savePurchaseDrug(@PathVariable String patCode,
-                                                        @RequestBody PurchaseDrugDTO drug){
+                                                        @RequestBody PurchaseCartDrugDTO drug){
         try {
-            PurchaseDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(patCode, drug);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(patCode, drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (BadRequestException e) {
@@ -93,7 +95,7 @@ public class PharmacyController {
                                                           @PathVariable int idDrug,
                                                           @RequestBody(required = false) LocalDateTime prescriptionTimestamp){
         try {
-            PurchaseDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(patCode, idDrug, prescriptionTimestamp);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(patCode, idDrug, prescriptionTimestamp);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -122,7 +124,7 @@ public class PharmacyController {
                                                                   @PathVariable int idDrug,
                                                                   @RequestBody int quantity){
         try {
-            PurchaseDrugDTO purchaseDrug = pharmacyService.modifyPurchaseDrugQuantity(patCode, idDrug, quantity);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.modifyPurchaseDrugQuantity(patCode, idDrug, quantity);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -150,8 +152,8 @@ public class PharmacyController {
     public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable String patCode,
                                                        @RequestBody String pharmacyRegion){
         try {
-            List<PurchaseDrugDTO> purchaseCart = pharmacyService.confirmPurchase(patCode, pharmacyRegion);
-            ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseCart);
+            LatestPurchase latestPurchase = pharmacyService.confirmPurchase(patCode, pharmacyRegion);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, latestPurchase);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);

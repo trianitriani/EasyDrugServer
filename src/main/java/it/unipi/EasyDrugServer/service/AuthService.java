@@ -18,6 +18,7 @@ import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.repository.mongo.ResearcherRepository;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 
@@ -92,7 +93,7 @@ public class AuthService {
                 sessionUserDTO.setId(researcher.getId());
                 break;
             case PHARMACY:
-                if(pharmacyRepository.findById("PH"+user.getVatNumber()).isPresent())
+                if(pharmacyRepository.findById("Ph"+user.getVatNumber()).isPresent())
                     throw new ForbiddenException("Pharmacy already exists");
                 // Inserimento nel document
                 Pharmacy pharmacy = new Pharmacy();
@@ -104,7 +105,7 @@ public class AuthService {
                 pharmacy.setRegion(user.getRegion());
                 pharmacy.setOwnerTaxCode(user.getOwnerTaxCode());
                 pharmacy.setVATnumber(user.getVatNumber());
-                pharmacy.setId("PH"+user.getVatNumber());
+                pharmacy.setId("Ph"+user.getVatNumber());
                 pharmacyRepository.save(pharmacy);
                 sessionUserDTO.setName(pharmacy.getName());
                 sessionUserDTO.setId(pharmacy.getId());
@@ -125,11 +126,11 @@ public class AuthService {
         String identifyCode = user.getIdentifyCode();
         String psw = user.getPassword();
 
-        if(Character.isDigit(identifyCode.charAt(0))){
+        if(identifyCode.startsWith("Ph")){
             // significa che sto effettuando il login di una farmacia
             Optional<Pharmacy> optionalPharmacy = pharmacyRepository.findById(identifyCode);
             if(optionalPharmacy.isEmpty())
-                throw new NotFoundException("Pharmacy does not exists");
+                throw new NotFoundException("Pharmacy does not exist");
 
             Pharmacy pharmacy = optionalPharmacy.get();
             if(!PasswordHasher.verifyPassword(psw, pharmacy.getPassword()))
@@ -146,7 +147,7 @@ public class AuthService {
                     // login patient
                     Optional<Patient> optionalPatient = patientRepository.findById(identifyCode);
                     if (optionalPatient.isEmpty())
-                        throw new NotFoundException("Patient does not exists");
+                        throw new NotFoundException("Patient does not exist");
 
                     Patient patient = optionalPatient.get();
                     System.out.println(psw);
@@ -163,7 +164,7 @@ public class AuthService {
                     // login doctor
                     Optional<Doctor> optionalDoctor = doctorRepository.findById(identifyCode);
                     if (optionalDoctor.isEmpty())
-                        throw new NotFoundException("Doctor does not exists");
+                        throw new NotFoundException("Doctor does not exist");
 
                     Doctor doctor = optionalDoctor.get();
                     if(!PasswordHasher.verifyPassword(psw, doctor.getPassword()))
@@ -178,7 +179,7 @@ public class AuthService {
                     // login researcher
                     Optional<Researcher> optionalResearcher = researcherRepository.findById(identifyCode);
                     if(optionalResearcher.isEmpty())
-                        throw new NotFoundException("Researcher does not exists");
+                        throw new NotFoundException("Researcher does not exist");
 
                     Researcher researcher = optionalResearcher.get();
                     if(!PasswordHasher.verifyPassword(psw, researcher.getPassword()))
@@ -190,7 +191,7 @@ public class AuthService {
                     break;
                 default:
                     // identifyCode sbagliato
-                    throw new BadRequestException("User type not supported ");
+                    throw new BadRequestException("User type not supported");
             }
         }
         return sessionUserDTO;

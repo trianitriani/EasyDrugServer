@@ -28,7 +28,10 @@ public class UserService {
     protected Object getUserIfExists(String id, UserType type) {
         switch (type) {
             case PATIENT:
+                System.out.println(id + " " + id.getClass());
+                System.out.println("D1: "+patientRepository.findById(id));
                 Optional<Patient> optPatient = patientRepository.findById(id);
+                System.out.println(optPatient + " WAAAAAA");
                 if(optPatient.isPresent()) return optPatient.get();
                 throw new NotFoundException("Patient "+id+" does not exist");
             case DOCTOR:
@@ -40,9 +43,7 @@ public class UserService {
                 if(optResearcher.isPresent()) return optResearcher.get();
                 throw new NotFoundException("Researcher "+id+" does not exist");
             case PHARMACY:
-                System.out.println(id.getClass().getName());
                 Optional<Pharmacy> optPharmacy = pharmacyRepository.findById(id);
-                System.out.println(optPharmacy);
                 if(optPharmacy.isPresent()) return optPharmacy.get();
                 throw new NotFoundException("Pharmacy "+id+" does not exist");
             default:

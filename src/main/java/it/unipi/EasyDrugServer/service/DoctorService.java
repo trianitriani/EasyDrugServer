@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 // import org.apache.coyote.BadRequestException;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -55,7 +54,7 @@ public class DoctorService {
         if(quantity == 0)
             return prescriptionRedisRepository.deleteInactivePrescribedDrug(patientCode, idDrug);
         else if(quantity < 0)
-            throw new BadRequestException("Quantity can not lower that zero.");
+            throw new BadRequestException("Quantity can not be lower that zero.");
         return prescriptionRedisRepository.modifyInactivePrescribedDrugQuantity(patientCode, idDrug, quantity);
     }
 
@@ -73,10 +72,11 @@ public class DoctorService {
             doctor_.setCity(doctor.getCity());
             doctor_.setDistrict(doctor.getDistrict());
             doctor_.setRegion(doctor.getRegion());
-            doctor_.setPassword(PasswordHasher.hash(doctor.getPassword()));
+            if(!Objects.equals(doctor.getPassword(), ""))
+                doctor_.setPassword(PasswordHasher.hash(doctor.getPassword()));
             doctorRepository.save(doctor_);
             return doctor_;
-        } else throw new NotFoundException("Doctor "+doctor.getId()+" does not exists");
+        } else throw new NotFoundException("Doctor "+doctor.getId()+" does not exist");
     }
 
     public Doctor deleteDoctor(String id) {
@@ -173,7 +173,7 @@ public class DoctorService {
 
     public List<SimplePatientDTO> getOwnPatients(String id, String patSurname) {
         if(!doctorRepository.existsById(id))
-            throw new NotFoundException("Doctor "+id+" does not exists");
+            throw new NotFoundException("Doctor "+id+" does not exist");
 
         List<Patient> patients = patientRepository.findBySurnameContainingIgnoreCaseAndDoctorCode(id, patSurname);
         List<SimplePatientDTO> patientDTOs = new ArrayList<>();

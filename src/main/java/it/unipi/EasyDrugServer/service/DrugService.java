@@ -43,7 +43,7 @@ public class DrugService {
             Drug drug = optDrug.get();
             drugRepository.deleteById(id);
             return drug;
-        } else throw new NotFoundException("Drug "+ id+" does not exists");
+        } else throw new NotFoundException("Drug "+ id+" does not exist");
     }
 
     public void insertDrug(Drug drug) {
@@ -53,8 +53,8 @@ public class DrugService {
             throw new ForbiddenException("Drug " + drug.getId() + " already exists");
     }
     
-    public List<SimpleDrugDTO> getDrugsThatContain(String name) {
-        List<Drug> drugs = drugRepository.findByDrugNameContainingIgnoreCase(name);
+    public List<SimpleDrugDTO> getDrugThatStartWith(String name) {
+        List<Drug> drugs = drugRepository.findByDrugNameStartingWithIgnoreCase(name);
         return getSimpleDrugsByDrugs(drugs);
     }
 

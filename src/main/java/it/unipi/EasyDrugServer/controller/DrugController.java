@@ -90,9 +90,9 @@ public class DrugController {
     }
     
     @GetMapping("/search/{name}")
-    public ResponseEntity<ResponseDTO> getDrugsThatContain(@PathVariable String name){
+    public ResponseEntity<ResponseDTO> getDrugThatStartWith(@PathVariable String name){
         try {
-            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsThatContain(name);
+            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugThatStartWith(name);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MongoSocketException e) {

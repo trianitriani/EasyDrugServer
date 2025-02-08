@@ -2,6 +2,7 @@ package it.unipi.EasyDrugServer.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.types.ObjectId;
 
 @Getter
 @Setter
