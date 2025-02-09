@@ -38,7 +38,6 @@ public class PatientService {
 
     public Patient getPatientById(String id) {
         Object obj = userService.getUserIfExists(id, UserType.PATIENT);
-        System.out.println("D2: "+obj);
         return (Patient) obj;
     }
 
@@ -71,7 +70,7 @@ public class PatientService {
             throw new NotFoundException("Patient "+id_pat+" does not exist");
 
         Optional<Patient> optPatient = patientRepository.findById(id_pat);
-        List<ObjectId> purchasesId = new ArrayList<>();
+        List<String> purchasesId = new ArrayList<>();
         List<Purchase> purchases = new ArrayList<>();
         if(optPatient.isPresent())
             purchasesId = optPatient.get().getPurchases();
@@ -79,9 +78,9 @@ public class PatientService {
         int startIndex = purchasesId.size() - 1 - nAlreadyViewed;
         int endIndex = startIndex - N_TO_VIEW;
         // id of purchased drugs that interest us
-        List<ObjectId> idToView = purchasesId.subList(endIndex, startIndex);
+        List<String> idToView = purchasesId.subList(endIndex, startIndex);
 
-        for(ObjectId purchId: idToView){
+        for(String purchId: idToView){
             Optional<Purchase> optPurch = purchaseRepository.findById(purchId);
             optPurch.ifPresent(purchases::add);
         }

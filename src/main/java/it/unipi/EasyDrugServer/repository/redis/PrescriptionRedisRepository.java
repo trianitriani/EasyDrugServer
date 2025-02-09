@@ -159,7 +159,7 @@ public class PrescriptionRedisRepository {
         return drug;
     }
 
-    public PrescribedDrugDTO deleteInactivePrescribedDrug(String patientCode, int idDrug) {
+    public PrescribedDrugDTO deleteInactivePrescribedDrug(String patientCode, String idDrug) {
         PrescribedDrugDTO prescribedDrug;
         for(int i = 1; i<=redisHelper.nEntities(jedis, this.pres); i++) {
             // cerco l'unica prescrizione inattiva con timestamp false
@@ -171,7 +171,7 @@ public class PrescriptionRedisRepository {
                 for(int j = 1; j<=redisHelper.nEntities(jedis, this.presDrug); j++) {
                     String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
                     if(jedis.exists(keyPresDrug + "id")){
-                        if(idDrug == Integer.parseInt(jedis.get(keyPresDrug + "id"))){
+                        if(Objects.equals(idDrug, jedis.get(keyPresDrug + "id"))){
                             // è il farmaco da rimuovere
                             // preparo l'oggetto per il ritorno
                             prescribedDrug = createPrescribedDrugDTO(idDrug, keyPresDrug);
@@ -197,7 +197,7 @@ public class PrescriptionRedisRepository {
         throw new NotFoundException("Not found any inactive prescription related to patient "+patientCode);
     }
 
-    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String patientCode, int idDrug, int quantity) {
+    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String patientCode, String idDrug, int quantity) {
         // cercare l'id della prescrizione inattiva
         int index_pres = 0;
         for(int i = 1; i<=redisHelper.nEntities(jedis, this.pres); i++) {
@@ -216,7 +216,7 @@ public class PrescriptionRedisRepository {
             // cerco tutti i farmaci con il campo "timestamp" non esistente (quelli non ancora confermati)
             String keyPresDrug = this.presDrug + ":" + i + ":" + index_pres + ":";
             if(jedis.exists(keyPresDrug + "id")){
-                if(idDrug == Integer.parseInt(jedis.get(keyPresDrug + "id"))){
+                if(Objects.equals(idDrug, jedis.get(keyPresDrug + "id"))){
                     // ho trovato il farmaco da modificare
                     jedis.set(keyPresDrug + "quantity", String.valueOf(quantity));
                     return createPrescribedDrugDTO(idDrug, quantity, keyPresDrug);
@@ -279,7 +279,7 @@ public class PrescriptionRedisRepository {
 
     private PrescribedDrugDTO createPrescribedDrugDTO(String key){
         PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
-        prescribedDrug.setId(Integer.parseInt(jedis.get(key + "id")));
+        prescribedDrug.setId(jedis.get(key + "id"));
         JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
         prescribedDrug.setName(jsonObject.get("name").getAsString());
         prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
@@ -288,7 +288,7 @@ public class PrescriptionRedisRepository {
         return prescribedDrug;
     }
 
-    private PrescribedDrugDTO createPrescribedDrugDTO(int id, String key){
+    private PrescribedDrugDTO createPrescribedDrugDTO(String id, String key){
         PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
         JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
         prescribedDrug.setId(id);
@@ -299,7 +299,7 @@ public class PrescriptionRedisRepository {
         return prescribedDrug;
     }
 
-    private PrescribedDrugDTO createPrescribedDrugDTO(int id, int quantity, String key){
+    private PrescribedDrugDTO createPrescribedDrugDTO(String id, int quantity, String key){
         PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
         JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
         prescribedDrug.setId(id);

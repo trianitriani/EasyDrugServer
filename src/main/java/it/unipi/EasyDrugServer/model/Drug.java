@@ -21,7 +21,7 @@ import java.util.List;
 public class Drug {
 
     @Id
-    private ObjectId id;
+    private String id;
 
     @Indexed
     private String drugName;

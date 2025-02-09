@@ -56,7 +56,7 @@ public class DrugController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResponseDTO> deleteDrug(@PathVariable ObjectId id){
+    public ResponseEntity<ResponseDTO> deleteDrug(@PathVariable String id){
         try {
             Drug drug = drugService.deleteDrug(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drug);
@@ -73,7 +73,7 @@ public class DrugController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO> getDrugById(@PathVariable ObjectId id){
+    public ResponseEntity<ResponseDTO> getDrugById(@PathVariable String id){
         try {
             Drug drug = drugService.getDrugById(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drug);

@@ -1,6 +1,7 @@
 package it.unipi.EasyDrugServer;
 
 import it.unipi.EasyDrugServer.utility.MongoBoot;
+import it.unipi.EasyDrugServer.utility.RedisBoot;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
@@ -12,9 +13,9 @@ public class EasyDrugServerApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(EasyDrugServerApplication.class, args);
 		try {
-			MongoBoot.main(args); // Avvia il codice di MongoBoot
+			// MongoBoot.main(args); // Avvia il codice di MongoBoot
 		} catch (Exception e) {
-			System.out.println("Errore");
+			System.out.println("Errore: "+e.getMessage());
 		}
 	}
 

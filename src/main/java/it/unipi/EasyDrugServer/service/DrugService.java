@@ -24,7 +24,7 @@ public class DrugService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    public Drug getDrugById(ObjectId id) {
+    public Drug getDrugById(String id) {
         Optional<Drug> optDrug = drugRepository.findById(id);
         if(optDrug.isPresent()) return optDrug.get();
         throw new NotFoundException("Drug "+id+" does not exist");
@@ -36,7 +36,7 @@ public class DrugService {
         } else throw new NotFoundException("Drug "+ drug.getId() +" does not exist");
     }
 
-    public Drug deleteDrug(ObjectId id) {
+    public Drug deleteDrug(String id) {
         Optional<Drug> optDrug = drugRepository.findById(id);
         if(optDrug.isPresent()) {
             System.out.println(optDrug);
@@ -52,7 +52,7 @@ public class DrugService {
         else
             throw new ForbiddenException("Drug " + drug.getId() + " already exists");
     }
-    
+
     public List<SimpleDrugDTO> getDrugThatStartWith(String name) {
         List<Drug> drugs = drugRepository.findByDrugNameStartingWithIgnoreCase(name);
         return getSimpleDrugsByDrugs(drugs);

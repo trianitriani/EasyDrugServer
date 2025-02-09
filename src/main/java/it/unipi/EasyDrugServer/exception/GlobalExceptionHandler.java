@@ -14,7 +14,7 @@ import redis.clients.jedis.exceptions.JedisException;
 // @ControllerAdvice(basePackages = "it.unipi.EasyDrugServer.controller")
 @Component
 public class GlobalExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    public static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ResponseDTO> handleNotFoundException(NotFoundException ex) {

@@ -92,7 +92,7 @@ public class PharmacyController {
      */
     @DeleteMapping("/patients/{patCode}/cart/drugs/{idDrug}")
     public ResponseEntity<ResponseDTO> deletePurchaseDrug(@PathVariable String patCode,
-                                                          @PathVariable int idDrug,
+                                                          @PathVariable String idDrug,
                                                           @RequestBody(required = false) LocalDateTime prescriptionTimestamp){
         try {
             PurchaseCartDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(patCode, idDrug, prescriptionTimestamp);
@@ -121,7 +121,7 @@ public class PharmacyController {
      */
     @PatchMapping("/patients/{patCode}/cart/drugs/{idDrug}")
     public ResponseEntity<ResponseDTO> modifyPurchaseDrugQuantity(@PathVariable String patCode,
-                                                                  @PathVariable int idDrug,
+                                                                  @PathVariable String idDrug,
                                                                   @RequestBody int quantity){
         try {
             PurchaseCartDrugDTO purchaseDrug = pharmacyService.modifyPurchaseDrugQuantity(patCode, idDrug, quantity);

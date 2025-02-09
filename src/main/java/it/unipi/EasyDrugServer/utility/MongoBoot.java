@@ -80,7 +80,6 @@ public class MongoBoot {
 
          */
 
-
         List<Process> processes = new ArrayList<>();
 
         // Avvia i nodi del cluster

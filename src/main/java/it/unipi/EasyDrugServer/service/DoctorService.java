@@ -46,11 +46,11 @@ public class DoctorService {
         return prescriptionRedisRepository.insertInactivePrescribedDrug(patientCode, drug);
     }
 
-    public PrescribedDrugDTO deleteInactivePrescribedDrug(String patientCode, int idDrug) {
+    public PrescribedDrugDTO deleteInactivePrescribedDrug(String patientCode, String idDrug) {
         return prescriptionRedisRepository.deleteInactivePrescribedDrug(patientCode, idDrug);
     }
 
-    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String patientCode, int idDrug, int quantity) {
+    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String patientCode, String idDrug, int quantity) {
         if(quantity == 0)
             return prescriptionRedisRepository.deleteInactivePrescribedDrug(patientCode, idDrug);
         else if(quantity < 0)
@@ -133,7 +133,7 @@ public class DoctorService {
             throw new UnauthorizedException("You are not authorized to access this patient");
 
         Optional<Patient> optPatient = patientRepository.findById(id_pat);
-        List<ObjectId> prescriptionsId = new ArrayList<>();
+        List<String> prescriptionsId = new ArrayList<>();
         List<Purchase> prescriptions = new ArrayList<>();
         if(optPatient.isPresent())
             prescriptionsId = optPatient.get().getPrescriptions();
@@ -141,10 +141,10 @@ public class DoctorService {
         int startIndex = prescriptionsId.size() - 1 - nAlreadyViewed;
         int endIndex = startIndex - N_TO_VIEW;
         // id of purchased drugs that interest us
-        List<ObjectId> idToView = prescriptionsId.subList(endIndex, startIndex);
+        List<String> idToView = prescriptionsId.subList(endIndex, startIndex);
 
         // retrieve information of any id
-        for(ObjectId prescId: idToView){
+        for(String prescId: idToView){
             Optional<Purchase> optPurch = purchaseRepository.findById(prescId);
             optPurch.ifPresent(prescriptions::add);
         }
