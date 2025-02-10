@@ -139,13 +139,13 @@ public class PurchaseCartRedisRepository {
     }
 
     public ConfirmPurchaseCartDTO confirmPurchaseCart(String patientCode){
-        HashMap<String, List<String>> prescribedDrugs = new HashMap<>();
+        LinkedHashMap<String, List<String>> prescribedDrugs = new LinkedHashMap<>();
         List<PurchaseCartDrugDTO> purchaseDrugs = new ArrayList<>();
-        HashMap<String, Integer> purchToDelete = new HashMap<>();
-        HashMap<String, Integer> presDrugToDelete = new HashMap<>();
+        LinkedHashMap<String, Integer> purchToDelete = new LinkedHashMap<>();
+        LinkedHashMap<String, Integer> presDrugToDelete = new LinkedHashMap<>();
         List<String> presDrugPurchased = new ArrayList<>();
-        HashMap<String, Integer> presToDelete = new HashMap<>();
-        HashMap<String, Integer> presToModify = new HashMap<>();
+        LinkedHashMap<String, Integer> presToDelete = new LinkedHashMap<>();
+        LinkedHashMap<String, Integer> presToModify = new LinkedHashMap<>();
         // cerco tutti i farmaci che sono nel carrello e si riferiscono al paziente selezionato
         for(int i=1; i<=redisHelper.nEntities(jedis, this.entity); i++){
             String keyPurch = this.entity + ":" + i + ":" + patientCode + ":";
@@ -187,7 +187,7 @@ public class PurchaseCartRedisRepository {
                 for(int k=1; k<=redisHelper.nEntities(jedis, "pres-drug"); k++){
                     String presDrugKey = "pres-drug:" + k + ":" + j + ":";
                     if(jedis.exists(presDrugKey + "id")){
-                        int id = Integer.parseInt(jedis.get((presDrugKey + "id")));
+                        String id = jedis.get((presDrugKey + "id"));
                         if(drugs.contains(id)){
                             if (ended){
                                 // Allora vado a eliminare quel farmaco

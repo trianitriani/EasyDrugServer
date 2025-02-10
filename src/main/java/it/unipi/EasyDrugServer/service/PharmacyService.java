@@ -116,35 +116,33 @@ public class PharmacyService {
         Optional<Patient> optPatient = patientRepository.findById(patientCode);
         Patient patient;
         int nDrugs = 0;
+
         if(optPatient.isPresent()) {
             patient = optPatient.get();
+
+            System.out.println("Latest Purchased Drugs Before Update: " + patient.getLatestPurchasedDrugs());   // DEBUG
+
             nDrugs = patient.getLatestPurchasedDrugs().size();
         }
 
-        Update update;
-        if(nDrugs >= 5) {
-            update = new Update()
-                    .pop("latestPurchasedDrugs", Update.Position.LAST) // Rimuove l'ultimo elemento
-                    .push("latestPurchasedDrugs").atPosition(0).value(latestPurchase);
-
+        if (nDrugs >= 5) {
+            // PRIMO UPDATE: Rimuove l'ultimo elemento
+            Update popUpdate = new Update().pop("latestPurchasedDrugs", Update.Position.LAST);
+            System.out.println("Executing Update: " + popUpdate);  // DEBUG
+            mongoTemplate.updateFirst(query, popUpdate, Patient.class);
         }
-        else{
-            update = new Update()
-                    .push("latestPurchasedDrugs").atPosition(0).value(latestPurchase);
 
-        }
-        mongoTemplate.updateFirst(query, update, Patient.class);
+        Update pushUpdate = new Update().push("latestPurchasedDrugs").atPosition(0).value(latestPurchase);
+        System.out.println("Executing Update: " + pushUpdate);  // DEBUG
+        mongoTemplate.updateFirst(query, pushUpdate, Patient.class);
 
         // aggiorno le liste "purchases" e "prescriptions"
-        for(String id : purchaseDrugsId){
-            update = new Update().push("purchases").value(id);
-            mongoTemplate.updateFirst(query, update, Patient.class);
-        }
+        Update updateLists = new Update()
+                .push("purchases").each(purchaseDrugsId.toArray())
+                .push("prescriptions").each(prescribedDrugsId.toArray());
 
-        for(String id : prescribedDrugsId){
-            update = new Update().push("prescriptions").value(id);
-            mongoTemplate.updateFirst(query, update, Patient.class);
-        }
+        System.out.println("Executing Update: " + updateLists);  // DEBUG
+        mongoTemplate.updateFirst(query, updateLists, Patient.class);
         return latestPurchase;
     }
 
