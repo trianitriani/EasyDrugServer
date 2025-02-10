@@ -20,4 +20,6 @@ public interface DrugRepository extends MongoRepository<Drug, String> {
     List<Drug> findByDrugNameContainingIgnoreCaseAndOnPrescriptionFalse(String name);
 
     List<Drug> findByDrugNameContainingIgnoreCaseAndOnPrescriptionTrue(String name);
+
+    List<Drug> findByOnPrescriptionTrue();
 }

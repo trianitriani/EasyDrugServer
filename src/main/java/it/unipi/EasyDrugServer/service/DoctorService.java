@@ -41,11 +41,11 @@ public class DoctorService {
         return prescriptionRedisRepository.insertInactivePrescribedDrug(patientCode, drug);
     }
 
-    public PrescribedDrugDTO deleteInactivePrescribedDrug(String patientCode, int idDrug) {
+    public PrescribedDrugDTO deleteInactivePrescribedDrug(String patientCode, String idDrug) {
         return prescriptionRedisRepository.deleteInactivePrescribedDrug(patientCode, idDrug);
     }
 
-    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String patientCode, int idDrug, int quantity) {
+    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String patientCode, String idDrug, int quantity) {
         if(quantity == 0)
             return prescriptionRedisRepository.deleteInactivePrescribedDrug(patientCode, idDrug);
         else if(quantity < 0)

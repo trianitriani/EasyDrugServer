@@ -7,7 +7,7 @@ import org.bson.types.ObjectId;
 @Setter
 @Getter
 public class PrescribedDrugDTO {
-    private int id;
+    private String id;
     private String name;
     private double price;
     private int quantity;

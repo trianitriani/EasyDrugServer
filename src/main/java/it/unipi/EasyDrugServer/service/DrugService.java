@@ -48,7 +48,7 @@ public class DrugService {
     public void insertDrug(Drug drug) {
         drugRepository.save(drug);
     }
-    
+
     public List<SimpleDrugDTO> getDrugThatStartWith(String name) {
         List<Drug> drugs = drugRepository.findByDrugNameStartingWithIgnoreCase(name);
         return getSimpleDrugsByDrugs(drugs);

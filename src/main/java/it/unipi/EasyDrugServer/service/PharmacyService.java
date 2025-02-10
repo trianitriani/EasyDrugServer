@@ -63,11 +63,11 @@ public class PharmacyService {
         return purchaseCartRedisRepository.insertPurchaseDrug(patientCode, drug);
     }
 
-    public PurchaseCartDrugDTO deletePurchaseDrug(String patientCode, int idDrug, LocalDateTime prescriptionTimestamp) {
+    public PurchaseCartDrugDTO deletePurchaseDrug(String patientCode, String idDrug, LocalDateTime prescriptionTimestamp) {
         return purchaseCartRedisRepository.deletePurchaseDrug(patientCode, idDrug, String.valueOf(prescriptionTimestamp));
     }
 
-    public PurchaseCartDrugDTO modifyPurchaseDrugQuantity(String patientCode, int idDrug, int quantity) {
+    public PurchaseCartDrugDTO modifyPurchaseDrugQuantity(String patientCode, String idDrug, int quantity) {
         if(quantity == 0)
             return purchaseCartRedisRepository.deletePurchaseDrug(patientCode, idDrug, "");
         else if(quantity < 0)

@@ -198,7 +198,7 @@ public class DoctorController {
      */
     @DeleteMapping("/patients/{patCode}/cart/drugs/{drugId}")
     public ResponseEntity<ResponseDTO> deleteInactivePrescribedDrug(@PathVariable String patCode,
-                                                                    @PathVariable int drugId){
+                                                                    @PathVariable String drugId){
         try {
             PrescribedDrugDTO prescribedDrugDTO = doctorService.deleteInactivePrescribedDrug(patCode, drugId);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
@@ -224,7 +224,7 @@ public class DoctorController {
      */
     @PatchMapping("/patients/{patCode}/cart/drugs/{drugId}")
     public ResponseEntity<ResponseDTO> modifyInactivePrescribedDrugQuantity(@PathVariable String patCode,
-                                                                            @PathVariable int drugId,
+                                                                            @PathVariable String drugId,
                                                                             @RequestBody int quantity){
         try {
             PrescribedDrugDTO prescribedDrugDTO = doctorService.modifyInactivePrescribedDrugQuantity(patCode, drugId, quantity);
