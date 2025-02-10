@@ -137,7 +137,7 @@ public class DoctorService {
         if(!doctorRepository.existsById(id))
             throw new NotFoundException("Doctor "+id+" does not exist");
 
-        List<Patient> patients = patientRepository.findBySurnameContainingIgnoreCaseAndDoctorCode(id, patSurname);
+        List<Patient> patients = patientRepository.findByDoctorCodeAndSurnameStarting(id, patSurname);
         List<SimplePatientDTO> patientDTOs = new ArrayList<>();
         for(Patient patient : patients){
             SimplePatientDTO patientDTO = new SimplePatientDTO();

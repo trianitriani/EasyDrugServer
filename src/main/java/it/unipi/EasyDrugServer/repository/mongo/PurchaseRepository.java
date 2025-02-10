@@ -1,6 +1,7 @@
 package it.unipi.EasyDrugServer.repository.mongo;
 
 import it.unipi.EasyDrugServer.dto.DrugDistributionDTO;
+import it.unipi.EasyDrugServer.dto.TopDrugDTO;
 import it.unipi.EasyDrugServer.model.Purchase;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -29,6 +30,14 @@ public interface PurchaseRepository extends MongoRepository<Purchase, String> {
             "{ $sort: { percentage: ?1 } }"
     })
     List<DrugDistributionDTO> getDistributionByDrug(@Param("drugId") String drugId, @Param("order") int order);
+
+    @Aggregation(pipeline = {
+            "{ $match: { prescriptionDate: { $gte: '?0', $lte: '?1' } } }",
+            "{ $group: { _id: { drugId: '$drugId', name: '$name' }, totalQuantity: { $sum: '$quantity' } } }",
+            "{ $sort: { totalQuantity: -1 } }",
+            "{ $limit: ?2 }"
+    })
+    List<TopDrugDTO> getTopDrugs(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("top") int top);
 
     String id(String id);
 }

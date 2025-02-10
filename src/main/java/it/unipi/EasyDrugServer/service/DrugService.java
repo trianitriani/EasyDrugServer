@@ -50,24 +50,25 @@ public class DrugService {
     }
 
     public List<SimpleDrugDTO> getDrugThatStartWith(String name) {
-        List<Drug> drugs = drugRepository.findByDrugNameStartingWithIgnoreCase(name);
+        List<Drug> drugs = drugRepository.findByDrugNameStarting(name.toLowerCase());
         return getSimpleDrugsByDrugs(drugs);
     }
 
-    public List<SimpleDrugDTO> getDrugsPurchasableThatContain(String name) {
-        List<Drug> drugs = drugRepository.findByDrugNameContainingIgnoreCaseAndOnPrescriptionFalse(name);
+    public List<SimpleDrugDTO> getDrugsPurchasableThatStarts(String name) {
+        List<Drug> drugs = drugRepository.findByDrugNameStartingAndOnPrescription(name.toLowerCase(), false);
         return getSimpleDrugsByDrugs(drugs);
     }
 
-    public List<SimpleDrugDTO> getDrugsOnPrescriptionThatContain(String name) {
-        List<Drug> drugs = drugRepository.findByDrugNameContainingIgnoreCaseAndOnPrescriptionTrue(name);
+    public List<SimpleDrugDTO> getDrugsOnPrescriptionThatStarts(String name) {
+        List<Drug> drugs = drugRepository.findByDrugNameStartingAndOnPrescription(name.toLowerCase(), true);
         return getSimpleDrugsByDrugs(drugs);
     }
 
+    /*
     public List<SimpleDrugDTO> getDrugsByIndication(String name) {
         List<Drug> drugs = drugRepository.findByIndicationsContaining(name);
         return getSimpleDrugsByDrugs(drugs);
-    }
+    }*/
 
     private List<SimpleDrugDTO> getSimpleDrugsByDrugs(List<Drug> drugs) {
         List<SimpleDrugDTO> simpleDrugs = new ArrayList<>();

@@ -193,7 +193,7 @@ public class PharmacyService {
                 pharmacy_.setPassword(PasswordHasher.hash(pharmacy.getPassword()));
             pharmacyRepository.save(pharmacy_);
             return pharmacy_;
-        } else throw new NotFoundException("Researcher "+pharmacy.getId()+" does not exist");
+        } else throw new NotFoundException("Pharmacy "+pharmacy.getId()+" does not exist");
     }
 
     public Pharmacy deletePharmacy(String id) {

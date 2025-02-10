@@ -4,6 +4,7 @@ import it.unipi.EasyDrugServer.dto.PatientDoctorRatioDTO;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import it.unipi.EasyDrugServer.model.Patient;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -22,5 +23,6 @@ public interface PatientRepository extends MongoRepository<Patient, String> {
     })
     List<PatientDoctorRatioDTO> getPatientsToDoctorsRatio(@Param("order") int order);
 
-    List<Patient> findBySurnameContainingIgnoreCaseAndDoctorCode(String id, String patSurname);
+    @Query("{ 'doctorCode': '?0', 'surname' : { $regex: '^?1' } }")
+    List<Patient> findByDoctorCodeAndSurnameStarting(String id, String patSurname);
 }

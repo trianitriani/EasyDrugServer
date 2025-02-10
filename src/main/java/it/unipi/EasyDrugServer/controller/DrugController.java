@@ -106,7 +106,7 @@ public class DrugController {
     @GetMapping("/search/{name}/purchasable")
     public ResponseEntity<ResponseDTO> getDrugsPurchasableThatContain(@PathVariable String name){
         try {
-            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsPurchasableThatContain(name);
+            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsPurchasableThatStarts(name);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MongoSocketException e) {
@@ -121,7 +121,7 @@ public class DrugController {
     @GetMapping("/search/{name}/on-prescription")
     public ResponseEntity<ResponseDTO> getDrugsOnPrescriptionThatContain(@PathVariable String name){
         try {
-            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsOnPrescriptionThatContain(name);
+            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsOnPrescriptionThatStarts(name);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MongoSocketException e) {
@@ -133,6 +133,7 @@ public class DrugController {
         }
     }
 
+    /*
     @GetMapping("/indications/{name}")
     public ResponseEntity<ResponseDTO> getDrugsByIndication(@PathVariable String name) {
         try {
@@ -146,5 +147,5 @@ public class DrugController {
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
-    }
+    }*/
 }

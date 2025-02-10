@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import java.util.List;
@@ -96,8 +97,8 @@ public class ResearcherController {
 
     @GetMapping("/purchases/top/{top}/from/{from}/to/{to}")
     public ResponseEntity<ResponseDTO> getTopPurchases(@PathVariable int top,
-                                                       @PathVariable LocalDate from,
-                                                       @PathVariable LocalDate to){
+                                                       @PathVariable LocalDateTime from,
+                                                       @PathVariable LocalDateTime to){
         try{
             List<TopDrugDTO> topDrugs = researcherService.getTopPurchases(top, from, to);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, topDrugs);

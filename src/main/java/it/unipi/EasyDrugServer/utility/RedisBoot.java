@@ -24,6 +24,7 @@ public class RedisBoot {
     private final DoctorService doctorService;
     private final Jedis jedis;
 
+    /*
     @PostConstruct
     public void init() {
         try {
@@ -54,4 +55,6 @@ public class RedisBoot {
         int min = 1;
         return (int) (Math.random() * (max - min + 1)) + min;
     }
+
+     */
 }

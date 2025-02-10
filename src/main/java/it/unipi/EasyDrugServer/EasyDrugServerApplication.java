@@ -14,11 +14,10 @@ public class EasyDrugServerApplication {
 		SpringApplication.run(EasyDrugServerApplication.class, args);
 
 		try {
-			// MongoBoot.main(args); // Avvia il codice di MongoBoot
+			MongoBoot.main(args); // Avvia il codice di MongoBoot
 		} catch (Exception e) {
 			System.out.println("Errore nel boot: " + e.getMessage());
 		}
-
 
 	}
 

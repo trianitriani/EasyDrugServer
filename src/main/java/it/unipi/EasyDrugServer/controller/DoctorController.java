@@ -115,7 +115,8 @@ public class DoctorController {
     }
 
     @GetMapping("/{id}/patients/surname/{patSurname}")
-    public ResponseEntity<ResponseDTO> getOwnPatients(@PathVariable String id, @PathVariable String patSurname){
+    public ResponseEntity<ResponseDTO> getOwnPatients(@PathVariable String id,
+                                                      @PathVariable String patSurname){
         try {
             List<SimplePatientDTO> simplePatientDTO = doctorService.getOwnPatients(id, patSurname);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, simplePatientDTO);

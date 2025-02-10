@@ -5,6 +5,7 @@ import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Researcher;
+import it.unipi.EasyDrugServer.repository.mongo.DrugRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PatientRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.mongo.ResearcherRepository;
@@ -19,6 +20,7 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +32,7 @@ public class ResearcherService {
     private final ResearcherRepository researcherRepository;
     private final PatientRepository patientRepository;
     private final PurchaseRepository purchaseRepository;
+    private final DrugRepository drugRepository;
     private MongoTemplate mongoTemplate;
 
     public Researcher getResearcherById(String id) {
@@ -71,48 +74,17 @@ public class ResearcherService {
         };
     }
 
-    public List<TopDrugDTO> getTopPurchases(int top, LocalDate from, LocalDate to){
-        if(top <= 1)
+    public List<TopDrugDTO> getTopPurchases(int top, LocalDateTime from, LocalDateTime to){
+        if(top < 1)
             throw new BadRequestException("It is impossible to get a top " + top + " purchases");
 
-        Aggregation aggregation = Aggregation.newAggregation(
-                // Filtra gli acquisti con prescriptionDate tra 'from' e 'to'
-                Aggregation.match(Criteria.where("prescriptionDate").gte(from).lte(to)),
-
-                // Raggruppa per drugId e conta le occorrenze
-                Aggregation.group("drugId", "name").sum("quantity").as("totalQuantity"),
-
-                // Ordina in ordine decrescente in base al totale
-                Aggregation.sort(org.springframework.data.domain.Sort.Direction.DESC, "totalQuantity"),
-
-                // Limita ai primi "top" risultati
-                Aggregation.limit(top)
-        );
-
-        AggregationResults<TopDrugDTO> topPurchases = mongoTemplate.aggregate(aggregation, "purchases", TopDrugDTO.class);
-        return topPurchases.getMappedResults();
+        return purchaseRepository.getTopDrugs(from, to, top);
     }
 
     public List<TopRareIndicationDTO> getIndicationsWithLessDrugs(int top){
-        if(top <= 1)
+        if(top < 1)
             throw new BadRequestException("It is impossible to get a top " + top + " purchases");
-        Aggregation aggregation = Aggregation.newAggregation(
-                // Esplodi l'array "indications" per lavorare sulle singole malattie
-                Aggregation.unwind("indications"),
 
-                // Raggruppa per "indicationId" e conta i farmaci
-                Aggregation.group("indications.indicationId", "indications.indicationName")
-                        .addToSet("drugName").as("drugNames") // Colleziona i nomi dei farmaci
-                        .count().as("drugCount"), // Conta i farmaci
-
-                // Ordina in ordine crescente per numero di farmaci
-                Aggregation.sort(org.springframework.data.domain.Sort.Direction.ASC, "drugCount"),
-
-                // Limita ai primi "top" risultati
-                Aggregation.limit(top)
-        );
-
-        AggregationResults<TopRareIndicationDTO> diseases = mongoTemplate.aggregate(aggregation, "drugs", TopRareIndicationDTO.class);
-        return diseases.getMappedResults();
+        return drugRepository.getIndicationsWithLessDrugs(top);
     }
 }
