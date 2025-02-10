@@ -15,24 +15,28 @@ import org.springframework.stereotype.Repository;
 public interface PurchaseRepository extends MongoRepository<Purchase, String> {
 
     @Aggregation(pipeline = {
-            "{ $match: { drugId: ?0 } }",
-            "{ $group: { _id: '$region', numberOfSaledDrugs: { $sum: '$quantity' } } }",
+            "{ $match: { { purchaseDate: { $gte: '?2', $lte: '?3' } }, drugId: ?0 } }",
+            "{ $group: { _id: '$region', numberOfSoldDrugs: { $sum: '$quantity' } } }",
             "{ $group: { " +
                     "_id: null, " +
-                    "regionalSales: { $push: { region: '$_id', numberOfSaledDrugs: '$numberOfSaledDrugs' } }, " +
-                    "numberOfSaledDrugsInItaly: { $sum: '$numberOfSaledDrugs' } } }",
+                    "regionalSales: { $push: { region: '$_id', numberOfSoldDrugs: '$numberOfSoldDrugs' } }, " +
+                    "numberOfSoldDrugsInItaly: { $sum: '$numberOfSoldDrugs' } } }",
             "{ $unwind: '$regionalSales' }",
             "{ $project: { " +
-                    "_id: 0, " +
                     "region: '$regionalSales.region', " +
-                    "totalQuantity: '$regionalSales.numberOfSaledDrugs', " +
-                    "percentage: { $multiply: [ { $divide: ['$regionalSales.numberOfSaledDrugs', '$numberOfSaledDrugsInItaly'] }, 100 ] } } }",
+                    "numberOfSoldDrugs: '$regionalSales.numberOfSoldDrugs', " +
+                    "percentage: { $multiply: [ " +
+                    "{ $cond: { " +
+                    "if: { $eq: ['$numberOfSoldDrugsInItaly', 0] }, " +
+                    "then: 0, " +
+                    "else: { $divide: [{ $toDouble: '$regionalSales.numberOfSoldDrugs' }, '$numberOfSoldDrugsInItaly'] } } }, " +
+                    "100 ] } } }",
             "{ $sort: { percentage: ?1 } }"
     })
-    List<DrugDistributionDTO> getDistributionByDrug(@Param("drugId") String drugId, @Param("order") int order);
+    List<DrugDistributionDTO> getDistributionByDrug(@Param("drugId") ObjectId drugId, @Param("order") int order, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     @Aggregation(pipeline = {
-            "{ $match: { prescriptionDate: { $gte: '?0', $lte: '?1' } } }",
+            "{ $match: { purchaseDate: { $gte: '?0', $lte: '?1' } } }",
             "{ $group: { _id: { drugId: '$drugId', name: '$name' }, totalQuantity: { $sum: '$quantity' } } }",
             "{ $sort: { totalQuantity: -1 } }",
             "{ $limit: ?2 }"

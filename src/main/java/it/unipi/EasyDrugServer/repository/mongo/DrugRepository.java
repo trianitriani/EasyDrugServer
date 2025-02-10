@@ -25,7 +25,7 @@ public interface DrugRepository extends MongoRepository<Drug, String> {
     @Aggregation(pipeline = {
             "{ $unwind: '$indications' }",
             "{ $group: { " +
-                    "_id: { indicationId: '$indications.indicationId', indicationName: '$indications.indicationName' }, " +
+                    "_id: '$indications', " +
                     "drugNames: { $addToSet: '$drugName' }, " +
                     "drugCount: { $sum: 1 } } }",
             "{ $sort: { drugCount: 1 } }",
@@ -33,4 +33,5 @@ public interface DrugRepository extends MongoRepository<Drug, String> {
     })
     List<TopRareIndicationDTO> getIndicationsWithLessDrugs(@Param("top") int top);
 
+    List<Drug> findByOnPrescriptionTrue();
 }

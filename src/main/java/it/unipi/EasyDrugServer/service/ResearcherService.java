@@ -66,10 +66,11 @@ public class ResearcherService {
         };
     }
 
-    public List<DrugDistributionDTO> getDistributionByDrug(String idDrug, Order order) {
+    public List<DrugDistributionDTO> getDistributionByDrug(String idDrug, Order order, LocalDateTime from, LocalDateTime to) {
+        ObjectId objDrugId = new ObjectId(idDrug);
         return switch (order) {
-            case ASC -> purchaseRepository.getDistributionByDrug(idDrug, 1);
-            case DESC -> purchaseRepository.getDistributionByDrug(idDrug, -1);
+            case ASC -> purchaseRepository.getDistributionByDrug(objDrugId, 1, from, to);
+            case DESC -> purchaseRepository.getDistributionByDrug(objDrugId, -1, from, to);
             default -> throw new BadRequestException("The order is invalid");
         };
     }

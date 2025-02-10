@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import com.google.gson.*;
-import org.bson.types.ObjectId;
 
-import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -59,6 +57,7 @@ public class MongoBoot {
 
             for (JsonElement element : jsonArray) {
                 Document doc = Document.parse(element.toString());
+                ConvertDates.convertDates(doc);     // CONVERSIONE DATE 
                 documents.add(doc);
             }
 

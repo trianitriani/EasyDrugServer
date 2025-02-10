@@ -114,11 +114,13 @@ public class ResearcherController {
         }
     }
 
-    @GetMapping("/drugs/{id_drug}/distribution/order/{order}")
+    @GetMapping("/drugs/{id_drug}/distribution/from/{from}/to/{to}/order/{order}")
     public ResponseEntity<ResponseDTO> getDistributionByDrug(@PathVariable String id_drug,
+                                                             @PathVariable LocalDateTime from,
+                                                             @PathVariable LocalDateTime to,
                                                              @PathVariable Order order){
         try {
-            List<DrugDistributionDTO> list = researcherService.getDistributionByDrug(id_drug, order);
+            List<DrugDistributionDTO> list = researcherService.getDistributionByDrug(id_drug, order, from, to);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, list);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (NotFoundException e) {
