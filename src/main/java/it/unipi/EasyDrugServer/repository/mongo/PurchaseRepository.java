@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 public interface PurchaseRepository extends MongoRepository<Purchase, String> {
 
     @Aggregation(pipeline = {
-            "{ $match: { { purchaseDate: { $gte: '?2', $lte: '?3' } }, drugId: ?0 } }",
+            "{ $match: { purchaseDate: { $gte: ?2, $lte: ?3 }, drugId: ?0 } }",
             "{ $group: { _id: '$region', numberOfSoldDrugs: { $sum: '$quantity' } } }",
             "{ $group: { " +
                     "_id: null, " +
@@ -36,7 +36,7 @@ public interface PurchaseRepository extends MongoRepository<Purchase, String> {
     List<DrugDistributionDTO> getDistributionByDrug(@Param("drugId") ObjectId drugId, @Param("order") int order, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     @Aggregation(pipeline = {
-            "{ $match: { purchaseDate: { $gte: '?0', $lte: '?1' } } }",
+            "{ $match: { purchaseDate: { $gte: ?0, $lte: ?1 } } }",
             "{ $group: { _id: { drugId: '$drugId', name: '$name' }, totalQuantity: { $sum: '$quantity' } } }",
             "{ $sort: { totalQuantity: -1 } }",
             "{ $limit: ?2 }"

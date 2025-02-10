@@ -64,12 +64,6 @@ public class DrugService {
         return getSimpleDrugsByDrugs(drugs);
     }
 
-    /*
-    public List<SimpleDrugDTO> getDrugsByIndication(String name) {
-        List<Drug> drugs = drugRepository.findByIndicationsContaining(name);
-        return getSimpleDrugsByDrugs(drugs);
-    }*/
-
     private List<SimpleDrugDTO> getSimpleDrugsByDrugs(List<Drug> drugs) {
         List<SimpleDrugDTO> simpleDrugs = new ArrayList<>();
         for(Drug drug: drugs){
