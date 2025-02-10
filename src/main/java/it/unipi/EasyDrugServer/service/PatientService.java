@@ -27,7 +27,7 @@ public class PatientService {
     private final PrescriptionRedisRepository prescriptionRedisRepository;
     private final PatientRepository patientRepository;
     private final PurchaseRepository purchaseRepository;
-    private final int N_TO_VIEW = 10;
+    private final int N_TO_VIEW = 6;
 
     public List<PrescriptionDTO> getAllActivePrescriptions(String patientCode){
         return prescriptionRedisRepository.getAllActivePrescriptions(patientCode);
@@ -44,6 +44,13 @@ public class PatientService {
         accountPatientDTO.setId(patient.getId());
         accountPatientDTO.setName(patient.getName());
         accountPatientDTO.setSurname(patient.getSurname());
+        accountPatientDTO.setCity(patient.getCity());
+        accountPatientDTO.setDistrict(patient.getDistrict());
+        accountPatientDTO.setRegion(patient.getRegion());
+        accountPatientDTO.setDateOfBirth(patient.getDateOfBirth());
+        accountPatientDTO.setGender(patient.getGender());
+        accountPatientDTO.setTaxCode(patient.getTaxCode());
+        accountPatientDTO.setDoctorCode(patient.getDoctorCode());
         return accountPatientDTO;
     }
 

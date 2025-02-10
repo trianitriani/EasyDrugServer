@@ -7,6 +7,7 @@ import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.dto.SessionUserDTO;
 import it.unipi.EasyDrugServer.dto.SignupUserDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
+import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
 import it.unipi.EasyDrugServer.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +31,10 @@ public class AuthController {
             SessionUserDTO sessionUserDTO = authService.signup(user);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, sessionUserDTO);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (BadRequestException e){
+        } catch (BadRequestException e) {
             return exceptionHandler.handleBadRequestException(e);
+        } catch (ForbiddenException e){
+            return exceptionHandler.handleForbiddenException(e);
         } catch (MongoSocketException e) {
             return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
         } catch (MongoException e) {

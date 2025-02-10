@@ -20,10 +20,14 @@ public class SignupUserDTO {
     private String surname;
     private String dateOfBirth;
     private String taxCode;
+    private String gender;
 
     // for doctor, researcher
     private String doctorRegisterCode;
     private String researcherRegisterCode;
+
+    // for patient
+    private String doctorCode;
 
     // for pharmacy
     private String vatNumber;

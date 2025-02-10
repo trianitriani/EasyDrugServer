@@ -8,6 +8,7 @@ import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
+import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.LatestPurchase;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.service.PatientService;
@@ -35,6 +36,8 @@ public class PatientController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e) {
             return exceptionHandler.handleBadRequestException(e);
+        } catch (NotFoundException e) {
+            return exceptionHandler.handleNotFoundException(e);
         } catch (MongoSocketException e) {
             return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
         } catch (MongoException e) {
