@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 @Repository
-public interface PurchaseRepository extends MongoRepository<Purchase, ObjectId> {
+public interface PurchaseRepository extends MongoRepository<Purchase, String> {
 
     @Aggregation(pipeline = {
             "{ $match: { drugId: ?0 } }",
@@ -28,7 +28,7 @@ public interface PurchaseRepository extends MongoRepository<Purchase, ObjectId> 
                     "percentage: { $multiply: [ { $divide: ['$regionalSales.numberOfSaledDrugs', '$numberOfSaledDrugsInItaly'] }, 100 ] } } }",
             "{ $sort: { percentage: ?1 } }"
     })
-    List<DrugDistributionDTO> getDistributionByDrug(@Param("drugId") ObjectId drugId, @Param("order") int order);
+    List<DrugDistributionDTO> getDistributionByDrug(@Param("drugId") String drugId, @Param("order") int order);
 
     String id(String id);
 }

@@ -114,7 +114,7 @@ public class ResearcherController {
     }
 
     @GetMapping("/drugs/{id_drug}/distribution/order/{order}")
-    public ResponseEntity<ResponseDTO> getDistributionByDrug(@PathVariable ObjectId id_drug,
+    public ResponseEntity<ResponseDTO> getDistributionByDrug(@PathVariable String id_drug,
                                                              @PathVariable Order order){
         try {
             List<DrugDistributionDTO> list = researcherService.getDistributionByDrug(id_drug, order);

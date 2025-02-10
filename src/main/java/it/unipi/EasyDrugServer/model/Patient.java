@@ -38,6 +38,6 @@ public class Patient {
     @Field("latestPurchasedDrugs")
     private List<LatestPurchase> latestPurchasedDrugs;
 
-    private List<ObjectId> purchases;
-    private List<ObjectId> prescriptions;
+    private List<String> purchases;
+    private List<String> prescriptions;
 }

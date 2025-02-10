@@ -13,11 +13,6 @@ import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
-// import org.apache.coyote.BadRequestException;
-import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 
@@ -85,44 +80,6 @@ public class DoctorService {
         return doctor;
     }
 
-    /*
-    public List<PrescriptionDTO> getLatestPrescriptions(String id_doc, String id_pat) {
-        if(!doctorRepository.existsById(id_doc))
-            throw new NotFoundException("Doctor "+id_doc+" does not exists");
-
-        Patient patient = (Patient) userService.getUserIfExists(id_pat, UserType.PATIENT);
-        if(!Objects.equals(patient.getDoctorCode(), id_doc))
-            throw new UnauthorizedException("You are not authorized to access this patient");
-
-        List<LatestPurchase> latestPurchased = patient.getLatestPurchasedDrugs();
-        HashMap<LocalDateTime, PrescriptionDTO> prescriptionsHash = new HashMap<>();
-        for(LatestPurchase latestPurchase : latestPurchased) {
-            for(LatestDrug latestDrug : latestPurchase.getDrugs()){
-                LocalDateTime timestamp = latestDrug.getPrescriptionDate();
-                if(timestamp == null) continue;
-                PrescribedDrugDTO drug = new PrescribedDrugDTO();
-                drug.setId((latestDrug.getDrugId()));
-                drug.setName(latestDrug.getDrugName());
-                drug.setPrice(latestDrug.getPrice());
-                drug.setPurchased(true);
-                drug.setQuantity(latestDrug.getQuantity());
-                if(!prescriptionsHash.containsKey(timestamp)){
-                    PrescriptionDTO prescriptionDTO = new PrescriptionDTO();
-                    prescriptionDTO.setTimestamp(timestamp);
-                    List<PrescribedDrugDTO> prescribedDrugs = new ArrayList<>();
-                    prescribedDrugs.add(drug);
-                    prescriptionDTO.setPrescribedDrugs(prescribedDrugs);
-                    prescriptionsHash.put(timestamp, prescriptionDTO);
-                } else {
-                    prescriptionsHash.get(timestamp).getPrescribedDrugs().add(drug);
-                }
-            }
-        }
-        return (List<PrescriptionDTO>) prescriptionsHash.values();
-    }
-
-     */
-
     // mostra le successive prescrizioni già concluse dopo la mAlreadyViews-esima divise per prescrizione
     public List<LatestPurchase> getNextPrescriptionDrugs(String id_doc, String id_pat, int nAlreadyViewed) {
         if(!doctorRepository.existsById(id_doc))
@@ -133,18 +90,22 @@ public class DoctorService {
             throw new UnauthorizedException("You are not authorized to access this patient");
 
         Optional<Patient> optPatient = patientRepository.findById(id_pat);
-        List<ObjectId> prescriptionsId = new ArrayList<>();
+        List<String> prescriptionsId = new ArrayList<>();
         List<Purchase> prescriptions = new ArrayList<>();
         if(optPatient.isPresent())
             prescriptionsId = optPatient.get().getPrescriptions();
 
-        int startIndex = prescriptionsId.size() - 1 - nAlreadyViewed;
+        int startIndex = prescriptionsId.size() - nAlreadyViewed;
+        if(startIndex <= 0)
+            return new ArrayList<>();
+
         int endIndex = startIndex - N_TO_VIEW;
+        if(endIndex < 0) endIndex = 0;
         // id of purchased drugs that interest us
-        List<ObjectId> idToView = prescriptionsId.subList(endIndex, startIndex);
+        List<String> idToView = prescriptionsId.subList(endIndex, startIndex);
 
         // retrieve information of any id
-        for(ObjectId prescId: idToView){
+        for(String prescId: idToView){
             Optional<Purchase> optPurch = purchaseRepository.findById(prescId);
             optPurch.ifPresent(prescriptions::add);
         }
@@ -158,6 +119,7 @@ public class DoctorService {
             drug.setDrugName(purch.getName());
             drug.setQuantity(purch.getQuantity());
             drug.setPrice(purch.getPrice());
+            drug.setPrescriptionDate(purch.getPrescriptionDate());
             if(!hashPurchases.containsKey(purch.getPurchaseDate())){
                 LatestPurchase latestPurchase = new LatestPurchase();
                 List<LatestDrug> drugs = new ArrayList<>();
@@ -168,7 +130,7 @@ public class DoctorService {
             } else
                 hashPurchases.get(purch.getPurchaseDate()).getDrugs().add(drug);
         }
-        return (List<LatestPurchase>) hashPurchases.values();
+        return new ArrayList<>(hashPurchases.values());
     }
 
     public List<SimplePatientDTO> getOwnPatients(String id, String patSurname) {

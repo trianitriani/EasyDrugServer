@@ -2,6 +2,7 @@ package it.unipi.EasyDrugServer.controller;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
+import it.unipi.EasyDrugServer.dto.AccountPatientDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
@@ -43,10 +44,27 @@ public class PatientController {
         }
     }
 
-    @PutMapping()
-    public ResponseEntity<ResponseDTO> modifyPatient(@RequestBody Patient patient){
+    @GetMapping("/{id}/profile")
+    public ResponseEntity<ResponseDTO> getAccountPatientById(@PathVariable String id){
         try {
-            Patient patient_ = patientService.modifyPatient(patient);
+            AccountPatientDTO patient = patientService.getAccountPatientById(id);
+            ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (BadRequestException e) {
+            return exceptionHandler.handleBadRequestException(e);
+        } catch (MongoSocketException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (MongoException e) {
+            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e){
+            return exceptionHandler.handleException(e);
+        }
+    }
+
+    @PutMapping()
+    public ResponseEntity<ResponseDTO> modifyPatient(@RequestBody AccountPatientDTO patient){
+        try {
+            AccountPatientDTO patient_ = patientService.modifyPatient(patient);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, patient_);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -96,7 +114,7 @@ public class PatientController {
 
     @GetMapping("/{id}/purchases/from/{nAlreadyViewed}")
     public ResponseEntity<ResponseDTO> getNextPurchases(@PathVariable String id,
-                                                        @PathVariable Integer nAlreadyViewed){
+                                                        @PathVariable int nAlreadyViewed){
         try {
             List<LatestPurchase> purchases = patientService.getNextPurchaseDrugs(id, nAlreadyViewed);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);

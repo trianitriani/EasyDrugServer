@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface DrugRepository extends MongoRepository<Drug, ObjectId> {
+public interface DrugRepository extends MongoRepository<Drug, String> {
 
     @Query("{ 'drugName' : { $regex: '^?0', $options: 'i' } }")
     List<Drug> findByDrugNameStartingWithIgnoreCase(String drugName);

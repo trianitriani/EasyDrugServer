@@ -77,8 +77,8 @@ public class PharmacyService {
 
     // funzione usata per inserire un acquisto di farmaci all'interno di mongo db
     private LatestPurchase insertPurchases(String patientCode, String pharmacyRegion, List<PurchaseCartDrugDTO> purchasedDrugs){
-        List<ObjectId> prescribedDrugsId =  new ArrayList<>();
-        List<ObjectId> purchaseDrugsId =  new ArrayList<>();
+        List<String> prescribedDrugsId =  new ArrayList<>();
+        List<String> purchaseDrugsId =  new ArrayList<>();
         LocalDateTime currentTimestamp = LocalDateTime.now();
         LatestPurchase latestPurchase = new LatestPurchase();
 
@@ -93,7 +93,7 @@ public class PharmacyService {
             purchase.setRegion(pharmacyRegion);
 
             // inserisco nella collezione purchase il farmaco acquistato
-            ObjectId idPurchase = purchaseRepository.save(purchase).getId();
+            String idPurchase = purchaseRepository.save(purchase).getId();
             purchaseDrugsId.add(idPurchase);
             if(purchase.getPrescriptionDate() != null) prescribedDrugsId.add(idPurchase);
 
@@ -136,12 +136,12 @@ public class PharmacyService {
         mongoTemplate.updateFirst(query, update, Patient.class);
 
         // aggiorno le liste "purchases" e "prescriptions"
-        for(ObjectId id : purchaseDrugsId){
+        for(String id : purchaseDrugsId){
             update = new Update().push("purchases").value(id);
             mongoTemplate.updateFirst(query, update, Patient.class);
         }
 
-        for(ObjectId id : prescribedDrugsId){
+        for(String id : prescribedDrugsId){
             update = new Update().push("prescriptions").value(id);
             mongoTemplate.updateFirst(query, update, Patient.class);
         }

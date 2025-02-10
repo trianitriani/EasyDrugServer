@@ -1,9 +1,6 @@
 package it.unipi.EasyDrugServer.service;
 
-import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
-import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
-import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
-import it.unipi.EasyDrugServer.dto.UserType;
+import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.LatestDrug;
 import it.unipi.EasyDrugServer.model.LatestPurchase;
@@ -38,11 +35,19 @@ public class PatientService {
 
     public Patient getPatientById(String id) {
         Object obj = userService.getUserIfExists(id, UserType.PATIENT);
-        System.out.println("D2: "+obj);
         return (Patient) obj;
     }
 
-    public Patient modifyPatient(Patient patient) {
+    public AccountPatientDTO getAccountPatientById(String id) {
+        Patient patient = getPatientById(id);
+        AccountPatientDTO accountPatientDTO = new AccountPatientDTO();
+        accountPatientDTO.setId(patient.getId());
+        accountPatientDTO.setName(patient.getName());
+        accountPatientDTO.setSurname(patient.getSurname());
+        return accountPatientDTO;
+    }
+
+    public AccountPatientDTO modifyPatient(AccountPatientDTO patient) {
         if(patientRepository.existsById(patient.getId())) {
             Patient patient_ = getPatientById(patient.getId());
             patient_.setDistrict(patient.getDistrict());
@@ -52,7 +57,7 @@ public class PatientService {
             if(!Objects.equals(patient.getPassword(), ""))
                 patient_.setPassword(PasswordHasher.hash(patient.getPassword()));
             patientRepository.save(patient_);
-            return patient_;
+            return patient;
         } else throw new NotFoundException("Patient "+patient.getId()+" does not exist");
     }
 
@@ -71,17 +76,22 @@ public class PatientService {
             throw new NotFoundException("Patient "+id_pat+" does not exist");
 
         Optional<Patient> optPatient = patientRepository.findById(id_pat);
-        List<ObjectId> purchasesId = new ArrayList<>();
+        List<String> purchasesId = new ArrayList<>();
         List<Purchase> purchases = new ArrayList<>();
-        if(optPatient.isPresent())
+        if(optPatient.isPresent()){
             purchasesId = optPatient.get().getPurchases();
+        }
 
-        int startIndex = purchasesId.size() - 1 - nAlreadyViewed;
+        int startIndex = purchasesId.size() - nAlreadyViewed;
+        if(startIndex <= 0)
+            return new ArrayList<>();
+
         int endIndex = startIndex - N_TO_VIEW;
+        if(endIndex < 0) endIndex = 0;
         // id of purchased drugs that interest us
-        List<ObjectId> idToView = purchasesId.subList(endIndex, startIndex);
+        List<String> idToView = purchasesId.subList(endIndex, startIndex);
 
-        for(ObjectId purchId: idToView){
+        for(String purchId: idToView){
             Optional<Purchase> optPurch = purchaseRepository.findById(purchId);
             optPurch.ifPresent(purchases::add);
         }
@@ -106,6 +116,6 @@ public class PatientService {
             } else
                 hashPurchases.get(purch.getPurchaseDate()).getDrugs().add(latestDrug);
         }
-        return (List<LatestPurchase>) hashPurchases.values();
+        return new ArrayList<>(hashPurchases.values());
     }
 }

@@ -7,6 +7,6 @@ import org.bson.types.ObjectId;
 @Getter
 @Setter
 public class SimpleDrugDTO {
-    private ObjectId id;
+    private String id;
     private String name;
 }

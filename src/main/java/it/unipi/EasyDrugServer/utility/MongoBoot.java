@@ -7,10 +7,11 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import com.google.gson.*;
+import org.bson.types.ObjectId;
+
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-
 
 public class MongoBoot {
     private static Process startProcess(String command) throws IOException {
@@ -20,7 +21,7 @@ public class MongoBoot {
     }
 
     private static void insertCollection(String collectionName, MongoDatabase database) throws IOException {
-        // 3. Creazione della collezione (se non esiste)
+// 3. Creazione della collezione (se non esiste)
         boolean collectionExists = false;
         for (String name : database.listCollectionNames()) {
             if (name.equals(collectionName)) {
@@ -48,8 +49,19 @@ public class MongoBoot {
             // Convertire InputStream in Stringa
             String jsonContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
+            /*
             Gson gson = new Gson();
             List<Document> documents = Arrays.asList(gson.fromJson(jsonContent, Document[].class));
+             */
+
+            List<Document> documents = new ArrayList<>();
+            JsonArray jsonArray = JsonParser.parseString(jsonContent).getAsJsonArray();
+
+            for (JsonElement element : jsonArray) {
+                Document doc = Document.parse(element.toString());
+                documents.add(doc);
+            }
+
 
             final int batchSize = 1500;
             for (int i = 0; i < documents.size(); i += batchSize) {

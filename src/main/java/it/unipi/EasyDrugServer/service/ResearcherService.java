@@ -63,7 +63,7 @@ public class ResearcherService {
         };
     }
 
-    public List<DrugDistributionDTO> getDistributionByDrug(ObjectId idDrug, Order order) {
+    public List<DrugDistributionDTO> getDistributionByDrug(String idDrug, Order order) {
         return switch (order) {
             case ASC -> purchaseRepository.getDistributionByDrug(idDrug, 1);
             case DESC -> purchaseRepository.getDistributionByDrug(idDrug, -1);

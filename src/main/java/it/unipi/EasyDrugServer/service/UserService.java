@@ -28,10 +28,7 @@ public class UserService {
     protected Object getUserIfExists(String id, UserType type) {
         switch (type) {
             case PATIENT:
-                System.out.println(id + " " + id.getClass());
-                System.out.println("D1: "+patientRepository.findById(id));
                 Optional<Patient> optPatient = patientRepository.findById(id);
-                System.out.println(optPatient + " WAAAAAA");
                 if(optPatient.isPresent()) return optPatient.get();
                 throw new NotFoundException("Patient "+id+" does not exist");
             case DOCTOR:

@@ -16,10 +16,9 @@ import java.time.LocalDateTime;
 @Data
 @Document(collection = "purchases")
 public class Purchase {
-
     @Id
-    private ObjectId id;
-    private int drugId;
+    private String id;
+    private String drugId;
     private String name;
     private int quantity;
     private LocalDateTime purchaseDate;
