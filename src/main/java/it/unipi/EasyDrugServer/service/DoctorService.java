@@ -27,7 +27,7 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final PurchaseRepository purchaseRepository;
     private final PatientRepository patientRepository;
-    private final int N_TO_VIEW = 10;
+    private final int N_TO_VIEW = 5;
 
     public PrescriptionDTO getInactivePrescription(String patientCode) {
         return prescriptionRedisRepository.getInactivePrescription(patientCode);
@@ -67,8 +67,10 @@ public class DoctorService {
             doctor_.setCity(doctor.getCity());
             doctor_.setDistrict(doctor.getDistrict());
             doctor_.setRegion(doctor.getRegion());
-            if(!Objects.equals(doctor.getPassword(), ""))
-                doctor_.setPassword(PasswordHasher.hash(doctor.getPassword()));
+            if(doctor.getPassword() != null){
+                String hash = PasswordHasher.hash(doctor.getPassword());
+                doctor_.setPassword(hash);
+            }
             doctorRepository.save(doctor_);
             return doctor_;
         } else throw new NotFoundException("Doctor "+doctor.getId()+" does not exist");
@@ -111,7 +113,7 @@ public class DoctorService {
         }
 
         // salvo tutti i farmaci prescritti, in ordine inverso, perché almeno l'utente li vede dal più recente al meno recente
-        HashMap<LocalDateTime, LatestPurchase> hashPurchases = new HashMap<>();
+        Map<LocalDateTime, LatestPurchase> hashPurchases = new LinkedHashMap<>();
         for(int i=prescriptions.size()-1; i>=0; i--){
             LatestDrug drug = new LatestDrug();
             Purchase purch = prescriptions.get(i);
@@ -137,7 +139,7 @@ public class DoctorService {
         if(!doctorRepository.existsById(id))
             throw new NotFoundException("Doctor "+id+" does not exist");
 
-        List<Patient> patients = patientRepository.findByDoctorCodeAndSurnameStarting(id, patSurname);
+        List<Patient> patients = patientRepository.findByDoctorCodeAndSurnameStarting(id, patSurname.toLowerCase());
         List<SimplePatientDTO> patientDTOs = new ArrayList<>();
         for(Patient patient : patients){
             SimplePatientDTO patientDTO = new SimplePatientDTO();

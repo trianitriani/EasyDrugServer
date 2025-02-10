@@ -187,8 +187,10 @@ public class PharmacyService {
         if(pharmacyRepository.existsById(pharmacy.getId())) {
             Pharmacy pharmacy_ = getPharmacyById(pharmacy.getId());
             pharmacy_.setOwnerTaxCode(pharmacy.getOwnerTaxCode());
-            if(!Objects.equals(pharmacy.getPassword(), ""))
-                pharmacy_.setPassword(PasswordHasher.hash(pharmacy.getPassword()));
+            if(pharmacy.getPassword() != null){
+                String hash = PasswordHasher.hash(pharmacy.getPassword());
+                pharmacy_.setPassword(hash);
+            }
             pharmacyRepository.save(pharmacy_);
             return pharmacy_;
         } else throw new NotFoundException("Pharmacy "+pharmacy.getId()+" does not exist");

@@ -45,8 +45,10 @@ public class ResearcherService {
             researcher_.setDistrict(researcher.getDistrict());
             researcher_.setCity(researcher.getCity());
             researcher_.setRegion(researcher.getRegion());
-            if(!Objects.equals(researcher.getPassword(), ""))
-                researcher_.setPassword(PasswordHasher.hash(researcher.getPassword()));
+            if(researcher.getPassword() != null){
+                String hash = PasswordHasher.hash(researcher.getPassword());
+                researcher_.setPassword(hash);
+            }
             researcherRepository.save(researcher_);
             return researcher_;
         } else throw new NotFoundException("Researcher "+researcher.getId()+" does not exist");

@@ -6,6 +6,7 @@ import it.unipi.EasyDrugServer.model.LatestDrug;
 import it.unipi.EasyDrugServer.model.LatestPurchase;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.model.Purchase;
+import it.unipi.EasyDrugServer.repository.mongo.DoctorRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PatientRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
@@ -27,7 +28,8 @@ public class PatientService {
     private final PrescriptionRedisRepository prescriptionRedisRepository;
     private final PatientRepository patientRepository;
     private final PurchaseRepository purchaseRepository;
-    private final int N_TO_VIEW = 6;
+    private final DoctorRepository doctorRepository;
+    private final int N_TO_VIEW = 5;
 
     public List<PrescriptionDTO> getAllActivePrescriptions(String patientCode){
         return prescriptionRedisRepository.getAllActivePrescriptions(patientCode);
@@ -60,9 +62,14 @@ public class PatientService {
             patient_.setDistrict(patient.getDistrict());
             patient_.setCity(patient.getCity());
             patient_.setRegion(patient.getRegion());
-            patient_.setDoctorCode(patient.getDoctorCode());
-            if(!Objects.equals(patient.getPassword(), ""))
-                patient_.setPassword(PasswordHasher.hash(patient.getPassword()));
+            if(doctorRepository.findById(patient.getDoctorCode()).isPresent())
+                patient_.setDoctorCode(patient.getDoctorCode());
+            else patient.setDoctorCode(patient_.getDoctorCode());
+            if(patient.getPassword() != null) {
+                String hash = PasswordHasher.hash(patient.getPassword());
+                patient_.setPassword(hash);
+                patient.setPassword(hash);
+            }
             patientRepository.save(patient_);
             return patient;
         } else throw new NotFoundException("Patient "+patient.getId()+" does not exist");
@@ -104,11 +111,11 @@ public class PatientService {
         }
 
         // salvo tutti i farmaci prescritti, in ordine inverso, perché almeno l'utente li vede dal più recente al meno recente
-        HashMap<LocalDateTime, LatestPurchase> hashPurchases = new HashMap<>();
+        Map<LocalDateTime, LatestPurchase> hashPurchases = new LinkedHashMap<>();
         for(int i=purchases.size()-1; i>=0; i--){
             LatestDrug latestDrug = new LatestDrug();
             Purchase purch = purchases.get(i);
-            latestDrug.setDrugId(purch.getId());
+            latestDrug.setDrugId(purch.getDrugId());
             latestDrug.setDrugName(purch.getName());
             latestDrug.setQuantity(purch.getQuantity());
             latestDrug.setPrice(purch.getPrice());
