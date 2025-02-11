@@ -29,7 +29,6 @@ public class Patient {
     private String region;
     private String name;
 
-    @Indexed
     private String surname;
 
     private String dateOfBirth;
