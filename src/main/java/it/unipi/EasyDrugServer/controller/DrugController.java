@@ -87,7 +87,7 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-    
+
     @GetMapping("/search/{name}")
     public ResponseEntity<ResponseDTO> getDrugThatStartWith(@PathVariable String name){
         try {
@@ -103,10 +103,10 @@ public class DrugController {
         }
     }
 
-    @GetMapping("/search/{name}/purchasable")
-    public ResponseEntity<ResponseDTO> getDrugsPurchasableThatContain(@PathVariable String name){
+    @GetMapping("/search/{name}/otp")
+    public ResponseEntity<ResponseDTO> getOPTDrugsThatStartWith(@PathVariable String name){
         try {
-            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsPurchasableThatStarts(name);
+            List<SimpleDrugDTO> drugsDTOs = drugService.getOPTDrugsThatStartWith(name);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MongoSocketException e) {
@@ -119,9 +119,9 @@ public class DrugController {
     }
 
     @GetMapping("/search/{name}/on-prescription")
-    public ResponseEntity<ResponseDTO> getDrugsOnPrescriptionThatContain(@PathVariable String name){
+    public ResponseEntity<ResponseDTO> getOnPrescriptionDrugsThatStartWith(@PathVariable String name){
         try {
-            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsOnPrescriptionThatStarts(name);
+            List<SimpleDrugDTO> drugsDTOs = drugService.getOnPrescriptionDrugsThatStartWith(name);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MongoSocketException e) {
@@ -132,20 +132,4 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-
-    /*
-    @GetMapping("/indications/{name}")
-    public ResponseEntity<ResponseDTO> getDrugsByIndication(@PathVariable String name) {
-        try {
-            List<SimpleDrugDTO> drugsDTOs = drugService.getDrugsByIndication(name);
-            ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (MongoSocketException e) {
-            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
-        } catch (MongoException e) {
-            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception e){
-            return exceptionHandler.handleException(e);
-        }
-    }*/
 }

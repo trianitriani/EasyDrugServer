@@ -46,33 +46,33 @@ public class PharmacyService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    public PharmacyHomeDTO viewPharmacyHome(String patCode) {
+    public PharmacyHomeDTO viewPharmacyHome(String id_pat) {
         PharmacyHomeDTO pharmacyHomeDTO = new PharmacyHomeDTO();
         // Mostra il carrello degli acquisti del paziente
-        pharmacyHomeDTO.setPurchaseCart(purchaseCartRedisRepository.getPurchaseCart(patCode));
+        pharmacyHomeDTO.setPurchaseCart(purchaseCartRedisRepository.getPurchaseCart(id_pat));
         // Mostra tutte le prescrizioni attive del paziente
-        pharmacyHomeDTO.setPrescriptions(prescriptionRedisRepository.getAllActivePrescriptions(patCode));
+        pharmacyHomeDTO.setPrescriptions(prescriptionRedisRepository.getAllActivePrescriptions(id_pat));
         return pharmacyHomeDTO;
     }
 
-    public PurchaseCartDrugDTO savePurchaseDrug(String patientCode, PurchaseCartDrugDTO drug) {
+    public PurchaseCartDrugDTO savePurchaseDrug(String id_pat, PurchaseCartDrugDTO drug) {
         if(Objects.equals(drug.getName(), ""))
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)
             throw new BadRequestException("Quantity can not be lower than one");
-        return purchaseCartRedisRepository.insertPurchaseDrug(patientCode, drug);
+        return purchaseCartRedisRepository.insertPurchaseDrug(id_pat, drug);
     }
 
-    public PurchaseCartDrugDTO deletePurchaseDrug(String patientCode, String idDrug, LocalDateTime prescriptionTimestamp) {
-        return purchaseCartRedisRepository.deletePurchaseDrug(patientCode, idDrug, String.valueOf(prescriptionTimestamp));
+    public PurchaseCartDrugDTO deletePurchaseDrug(String id_pat, String id_drug, LocalDateTime prescriptionTimestamp) {
+        return purchaseCartRedisRepository.deletePurchaseDrug(id_pat, id_drug, String.valueOf(prescriptionTimestamp));
     }
 
-    public PurchaseCartDrugDTO modifyPurchaseDrugQuantity(String patientCode, String idDrug, int quantity) {
+    public PurchaseCartDrugDTO modifyPurchaseDrugQuantity(String id_pat, String id_drug, int quantity) {
         if(quantity == 0)
-            return purchaseCartRedisRepository.deletePurchaseDrug(patientCode, idDrug, "");
+            return purchaseCartRedisRepository.deletePurchaseDrug(id_pat, id_drug, "");
         else if(quantity < 0)
             throw new BadRequestException("Quantity can not be lower that zero.");
-        return purchaseCartRedisRepository.modifyPurchaseDrugQuantity(patientCode, idDrug, quantity);
+        return purchaseCartRedisRepository.modifyPurchaseDrugQuantity(id_pat, id_drug, quantity);
     }
 
     // funzione usata per inserire un acquisto di farmaci all'interno di mongo db
@@ -152,14 +152,14 @@ public class PharmacyService {
             backoff = @Backoff(delay = 2000)
     )
     @Transactional
-    public LatestPurchase confirmPurchase(String patientCode, String pharmacyRegion) {
+    public LatestPurchase confirmPurchase(String id_pat, String pharmacyRegion) {
         Transaction transaction = null;
         try {
-            ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(patientCode);
+            ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
             List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
 
             // eseguiamo la transazione di MongoDB
-            LatestPurchase latestPurchase = insertPurchases(patientCode, pharmacyRegion, purchasedDrugs);
+            LatestPurchase latestPurchase = insertPurchases(id_pat, pharmacyRegion, purchasedDrugs);
 
             // eseguiamo la transazione di Redis
             transaction = confirmPurchaseCartDTO.getTransaction();

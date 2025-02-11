@@ -85,7 +85,7 @@ public class PatientService {
         return ((Patient) userService.getUserIfExists(id, UserType.PATIENT)).getLatestPurchasedDrugs();
     }
 
-    public List<LatestPurchase> getNextPurchaseDrugs(String id_pat, int nAlreadyViewed) {
+    public List<LatestPurchase> getNextPurchaseDrugs(String id_pat, int n_uploaded) {
         if(!patientRepository.existsById(id_pat))
             throw new NotFoundException("Patient "+id_pat+" does not exist");
 
@@ -96,7 +96,7 @@ public class PatientService {
             purchasesId = optPatient.get().getPurchases();
         }
 
-        int startIndex = purchasesId.size() - nAlreadyViewed;
+        int startIndex = purchasesId.size() - n_uploaded;
         if(startIndex <= 0)
             return new ArrayList<>();
 

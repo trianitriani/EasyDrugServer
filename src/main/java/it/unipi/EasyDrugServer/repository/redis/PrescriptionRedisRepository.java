@@ -46,10 +46,10 @@ public class PrescriptionRedisRepository {
         this.redisHelper = redisHelper;
     }
 
-    public List<PrescriptionDTO> getAllActivePrescriptions(String patientCode) {
+    public List<PrescriptionDTO> getAllActivePrescriptions(String id_pat) {
         List<PrescriptionDTO> prescriptions = new ArrayList<>();
         for (int i = 1; i <= redisHelper.nEntities(jedis, this.pres); i++) {
-            String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
+            String keyPres = this.pres + ":" + i + ":" + id_pat + ":";
             // Controllare che le prescrizioni siano attive, quindi con timestamp != false
             if(jedis.exists(keyPres + "timestamp") &&
                     !Objects.equals(jedis.get(keyPres + "timestamp"), "")){
@@ -75,11 +75,11 @@ public class PrescriptionRedisRepository {
         return prescriptions;
     }
 
-    public PrescriptionDTO getInactivePrescription(String patientCode) {
+    public PrescriptionDTO getPrescriptionCart(String id_pat) {
         PrescriptionDTO prescription = new PrescriptionDTO();
         prescription.setTimestamp(null);
         for (int i = 1; i <= redisHelper.nEntities(jedis, this.pres); i++) {
-            String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
+            String keyPres = this.pres + ":" + i + ":" + id_pat + ":";
             // Controllare che le prescrizioni siano attive, quindi con timestamp != false
             if(jedis.exists(keyPres + "timestamp") &&
                     Objects.equals(jedis.get(keyPres + "timestamp"), "")){
@@ -98,13 +98,13 @@ public class PrescriptionRedisRepository {
         return prescription;
     }
 
-    public PrescribedDrugDTO insertInactivePrescribedDrug(String patientCode, PrescribedDrugDTO drug) {
+    public PrescribedDrugDTO saveDrugIntoPrescriptionCart(String id_pat, PrescribedDrugDTO drug) {
         boolean found = false;
         // controllare se esiste una prescrizione inattiva del paziente
         String presKey = "";
         int i;
         for(i=1; i<=redisHelper.nEntities(jedis, this.pres); i++){
-            presKey = this.pres + ":" + i + ":" + patientCode + ":";
+            presKey = this.pres + ":" + i + ":" + id_pat + ":";
             if(jedis.exists(presKey + "timestamp") && Objects.equals(jedis.get(presKey + "timestamp"), "")){
                 // trovato l'id della prescrizione inattiva devo inserire all'interno
                 // della prescrizione un nuovo farmaco
@@ -124,7 +124,7 @@ public class PrescriptionRedisRepository {
         // se la prescrizione inattiva non esiste, devo crearla
         if(!found){
             int id_pres = Integer.parseInt(redisHelper.getReusableId(jedis, this.pres));
-            presKey = this.pres + ":" + id_pres + ":" + patientCode + ":";
+            presKey = this.pres + ":" + id_pres + ":" + id_pat + ":";
             i = id_pres;
         }
         // adesso possiamo inserire il farmaco presente all'interno del db
@@ -159,11 +159,11 @@ public class PrescriptionRedisRepository {
         return drug;
     }
 
-    public PrescribedDrugDTO deleteInactivePrescribedDrug(String patientCode, String idDrug) {
+    public PrescribedDrugDTO deleteDrugIntoPrescriptionCart(String id_pat, String id_drug) {
         PrescribedDrugDTO prescribedDrug;
         for(int i = 1; i<=redisHelper.nEntities(jedis, this.pres); i++) {
             // cerco l'unica prescrizione inattiva con timestamp false
-            String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
+            String keyPres = this.pres + ":" + i + ":" + id_pat + ":";
             if (jedis.exists(keyPres + "timestamp") &&
                     Objects.equals(jedis.get(keyPres + "timestamp"), "")) {
 
@@ -171,10 +171,10 @@ public class PrescriptionRedisRepository {
                 for(int j = 1; j<=redisHelper.nEntities(jedis, this.presDrug); j++) {
                     String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
                     if(jedis.exists(keyPresDrug + "id")){
-                        if(Objects.equals(idDrug, jedis.get(keyPresDrug + "id"))){
+                        if(Objects.equals(id_drug, jedis.get(keyPresDrug + "id"))){
                             // è il farmaco da rimuovere
                             // preparo l'oggetto per il ritorno
-                            prescribedDrug = createPrescribedDrugDTO(idDrug, keyPresDrug);
+                            prescribedDrug = createPrescribedDrugDTO(id_drug, keyPresDrug);
                             // rimuovo il farmaco dalla prescrizione attiva
                             Transaction transaction = jedis.multi();
                             transaction.del(keyPresDrug + "id");
@@ -190,43 +190,43 @@ public class PrescriptionRedisRepository {
                     }
                 }
                 // se qui, allora il farmaco non è stato trovato
-                throw new NotFoundException("The selected drug "+idDrug+" is not found.");
+                throw new NotFoundException("The selected drug "+id_drug+" is not found.");
             }
         }
         // se qui allora non ci sono prescrizioni inattive
-        throw new NotFoundException("Not found any inactive prescription related to patient "+patientCode);
+        throw new NotFoundException("Not found any inactive prescription related to patient "+id_pat);
     }
 
-    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String patientCode, String idDrug, int quantity) {
+    public PrescribedDrugDTO modifyDrugQuantityIntoPrescriptionCart(String id_pat, String id_drug, int quantity) {
         // cercare l'id della prescrizione inattiva
         int index_pres = 0;
         for(int i = 1; i<=redisHelper.nEntities(jedis, this.pres); i++) {
             // cerco l'unica prescrizione inattiva con timestamp false
-            String keyPres = this.pres + ":" + i + ":" + patientCode + ":";
+            String keyPres = this.pres + ":" + i + ":" + id_pat + ":";
             if(jedis.exists(keyPres + "timestamp") && Objects.equals(jedis.get(keyPres + "timestamp"), "")){
                 index_pres = i;
                 break;
             }
         }
         if(index_pres == 0)
-            throw new NotFoundException("Not found any inactive prescription for patient "+patientCode);
+            throw new NotFoundException("Not found any inactive prescription for patient "+id_pat);
 
         // adesso dato l'id della prescrizione trovo il farmaco a cui modificare la quantità
         for(int i = 1; i<=redisHelper.nEntities(jedis, this.presDrug); i++) {
             // cerco tutti i farmaci con il campo "timestamp" non esistente (quelli non ancora confermati)
             String keyPresDrug = this.presDrug + ":" + i + ":" + index_pres + ":";
             if(jedis.exists(keyPresDrug + "id")){
-                if(Objects.equals(idDrug, jedis.get(keyPresDrug + "id"))){
+                if(Objects.equals(id_drug, jedis.get(keyPresDrug + "id"))){
                     // ho trovato il farmaco da modificare
                     jedis.set(keyPresDrug + "quantity", String.valueOf(quantity));
-                    return createPrescribedDrugDTO(idDrug, quantity, keyPresDrug);
+                    return createPrescribedDrugDTO(id_drug, quantity, keyPresDrug);
                 }
             }
         }
-        throw new NotFoundException("Not found any drug with id "+idDrug+" into an inactive prescription");
+        throw new NotFoundException("Not found any drug with id "+id_drug+" into an inactive prescription");
     }
 
-    public PrescriptionDTO activatePrescription(String patientCode) {
+    public PrescriptionDTO activatePrescriptionCart(String id_pat) {
         PrescriptionDTO prescription = new PrescriptionDTO();
         prescription.setTimestamp(LocalDateTime.now());
         String keyPres = "";
@@ -234,7 +234,7 @@ public class PrescriptionRedisRepository {
         int  nDrugs = 0;
         for(int i = 1; i<=redisHelper.nEntities(jedis, this.pres); i++){
             // cerco la prescrizione con dato id
-            keyPres = this.pres + ":" + i + ":" + patientCode + ":";
+            keyPres = this.pres + ":" + i + ":" + id_pat + ":";
             if(jedis.exists(keyPres + "timestamp") && Objects.equals(jedis.get(keyPres + "timestamp"), "")){
                 // cicliamo i vari farmaci della prescrizione
                 for (int j = 1; j<=redisHelper.nEntities(jedis, this.presDrug); j++){
@@ -250,7 +250,7 @@ public class PrescriptionRedisRepository {
             }
         }
         if(prescription.checkIfEmpty())
-            throw new ForbiddenException("The patient "+patientCode+" has no prescriptions.");
+            throw new ForbiddenException("The patient "+id_pat+" has no prescriptions.");
 
         Transaction transaction = jedis.multi();
         // Modify db in atomic way

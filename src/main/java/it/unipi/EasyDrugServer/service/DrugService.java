@@ -54,12 +54,12 @@ public class DrugService {
         return getSimpleDrugsByDrugs(drugs);
     }
 
-    public List<SimpleDrugDTO> getDrugsPurchasableThatStarts(String name) {
+    public List<SimpleDrugDTO> getOPTDrugsThatStartWith(String name) {
         List<Drug> drugs = drugRepository.findByDrugNameStartingAndOnPrescription(name.toLowerCase(), false);
         return getSimpleDrugsByDrugs(drugs);
     }
 
-    public List<SimpleDrugDTO> getDrugsOnPrescriptionThatStarts(String name) {
+    public List<SimpleDrugDTO> getOnPrescriptionDrugsThatStartWith(String name) {
         List<Drug> drugs = drugRepository.findByDrugNameStartingAndOnPrescription(name.toLowerCase(), true);
         return getSimpleDrugsByDrugs(drugs);
     }

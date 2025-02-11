@@ -115,11 +115,11 @@ public class PatientController {
         }
     }
 
-    @GetMapping("/{id}/purchases/from/{nAlreadyViewed}")
+    @GetMapping("/{id}/purchases/from/{n_uploaded}")
     public ResponseEntity<ResponseDTO> getNextPurchases(@PathVariable String id,
-                                                        @PathVariable int nAlreadyViewed){
+                                                        @PathVariable int n_uploaded){
         try {
-            List<LatestPurchase> purchases = patientService.getNextPurchaseDrugs(id, nAlreadyViewed);
+            List<LatestPurchase> purchases = patientService.getNextPurchaseDrugs(id, n_uploaded);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

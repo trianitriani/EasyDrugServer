@@ -29,32 +29,32 @@ public class DoctorService {
     private final PatientRepository patientRepository;
     private final int N_TO_VIEW = 5;
 
-    public PrescriptionDTO getInactivePrescription(String patientCode) {
-        return prescriptionRedisRepository.getInactivePrescription(patientCode);
+    public PrescriptionDTO getPrescriptionCart(String id_pat) {
+        return prescriptionRedisRepository.getPrescriptionCart(id_pat);
     }
 
-    public PrescribedDrugDTO saveInactivePrescribedDrug(String patientCode, PrescribedDrugDTO drug) {
+    public PrescribedDrugDTO saveDrugIntoPrescriptionCart(String id_pat, PrescribedDrugDTO drug) {
         if(Objects.equals(drug.getName(), ""))
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)
             throw new BadRequestException("Quantity can not be lower than one");
-        return prescriptionRedisRepository.insertInactivePrescribedDrug(patientCode, drug);
+        return prescriptionRedisRepository.saveDrugIntoPrescriptionCart(id_pat, drug);
     }
 
-    public PrescribedDrugDTO deleteInactivePrescribedDrug(String patientCode, String idDrug) {
-        return prescriptionRedisRepository.deleteInactivePrescribedDrug(patientCode, idDrug);
+    public PrescribedDrugDTO deleteDrugIntoPrescriptionCart(String id_pat, String id_drug) {
+        return prescriptionRedisRepository.deleteDrugIntoPrescriptionCart(id_pat, id_drug);
     }
 
-    public PrescribedDrugDTO modifyInactivePrescribedDrugQuantity(String patientCode, String idDrug, int quantity) {
+    public PrescribedDrugDTO modifyDrugQuantityIntoPrescriptionCart(String id_pat, String id_drug, int quantity) {
         if(quantity == 0)
-            return prescriptionRedisRepository.deleteInactivePrescribedDrug(patientCode, idDrug);
+            return prescriptionRedisRepository.deleteDrugIntoPrescriptionCart(id_pat, id_drug);
         else if(quantity < 0)
             throw new BadRequestException("Quantity can not be lower that zero.");
-        return prescriptionRedisRepository.modifyInactivePrescribedDrugQuantity(patientCode, idDrug, quantity);
+        return prescriptionRedisRepository.modifyDrugQuantityIntoPrescriptionCart(id_pat, id_drug, quantity);
     }
 
-    public PrescriptionDTO activatePrescription(String patientCode) {
-        return prescriptionRedisRepository.activatePrescription(patientCode);
+    public PrescriptionDTO activatePrescriptionCart(String id_pat) {
+        return prescriptionRedisRepository.activatePrescriptionCart(id_pat);
     }
 
     public Doctor getDoctorById(String id) {
@@ -83,7 +83,7 @@ public class DoctorService {
     }
 
     // mostra le successive prescrizioni già concluse dopo la mAlreadyViews-esima divise per prescrizione
-    public List<LatestPurchase> getNextPrescriptionDrugs(String id_doc, String id_pat, int nAlreadyViewed) {
+    public List<LatestPurchase> getNextPrescriptionDrugs(String id_doc, String id_pat, int n_uploaded) {
         if(!doctorRepository.existsById(id_doc))
             throw new NotFoundException("Doctor "+id_doc+" does not exist");
 
@@ -97,7 +97,7 @@ public class DoctorService {
         if(optPatient.isPresent())
             prescriptionsId = optPatient.get().getPrescriptions();
 
-        int startIndex = prescriptionsId.size() - nAlreadyViewed;
+        int startIndex = prescriptionsId.size() - n_uploaded;
         if(startIndex <= 0)
             return new ArrayList<>();
 
@@ -135,11 +135,11 @@ public class DoctorService {
         return new ArrayList<>(hashPurchases.values());
     }
 
-    public List<SimplePatientDTO> getOwnPatients(String id, String patSurname) {
+    public List<SimplePatientDTO> getOwnPatientsBySurname(String id, String pat_surname) {
         if(!doctorRepository.existsById(id))
             throw new NotFoundException("Doctor "+id+" does not exist");
 
-        List<Patient> patients = patientRepository.findByDoctorCodeAndSurnameStarting(id, patSurname.toLowerCase());
+        List<Patient> patients = patientRepository.findByDoctorCodeAndSurnameStarting(id, pat_surname.toLowerCase());
         List<SimplePatientDTO> patientDTOs = new ArrayList<>();
         for(Patient patient : patients){
             SimplePatientDTO patientDTO = new SimplePatientDTO();

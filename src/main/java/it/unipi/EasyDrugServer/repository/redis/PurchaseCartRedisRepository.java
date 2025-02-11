@@ -39,10 +39,10 @@ public class PurchaseCartRedisRepository {
         this.redisHelper = redisHelper;
     }
 
-    public List<PurchaseCartDrugDTO> getPurchaseCart(String patientCode){
+    public List<PurchaseCartDrugDTO> getPurchaseCart(String id_pat){
         List<PurchaseCartDrugDTO> cartList = new ArrayList<>();
         for(int i=0; i<=redisHelper.nEntities(jedis, this.entity); i++){
-            String key = this.entity + ":" + i + ":" + patientCode + ":";
+            String key = this.entity + ":" + i + ":" + id_pat + ":";
             if(!jedis.exists(key + "id")) continue;
             // Se sono qui significa che l'oggetto esiste realmente e lo inserisco nella lista
             PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(key);
@@ -51,12 +51,12 @@ public class PurchaseCartRedisRepository {
         return cartList;
     }
 
-    public PurchaseCartDrugDTO insertPurchaseDrug(String patientCode, PurchaseCartDrugDTO drug) {
+    public PurchaseCartDrugDTO insertPurchaseDrug(String id_pat, PurchaseCartDrugDTO drug) {
         // se non deriva da una prescrizione controlliamo
         // che non si trovi di già all'interno del carrello
         if(drug.getPrescriptionTimestamp() == null){
             for(int i=1; i<=redisHelper.nEntities(jedis, this.entity); i++){
-                String keyPurch = this.entity + ":" + i + ":" + patientCode + ":";
+                String keyPurch = this.entity + ":" + i + ":" + id_pat + ":";
                 if(jedis.exists(keyPurch + "id") && Objects.equals(jedis.get(keyPurch + "id"), String.valueOf(drug.getId())))
                     throw new ForbiddenException("Drug "+drug.getId()+" is already into the purchase cart");
             }
@@ -71,7 +71,7 @@ public class PurchaseCartRedisRepository {
 
         // Now we have to search a valid id_purch for a new element
         String id_purch = redisHelper.getReusableId(jedis, this.entity);
-        String key = this.entity + ":" + id_purch + ":" + patientCode + ":";
+        String key = this.entity + ":" + id_purch + ":" + id_pat + ":";
 
         // insert in atomic way a drug into a purchase cart
         Transaction transaction = jedis.multi();
@@ -90,26 +90,26 @@ public class PurchaseCartRedisRepository {
         return drug;
     }
 
-    public PurchaseCartDrugDTO modifyPurchaseDrugQuantity(String patientCode, String idDrug, int quantity) {
+    public PurchaseCartDrugDTO modifyPurchaseDrugQuantity(String id_pat, String id_drug, int quantity) {
         // searching drug with idDrug
         for(int i=0; i<=redisHelper.nEntities(jedis, this.entity); i++){
-            String key = this.entity + ":" + i + ":" + patientCode + ":";
+            String key = this.entity + ":" + i + ":" + id_pat + ":";
             if(jedis.exists(key + "id")){
-                if(!Objects.equals(idDrug, jedis.get(key + "id"))) continue;
+                if(!Objects.equals(id_drug, jedis.get(key + "id"))) continue;
                 // modifica il campo quantità
                 jedis.set(key + "quantity", String.valueOf(quantity));
-                return createPurchaseCartDrugDTO(idDrug, quantity, key);
+                return createPurchaseCartDrugDTO(id_drug, quantity, key);
             }
         }
-        throw new NotFoundException("Impossibile modify the drug: patient "+patientCode+" has not drug with id "+idDrug+" in the cart.");
+        throw new NotFoundException("Impossibile modify the drug: patient "+id_pat+" has not drug with id "+id_drug+" in the cart.");
     }
 
-    public PurchaseCartDrugDTO deletePurchaseDrug(String patientCode, String idDrug, String prescriptionTimestamp) {
+    public PurchaseCartDrugDTO deletePurchaseDrug(String id_pat, String id_drug, String prescriptionTimestamp) {
         // searching into purchase cart the specific drug
         for(int i=0; i<=redisHelper.nEntities(jedis, this.entity); i++) {
-            String key = this.entity + ":" + i + ":" + patientCode + ":";
+            String key = this.entity + ":" + i + ":" + id_pat + ":";
             if (jedis.exists(key + "id")) {
-                if (!Objects.equals(idDrug, jedis.get(key + "id"))) continue;
+                if (!Objects.equals(id_drug, jedis.get(key + "id"))) continue;
 
                 // se il farmaco faceva parte di una prescrizione, devo trovare il farmaco con quel timestamp
                 // per evitare di eliminare uno stesso farmaco in una prescrizione diversa
@@ -120,7 +120,7 @@ public class PurchaseCartRedisRepository {
                     if(!Objects.equals(prescriptionTimestamp, timestampString)) continue;
                 }
 
-                PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(idDrug, key);
+                PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(id_drug, key);
 
                 // delete the specific drug in atomic way
                 Transaction transaction = jedis.multi();
@@ -134,11 +134,10 @@ public class PurchaseCartRedisRepository {
                 return drug;
             }
         }
-        throw new NotFoundException("Impossibile to delete the drug: patient "+patientCode+" " +
-                "has no drug with id "+idDrug+" in the cart.");
+        throw new NotFoundException("Impossibile to delete the drug: patient "+id_pat+" " + "has no drug with id "+id_drug+" in the cart.");
     }
 
-    public ConfirmPurchaseCartDTO confirmPurchaseCart(String patientCode){
+    public ConfirmPurchaseCartDTO confirmPurchaseCart(String id_pat){
         LinkedHashMap<String, List<String>> prescribedDrugs = new LinkedHashMap<>();
         List<PurchaseCartDrugDTO> purchaseDrugs = new ArrayList<>();
         LinkedHashMap<String, Integer> purchToDelete = new LinkedHashMap<>();
@@ -148,7 +147,7 @@ public class PurchaseCartRedisRepository {
         LinkedHashMap<String, Integer> presToModify = new LinkedHashMap<>();
         // cerco tutti i farmaci che sono nel carrello e si riferiscono al paziente selezionato
         for(int i=1; i<=redisHelper.nEntities(jedis, this.entity); i++){
-            String keyPurch = this.entity + ":" + i + ":" + patientCode + ":";
+            String keyPurch = this.entity + ":" + i + ":" + id_pat + ":";
             if(jedis.exists(keyPurch + "id")){
                 PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(keyPurch);
                 purchaseDrugs.add(drug);
@@ -168,7 +167,7 @@ public class PurchaseCartRedisRepository {
         // adesso per ogni prescrizione che contiene farmaci acquistati vado a modificare il db
         // segnando quel farmaco come acquistato e controllando se una prescrizione è conclusa.
         for(int j=1; j<=redisHelper.nEntities(jedis, "pres"); j++){
-            String presKey = "pres:" + j + ":" + patientCode + ":";
+            String presKey = "pres:" + j + ":" + id_pat + ":";
             if(jedis.exists(presKey + "timestamp")){
                 String stringTimestamp = jedis.get(presKey + "timestamp");
                 if(Objects.equals(stringTimestamp, "")) continue;

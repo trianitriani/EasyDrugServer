@@ -76,31 +76,12 @@ public class DoctorController {
         }
     }
 
-    /*
-    @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/latest")
-    public ResponseEntity<ResponseDTO> getLatestPrescriptions(@PathVariable String id_doc,
-                                                              @PathVariable String id_pat){
-        try {
-            List<PrescriptionDTO> prescriptions = doctorService.getLatestPrescriptions(id_doc, id_pat);
-            ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescriptions);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (BadRequestException e){
-            return exceptionHandler.handleBadRequestException(e);
-        } catch (MongoSocketException e) {
-            return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
-        } catch (MongoException e) {
-            return exceptionHandler.handleMongoDBException(e, HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception e){
-            return exceptionHandler.handleException(e);
-        }
-    }*/
-
-    @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/from/{nAlreadyViewed}")
+    @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/from/{n_uploaded}")
     public ResponseEntity<ResponseDTO> getNextPrescriptions(@PathVariable String id_doc,
                                                             @PathVariable String id_pat,
-                                                            @PathVariable Integer nAlreadyViewed){
+                                                            @PathVariable Integer n_uploaded){
         try {
-            List<LatestPurchase> purchases = doctorService.getNextPrescriptionDrugs(id_doc, id_pat, nAlreadyViewed);
+            List<LatestPurchase> purchases = doctorService.getNextPrescriptionDrugs(id_doc, id_pat, n_uploaded);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchases);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -114,11 +95,11 @@ public class DoctorController {
         }
     }
 
-    @GetMapping("/{id}/patients/surname/{patSurname}")
-    public ResponseEntity<ResponseDTO> getOwnPatients(@PathVariable String id,
-                                                      @PathVariable String patSurname){
+    @GetMapping("/{id}/patients/surname/{pat_surname}")
+    public ResponseEntity<ResponseDTO> getOwnPatientsBySurname(@PathVariable String id,
+                                                      @PathVariable String pat_surname){
         try {
-            List<SimplePatientDTO> simplePatientDTO = doctorService.getOwnPatients(id, patSurname);
+            List<SimplePatientDTO> simplePatientDTO = doctorService.getOwnPatientsBySurname(id, pat_surname);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, simplePatientDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -136,17 +117,17 @@ public class DoctorController {
      * ## DOCTOR ##
      * Method to view both the cart of prescription and a list of active prescriptions
      * related to a specific patient
-     * @param patCode code of patient
+     * @param id_pat code of patient
      * @return ResponseEntity<ResponseDTO>
      */
-    @GetMapping("/home/patients/{patCode}")
-    public ResponseEntity<ResponseDTO> viewDoctorHome(@PathVariable String patCode){
+    @GetMapping("/home/patients/{id_pat}")
+    public ResponseEntity<ResponseDTO> viewDoctorHome(@PathVariable String id_pat){
         try {
             DoctorHomeDTO doctorHomeDTO = new DoctorHomeDTO();
-            // Ottenere il carrello della prescrizione inattiva
-            doctorHomeDTO.setInactivePrescription(doctorService.getInactivePrescription(patCode));
+            // Ottenere il carrello della prescrizione
+            doctorHomeDTO.setInactivePrescription(doctorService.getPrescriptionCart(id_pat));
             // Ottenere la lista delle prescrizioni attive
-            doctorHomeDTO.setActivePrescriptions(patientService.getAllActivePrescriptions(patCode));
+            doctorHomeDTO.setActivePrescriptions(patientService.getAllActivePrescriptions(id_pat));
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctorHomeDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (UnauthorizedException e){
@@ -165,15 +146,15 @@ public class DoctorController {
     /**
      * ## DOCTOR ##
      * Method to insert a new drug into a new prescription that is still invalid
-     * @param patCode code of patient
+     * @param id_pat code of patient
      * @param drug drug to insert into new prescription
      * @return ResponseEntity<ResponseDTO>
      */
-    @PostMapping("/patients/{patCode}/cart/drugs")
-    public ResponseEntity<ResponseDTO> saveInactivePrescribedDrug(@PathVariable String patCode,
-                                                                  @RequestBody PrescribedDrugDTO drug){
+    @PostMapping("/patients/{id_pat}/cart/drugs")
+    public ResponseEntity<ResponseDTO> saveDrugIntoPrescriptionCart(@PathVariable String id_pat,
+                                                                    @RequestBody PrescribedDrugDTO drug){
         try {
-            PrescribedDrugDTO prescribedDrugDTO = doctorService.saveInactivePrescribedDrug(patCode, drug);
+            PrescribedDrugDTO prescribedDrugDTO = doctorService.saveDrugIntoPrescriptionCart(id_pat, drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, prescribedDrugDTO);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (ForbiddenException e){
@@ -193,15 +174,15 @@ public class DoctorController {
      * ## DOCTOR ##
      * Method for the doctor to delete a specific drug into a new prescription that is
      * still invalid
-     * @param patCode code of patient
-     * @param drugId id of drug
+     * @param id_pat code of patient
+     * @param id_drug id of drug
      * @return ResponseEntity<ResponseDTO>
      */
-    @DeleteMapping("/patients/{patCode}/cart/drugs/{drugId}")
-    public ResponseEntity<ResponseDTO> deleteInactivePrescribedDrug(@PathVariable String patCode,
-                                                                    @PathVariable String drugId){
+    @DeleteMapping("/patients/{id_pat}/cart/drugs/{id_drug}")
+    public ResponseEntity<ResponseDTO> deleteDrugIntoPrescriptionCart(@PathVariable String id_pat,
+                                                                      @PathVariable String id_drug){
         try {
-            PrescribedDrugDTO prescribedDrugDTO = doctorService.deleteInactivePrescribedDrug(patCode, drugId);
+            PrescribedDrugDTO prescribedDrugDTO = doctorService.deleteDrugIntoPrescriptionCart(id_pat, id_drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (NotFoundException e){
@@ -218,17 +199,17 @@ public class DoctorController {
     /**
      * ## DOCTOR ##
      * Method for the doctor to modify quantity of a specific drug related to a specific patient
-     * @param patCode code of patient
-     * @param drugId id of drug
+     * @param id_pat code of patient
+     * @param id_drug id of drug
      * @param quantity new quantity
      * @return ResponseEntity<ResponseDTO>
      */
-    @PatchMapping("/patients/{patCode}/cart/drugs/{drugId}")
-    public ResponseEntity<ResponseDTO> modifyInactivePrescribedDrugQuantity(@PathVariable String patCode,
-                                                                            @PathVariable String drugId,
-                                                                            @RequestBody int quantity){
+    @PatchMapping("/patients/{id_pat}/cart/drugs/{id_drug}")
+    public ResponseEntity<ResponseDTO> modifyDrugQuantityIntoPrescriptionCart(@PathVariable String id_pat,
+                                                                              @PathVariable String id_drug,
+                                                                              @RequestBody int quantity){
         try {
-            PrescribedDrugDTO prescribedDrugDTO = doctorService.modifyInactivePrescribedDrugQuantity(patCode, drugId, quantity);
+            PrescribedDrugDTO prescribedDrugDTO = doctorService.modifyDrugQuantityIntoPrescriptionCart(id_pat, id_drug, quantity);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -248,13 +229,13 @@ public class DoctorController {
      * ## DOCTOR ##
      * Active a new prescription, after this the patient and the pharmacist can see it,
      * an active prescription it lasts a month.
-     * @param patCode code of patient
+     * @param id_pat code of patient
      * @return ResponseEntity<ResponseDTO>
      */
-    @PatchMapping("/patients/{patCode}/cart/activate")
-    public ResponseEntity<ResponseDTO> activatePrescription(@PathVariable String patCode){
+    @PatchMapping("/patients/{id_pat}/cart/activate")
+    public ResponseEntity<ResponseDTO> activatePrescriptionCart(@PathVariable String id_pat){
         try {
-            PrescriptionDTO prescriptionDTO = doctorService.activatePrescription(patCode);
+            PrescriptionDTO prescriptionDTO = doctorService.activatePrescriptionCart(id_pat);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescriptionDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (ForbiddenException e){

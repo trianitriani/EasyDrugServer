@@ -34,13 +34,13 @@ public class PharmacyController {
     /**
      * ## PHARMACIST ##
      * View a patient's cart and him active prescriptions
-     * @param patCode code of patient
+     * @param id_pat code of patient
      * @return ResponseEntity<ResponseDTO>
      */
-    @GetMapping("/home/patients/{patCode}")
-    public ResponseEntity<ResponseDTO> viewPharmacyHome(@PathVariable String patCode){
+    @GetMapping("/home/patients/{id_pat}")
+    public ResponseEntity<ResponseDTO> viewPharmacyHome(@PathVariable String id_pat){
         try {
-            PharmacyHomeDTO pharmacyHomeDTO = pharmacyService.viewPharmacyHome(patCode);
+            PharmacyHomeDTO pharmacyHomeDTO = pharmacyService.viewPharmacyHome(id_pat);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, pharmacyHomeDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -58,15 +58,15 @@ public class PharmacyController {
      * ## PHARMACIST ## Test senza mettere errori: OK
      * Insert into redis db information related to a specific drug that is insert into a cart
      * of a specific patient by a pharmacist
-     * @param patCode code of patient
+     * @param id_pat code of patient
      * @param drug drug insert into a cart
      * @return ResponseEntity<ResponseDTO>
      */
-    @PostMapping("/patients/{patCode}/cart/drugs")
-    public ResponseEntity<ResponseDTO> savePurchaseDrug(@PathVariable String patCode,
+    @PostMapping("/patients/{id_pat}/cart/drugs")
+    public ResponseEntity<ResponseDTO> savePurchaseDrug(@PathVariable String id_pat,
                                                         @RequestBody PurchaseCartDrugDTO drug){
         try {
-            PurchaseCartDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(patCode, drug);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(id_pat, drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (BadRequestException e) {
@@ -86,16 +86,16 @@ public class PharmacyController {
     /**
      * ## PHARMACIST ## Test senza mettere errori: OK
      * Remove from purchase cart a specific drug
-     * @param patCode code of patient
-     * @param idDrug code of drug to delete
+     * @param id_pat code of patient
+     * @param id_drug code of drug to delete
      * @return ResponseEntity<ResponseDTO>
      */
-    @DeleteMapping("/patients/{patCode}/cart/drugs/{idDrug}")
-    public ResponseEntity<ResponseDTO> deletePurchaseDrug(@PathVariable String patCode,
-                                                          @PathVariable String idDrug,
+    @DeleteMapping("/patients/{id_pat}/cart/drugs/{id_drug}")
+    public ResponseEntity<ResponseDTO> deletePurchaseDrug(@PathVariable String id_pat,
+                                                          @PathVariable String id_drug,
                                                           @RequestBody(required = false) LocalDateTime prescriptionTimestamp){
         try {
-            PurchaseCartDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(patCode, idDrug, prescriptionTimestamp);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(id_pat, id_drug, prescriptionTimestamp);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -114,17 +114,17 @@ public class PharmacyController {
     /**
      * ## PHARMACIST ##
      * Modify the quantity of the selected drug that is into the purchase cart of patient
-     * @param patCode code of patient
-     * @param idDrug code of drug to delete
+     * @param id_pat code of patient
+     * @param id_drug code of drug to delete
      * @param quantity new quantity
      * @return ResponseEntity<?>
      */
-    @PatchMapping("/patients/{patCode}/cart/drugs/{idDrug}")
-    public ResponseEntity<ResponseDTO> modifyPurchaseDrugQuantity(@PathVariable String patCode,
-                                                                  @PathVariable String idDrug,
+    @PatchMapping("/patients/{id_pat}/cart/drugs/{id_drug}")
+    public ResponseEntity<ResponseDTO> modifyPurchaseDrugQuantity(@PathVariable String id_pat,
+                                                                  @PathVariable String id_drug,
                                                                   @RequestBody int quantity){
         try {
-            PurchaseCartDrugDTO purchaseDrug = pharmacyService.modifyPurchaseDrugQuantity(patCode, idDrug, quantity);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.modifyPurchaseDrugQuantity(id_pat, id_drug, quantity);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -145,14 +145,14 @@ public class PharmacyController {
      * Conferma il pagamento, cancella tutti i farmaci prescritti, controlla quale di questi sono anche
      * parte di qualche prescrizione e la segna come acquistata.
      * Deve anche inserire le informazioni nel document
-     * @param patCode code of patient
+     * @param id_pat code of patient
      * @return ResponseEntity<ResponseDTO>
      */
-    @PatchMapping("/patients/{patCode}/cart/checkout")
-    public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable String patCode,
+    @PatchMapping("/patients/{id_pat}/cart/checkout")
+    public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable String id_pat,
                                                        @RequestBody String pharmacyRegion){
         try {
-            LatestPurchase latestPurchase = pharmacyService.confirmPurchase(patCode, pharmacyRegion);
+            LatestPurchase latestPurchase = pharmacyService.confirmPurchase(id_pat, pharmacyRegion);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, latestPurchase);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
