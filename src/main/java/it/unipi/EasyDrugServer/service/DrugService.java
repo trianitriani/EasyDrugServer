@@ -70,6 +70,7 @@ public class DrugService {
             SimpleDrugDTO simpleDrugDTO = new SimpleDrugDTO();
             simpleDrugDTO.setId(drug.getId());
             simpleDrugDTO.setName(drug.getDrugName());
+            simpleDrugDTO.setCompany(drug.getCompany());
             simpleDrugs.add(simpleDrugDTO);
         }
         return simpleDrugs;

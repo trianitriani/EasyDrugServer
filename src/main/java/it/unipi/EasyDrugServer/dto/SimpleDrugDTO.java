@@ -9,4 +9,5 @@ import org.bson.types.ObjectId;
 public class SimpleDrugDTO {
     private String id;
     private String name;
+    private String company;
 }
