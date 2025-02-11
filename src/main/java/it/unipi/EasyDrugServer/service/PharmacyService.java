@@ -77,14 +77,18 @@ public class PharmacyService {
 
     // funzione usata per inserire un acquisto di farmaci all'interno di mongo db
     private LatestPurchase insertPurchases(String patientCode, String pharmacyRegion, List<PurchaseCartDrugDTO> purchasedDrugs){
-        List<String> prescribedDrugsId =  new ArrayList<>();
-        List<String> purchaseDrugsId =  new ArrayList<>();
+        List<ObjectId> prescribedDrugsId =  new ArrayList<>();
+        List<ObjectId> purchaseDrugsId =  new ArrayList<>();
         LocalDateTime currentTimestamp = LocalDateTime.now();
         LatestPurchase latestPurchase = new LatestPurchase();
 
         for(PurchaseCartDrugDTO purchaseDrugDTO : purchasedDrugs){
             // creo, per ogni farmaco acquistato, il documento da inserire nella collezione purchases
             Purchase purchase = new Purchase();
+
+            ObjectId objectIdDrug = new ObjectId(purchaseDrugDTO.getId());
+            purchase.setDrugId(objectIdDrug);
+
             purchase.setName(purchaseDrugDTO.getName());
             purchase.setQuantity(purchaseDrugDTO.getQuantity());
             purchase.setPrice(purchaseDrugDTO.getPrice());
@@ -94,12 +98,17 @@ public class PharmacyService {
 
             // inserisco nella collezione purchase il farmaco acquistato
             String idPurchase = purchaseRepository.save(purchase).getId();
-            purchaseDrugsId.add(idPurchase);
-            if(purchase.getPrescriptionDate() != null) prescribedDrugsId.add(idPurchase);
+
+            ObjectId purchObjectId = new ObjectId(idPurchase);
+            purchaseDrugsId.add(purchObjectId);
+            if(purchase.getPrescriptionDate() != null) prescribedDrugsId.add(purchObjectId);
 
             // creo, per ogni farmaco acquistato, il documento da inserire nella collezione patients
             LatestDrug latestDrug = new LatestDrug();
-            latestDrug.setDrugId(idPurchase);
+
+            ObjectId objectIdPurchase = new ObjectId(purchaseDrugDTO.getId());
+            latestDrug.setDrugId(objectIdPurchase);
+
             latestDrug.setDrugName(purchaseDrugDTO.getName());
             latestDrug.setQuantity(purchaseDrugDTO.getQuantity());
             latestDrug.setPrice(purchaseDrugDTO.getPrice());

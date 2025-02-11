@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @Data
 public class LatestDrug {
-    private String drugId;
+    private ObjectId drugId;
     private String drugName;
     private int quantity;
     private double price;

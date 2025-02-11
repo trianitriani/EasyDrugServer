@@ -13,6 +13,7 @@ import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 
@@ -117,7 +118,9 @@ public class DoctorService {
         for(int i=prescriptions.size()-1; i>=0; i--){
             LatestDrug drug = new LatestDrug();
             Purchase purch = prescriptions.get(i);
-            drug.setDrugId(purch.getId());
+
+            ObjectId objectId = new ObjectId(purch.getId());
+            drug.setDrugId(objectId);
             drug.setDrugName(purch.getName());
             drug.setQuantity(purch.getQuantity());
             drug.setPrice(purch.getPrice());

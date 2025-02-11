@@ -9,6 +9,7 @@ import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,12 +19,11 @@ import java.util.List;
 @Data
 @Document(collection = "drugs")
 @TypeAlias("Drug")
+@CompoundIndex(def = "{'drugName': 1, 'onPrescription': 1}")
 public class Drug {
 
     @Id
     private String id;
-
-    @Indexed
     private String drugName;
     private double price;
     private String company;

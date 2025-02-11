@@ -115,6 +115,7 @@ public class PatientService {
         for(int i=purchases.size()-1; i>=0; i--){
             LatestDrug latestDrug = new LatestDrug();
             Purchase purch = purchases.get(i);
+
             latestDrug.setDrugId(purch.getDrugId());
             latestDrug.setDrugName(purch.getName());
             latestDrug.setQuantity(purch.getQuantity());

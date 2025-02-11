@@ -18,9 +18,11 @@ import java.time.LocalDateTime;
 public class Purchase {
     @Id
     private String id;
-    private String drugId;
+    private ObjectId drugId;
     private String name;
     private int quantity;
+
+    @Indexed
     private LocalDateTime purchaseDate;
     private String region;
     private LocalDateTime prescriptionDate;
