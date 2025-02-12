@@ -1,21 +1,63 @@
 package it.unipi.EasyDrugServer.utility;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.*;
+import com.mongodb.client.model.IndexModel;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import org.bson.Document;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import com.google.gson.*;
+import org.bson.UuidRepresentation;
+import org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
+import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class MongoBoot {
+    private static String primary = "10.1.1.20";
+    private static String secondary1 = "10.1.1.21";
+    private static String secondary2 = "10.1.1.22";
+
     private static Process startProcess(String command) throws IOException {
         ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", command);
         // processBuilder.inheritIO(); // Permette di vedere l'output nel terminale Java
         return processBuilder.start();
+    }
+
+    private static void createIndex(MongoDatabase database, String collection, String index) {
+        MongoCollection<Document> drugsCollection = database.getCollection(collection);
+
+        // Creazione dell'indice su "name"
+        IndexModel singleIndex = new IndexModel(
+                Indexes.ascending(index)
+        );
+        drugsCollection.createIndexes(Collections.singletonList(singleIndex));
+    }
+
+    private static void createCompoundIndex(MongoDatabase database, String collection, String index1, String index2){
+        MongoCollection<Document> drugsCollection = database.getCollection(collection);
+
+        // Creazione dell'indice composto su "name" e "category"
+        IndexModel compoundIndex = new IndexModel(
+                Indexes.compoundIndex(
+                        Indexes.ascending(index1),
+                        Indexes.ascending(index2)
+                )
+        );
+
+        drugsCollection.createIndexes(Collections.singletonList(compoundIndex));
+
     }
 
     private static void insertCollection(String collectionName, MongoDatabase database) throws IOException {
@@ -110,8 +152,13 @@ public class MongoBoot {
 
         // 2. Connessione a MongoDB
         String uri = "mongodb://localhost:27018,localhost:27019,localhost:27020/EasyDrugDB?replicaSet=rs0";
+
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("EasyDrugDB");
+
+            // createCompoundIndex(database, "drugs", "drugName", "onPrescription");
+            // createCompoundIndex(database, "patients", "doctorCode", "surname");
+            // createIndex(database, "purchases", "purchaseDate");
 
             insertCollection("drugs", database);
             insertCollection("doctors", database);

@@ -2,6 +2,7 @@ package it.unipi.EasyDrugServer.service;
 
 
 import it.unipi.EasyDrugServer.dto.SimpleDrugDTO;
+import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Drug;
@@ -30,6 +31,8 @@ public class DrugService {
     }
 
     public void modifyDrug(Drug drug) {
+        if(drug.getIndications().isEmpty())
+            throw new BadRequestException("No added indication");
         if(drugRepository.existsById(drug.getId())) {
             drugRepository.save(drug);
         } else throw new NotFoundException("Drug "+ drug.getId() +" does not exist");
@@ -38,7 +41,6 @@ public class DrugService {
     public Drug deleteDrug(String id) {
         Optional<Drug> optDrug = drugRepository.findById(id);
         if(optDrug.isPresent()) {
-            System.out.println(optDrug);
             Drug drug = optDrug.get();
             drugRepository.deleteById(id);
             return drug;
@@ -46,6 +48,8 @@ public class DrugService {
     }
 
     public void insertDrug(Drug drug) {
+        if(drug.getIndications().isEmpty())
+            throw new BadRequestException("No added indication");
         drugRepository.save(drug);
     }
 

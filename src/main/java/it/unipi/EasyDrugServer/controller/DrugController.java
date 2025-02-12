@@ -28,6 +28,8 @@ public class DrugController {
             drugService.insertDrug(drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, drug);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (BadRequestException e){
+            return exceptionHandler.handleBadRequestException(e);
         } catch (MongoSocketException e) {
             return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
         } catch (MongoException e) {

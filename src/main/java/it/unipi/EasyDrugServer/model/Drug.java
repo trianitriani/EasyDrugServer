@@ -18,7 +18,6 @@ import java.util.List;
 @Setter
 @Data
 @Document(collection = "drugs")
-@TypeAlias("Drug")
 @CompoundIndex(def = "{'drugName': 1, 'onPrescription': 1}")
 public class Drug {
 
