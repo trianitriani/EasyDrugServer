@@ -24,7 +24,7 @@ public class RedisBoot {
     private final DoctorService doctorService;
     private final Jedis jedis;
 
-    /*
+
     @PostConstruct
     public void init() {
         try {
@@ -41,9 +41,9 @@ public class RedisBoot {
                     prescribedDrugDTO.setPrice(drug.getPrice());
                     prescribedDrugDTO.setQuantity(random(2));
                     prescribedDrugDTO.setPurchased(false);
-                    doctorService.saveInactivePrescribedDrug(patient.getId(), prescribedDrugDTO);
+                    doctorService.saveDrugIntoPrescriptionCart(patient.getId(), prescribedDrugDTO);
                 }
-                doctorService.activatePrescription(patient.getId());
+                doctorService.activatePrescriptionCart(patient.getId());
                 System.out.println("Prescrizioni attive per: "+patient.getId());
             }
         } catch (Exception e) {
@@ -58,5 +58,5 @@ public class RedisBoot {
 
 
 
-     */
+
 }
