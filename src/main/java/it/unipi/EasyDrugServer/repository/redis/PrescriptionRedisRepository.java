@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
+import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.utility.RedisHelper;
@@ -64,8 +65,7 @@ public class PrescriptionRedisRepository {
             for (int i = 1; i <= redisHelper.nEntities(jedis, this.pres); i++) {
                 String keyPres = this.pres + ":" + i + ":" + id_pat + ":";
                 // Controllare che le prescrizioni siano attive, quindi con timestamp != false
-                if (jedis.exists(keyPres + "timestamp") &&
-                        !Objects.equals(jedis.get(keyPres + "timestamp"), "")) {
+                if (jedis.exists(keyPres + "timestamp") &&  jedis.get(keyPres + "timestamp").isEmpty()) {
                     // allora si tratta di una prescrizione attiva
                     String timestampString = jedis.get(keyPres + "timestamp");
                     DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
@@ -95,8 +95,7 @@ public class PrescriptionRedisRepository {
             for (int i = 1; i <= redisHelper.nEntities(jedis, this.pres); i++) {
                 String keyPres = this.pres + ":" + i + ":" + id_pat + ":";
                 // Controllare che le prescrizioni siano attive, quindi con timestamp != false
-                if (jedis.exists(keyPres + "timestamp") &&
-                        Objects.equals(jedis.get(keyPres + "timestamp"), "")) {
+                if (jedis.exists(keyPres + "timestamp") && jedis.get(keyPres + "timestamp").isEmpty()) {
                     // allora si tratta di una prescrizione inattiva
                     // cerco all'interno della prescrizione alla ricerca di tutti i farmaci di essa
                     for (int j = 1; j <= redisHelper.nEntities(jedis, this.presDrug); j++) {
@@ -121,7 +120,7 @@ public class PrescriptionRedisRepository {
             int i;
             for (i = 1; i <= redisHelper.nEntities(jedis, this.pres); i++) {
                 presKey = this.pres + ":" + i + ":" + id_pat + ":";
-                if (jedis.exists(presKey + "timestamp") && Objects.equals(jedis.get(presKey + "timestamp"), "")) {
+                if (jedis.exists(presKey + "timestamp") &&  jedis.get(presKey + "timestamp").isEmpty()) {
                     // trovato l'id della prescrizione inattiva devo inserire all'interno
                     // della prescrizione un nuovo farmaco
                     found = true;
@@ -158,7 +157,7 @@ public class PrescriptionRedisRepository {
             info.addProperty("price", drug.getPrice());
             jedis.set(presDrugKey + "info", String.valueOf(info));
             jedis.set(presDrugKey + "quantity", String.valueOf(drug.getQuantity()));
-            jedis.set(presDrugKey + "purchased", String.valueOf(drug.isPurchased()));
+            jedis.set(presDrugKey + "purchased", String.valueOf(false));
 
             // dopo un giorno, se la prescrizione non viene attivata, il farmaco viene eliminato
             jedis.expire(presDrugKey + "id", this.day);
@@ -265,9 +264,15 @@ public class PrescriptionRedisRepository {
             for (String keyDrugs : keyDrugsList){
                 // modify time to expire for all drugs into the prescription to activate
                 jedis.expire(keyDrugs + "id", this.month);
-                jedis.expire(keyDrugs + "info", this.month);
-                jedis.expire(keyDrugs + "quantity", this.month);
-                jedis.expire(keyDrugs + "purchased", this.month);
+                // if there are any missing fields throw an exception because in not possible
+                // create a prescription with missing values
+                // can be missing because the application don't use atomic operation
+                if(jedis.expire(keyDrugs + "info", this.month) == 0)
+                    throw new BadRequestException("Some prescription drugs are missing fields");
+                if(jedis.expire(keyDrugs + "quantity", this.month) == 0)
+                    throw new BadRequestException("Some prescription drugs are missing fields");
+                if(jedis.expire(keyDrugs + "purchased", this.month) == 0)
+                    throw new BadRequestException("Some prescription drugs are missing fields");
             }
 
             // un mese dopo la sua creazione la prescrizione viene eliminata

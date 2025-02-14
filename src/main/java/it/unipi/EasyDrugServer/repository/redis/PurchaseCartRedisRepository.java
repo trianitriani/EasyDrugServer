@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unipi.EasyDrugServer.dto.ConfirmPurchaseCartDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseCartDrugDTO;
+import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.utility.RedisHelper;
@@ -132,7 +133,6 @@ public class PurchaseCartRedisRepository {
                 }
 
                 PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(jedis, id_drug, key);
-
                 jedis.del(key + "id");
                 jedis.del(key + "info");
                 jedis.del(key + "quantity");
@@ -168,6 +168,13 @@ public class PurchaseCartRedisRepository {
                             prescribedDrugs.put(timestampString, new ArrayList<>());
                         prescribedDrugs.get(timestampString).add(id);
                     }
+                    // if there are any missing fields throw an exception because in not possible
+                    // create a prescription with missing values
+                    // can be missing because the application don't use atomic operation
+                    if(!jedis.exists(keyPurch + "info"))
+                        throw new BadRequestException("Some purchases drugs are missing fields");
+                    if(!jedis.exists(keyPurch + "quantity"))
+                        throw new BadRequestException("Some purchases drugs are missing fields");
                     // elimino dal key value il farmaco nel carrello
                     purchToDelete.put(keyPurch, i);
                 }
@@ -178,7 +185,7 @@ public class PurchaseCartRedisRepository {
                 String presKey = "pres:" + j + ":" + id_pat + ":";
                 if (jedis.exists(presKey + "timestamp")) {
                     String stringTimestamp = jedis.get(presKey + "timestamp");
-                    if (Objects.equals(stringTimestamp, "")) continue;
+                    if (stringTimestamp.isEmpty()) continue;
                     // allora la prescrizione è attiva
                     if (!prescribedDrugs.containsKey(stringTimestamp)) continue;
                     // allora sono stati acquistati farmaci di quella prescrizione
@@ -195,6 +202,7 @@ public class PurchaseCartRedisRepository {
                         String presDrugKey = "pres-drug:" + k + ":" + j + ":";
                         if (jedis.exists(presDrugKey + "id")) {
                             String id = jedis.get((presDrugKey + "id"));
+
                             if (drugs.contains(id)) {
                                 if (ended) {
                                     // Allora vado a eliminare quel farmaco
