@@ -11,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisSentinelPool;
 
 import java.util.List;
 
@@ -22,12 +23,11 @@ public class RedisBoot {
     private final PatientRepository patientRepository;
     private final DrugRepository drugRepository;
     private final DoctorService doctorService;
-    private final Jedis jedis;
-
-
+    private final JedisSentinelPool jedisSentinelPool;
+/*
     @PostConstruct
     public void init() {
-        try {
+        try (Jedis jedis = jedisSentinelPool.getResource()) {
             jedis.flushAll();
             List<Patient> patients = patientRepository.findAll();
             List<Drug> drugs = drugRepository.findByOnPrescriptionTrue();
@@ -56,7 +56,5 @@ public class RedisBoot {
         return (int) (Math.random() * (max - min + 1)) + min;
     }
 
-
-
-
+ */
 }

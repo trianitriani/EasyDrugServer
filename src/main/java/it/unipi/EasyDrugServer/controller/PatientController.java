@@ -148,9 +148,9 @@ public class PatientController {
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
         } catch (JedisConnectionException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
         } catch (JedisException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }

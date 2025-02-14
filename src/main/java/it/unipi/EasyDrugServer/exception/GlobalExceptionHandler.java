@@ -44,9 +44,9 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    public ResponseEntity<ResponseDTO> handleRedisException(JedisException ex, HttpStatus status){
-        logger.warn("RedisException: {}", ex.getMessage());
-        ResponseDTO error = new ResponseDTO(status, ex.getMessage());
+    public ResponseEntity<ResponseDTO> handleRedisException(String message, HttpStatus status){
+        logger.warn("RedisException: {}", message);
+        ResponseDTO error = new ResponseDTO(status, message);
         return new ResponseEntity<>(error, status);
     }
 

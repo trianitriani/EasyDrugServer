@@ -11,11 +11,10 @@ import java.util.Set;
 
 @Configuration
 public class RedisConfig {
-    private JedisCluster jedis;
+    private JedisSentinelPool jedisSentinelPool;
     private String master = "localhost";
     private String replica1 = "localhost";
     private String replica2 = "localhost";
-    private Integer port = 6379;
 
     @Bean
     public JedisSentinelPool jedisSentinelPool() {
@@ -23,28 +22,20 @@ public class RedisConfig {
         sentinels.add(master+":26379");
         sentinels.add(replica1+":26380");
         sentinels.add(replica2+":26381");
-        return new JedisSentinelPool("mymaster", sentinels);
-    }
-
-    @Bean
-    public JedisPool jedisPool(JedisSentinelPool jedisSentinelPool) {
-        return new JedisPool(jedisSentinelPool.getCurrentHostMaster().getHost(), jedisSentinelPool.getCurrentHostMaster().getPort());
-    }
-
-    @Bean
-    public Jedis jedis(JedisPool jedisPool) {
-        return jedisPool.getResource();
+        jedisSentinelPool = new JedisSentinelPool("mymaster", sentinels);
+        return jedisSentinelPool;
     }
 
     @PreDestroy
     public void shutdownJedis() {
-        if (jedis != null) {
-            try {
-                jedis.close();
-                System.out.println("Jedis chiuso correttamente.");
-            } catch (Exception e) {
-                System.err.println("Errore durante la chiusura di Jedis: " + e.getMessage());
+        System.out.println("Chiusura delle connessioni Redis...");
+        try {
+            if (jedisSentinelPool != null) {
+                jedisSentinelPool.close();
+                System.out.println("JedisSentinelPool chiuso correttamente.");
             }
+        } catch (Exception e) {
+            System.err.println("Errore durante la chiusura di Redis: " + e.getMessage());
         }
     }
 }

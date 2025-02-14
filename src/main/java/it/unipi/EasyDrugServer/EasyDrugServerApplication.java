@@ -5,8 +5,10 @@ import it.unipi.EasyDrugServer.utility.RedisBoot;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.retry.annotation.EnableRetry;
 
 @SpringBootApplication
+@EnableRetry
 @EnableMongoRepositories(basePackages = "it.unipi.EasyDrugServer.repository.mongo")
 public class EasyDrugServerApplication {
 

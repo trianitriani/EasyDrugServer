@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
+import java.net.SocketException;
 import java.util.List;
 
 @RestController
@@ -134,10 +135,10 @@ public class DoctorController {
             return exceptionHandler.handleUnauthorizedException(e);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
-        } catch (JedisConnectionException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+        } catch(JedisConnectionException e){
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
         } catch (JedisException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -162,9 +163,9 @@ public class DoctorController {
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
         } catch (JedisConnectionException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
         } catch (JedisException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -188,9 +189,9 @@ public class DoctorController {
         } catch (NotFoundException e){
             return exceptionHandler.handleNotFoundException(e);
         } catch (JedisConnectionException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
         } catch (JedisException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -217,9 +218,9 @@ public class DoctorController {
         } catch (NotFoundException e){
             return exceptionHandler.handleNotFoundException(e);
         } catch (JedisConnectionException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
         } catch (JedisException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
@@ -241,9 +242,9 @@ public class DoctorController {
         } catch (ForbiddenException e){
             return exceptionHandler.handleForbiddenException(e);
         } catch (JedisConnectionException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.SERVICE_UNAVAILABLE);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
         } catch (JedisException e){
-            return exceptionHandler.handleRedisException(e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return exceptionHandler.handleRedisException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e){
             return exceptionHandler.handleException(e);
         }
