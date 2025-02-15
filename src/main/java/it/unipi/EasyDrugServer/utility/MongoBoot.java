@@ -61,7 +61,7 @@ public class MongoBoot {
     }
 
     private static void insertCollection(String collectionName, MongoDatabase database) throws IOException {
-// 3. Creazione della collezione (se non esiste)
+        // 3. Creazione della collezione (se non esiste)
         boolean collectionExists = false;
         for (String name : database.listCollectionNames()) {
             if (name.equals(collectionName)) {
@@ -166,7 +166,6 @@ public class MongoBoot {
             insertCollection("pharmacies", database);
             insertCollection("purchases", database);
             insertCollection("researchers", database);
-
         }
     }
 
