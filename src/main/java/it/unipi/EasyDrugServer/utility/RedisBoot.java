@@ -24,7 +24,7 @@ public class RedisBoot {
     private final DrugRepository drugRepository;
     private final DoctorService doctorService;
     private final JedisSentinelPool jedisSentinelPool;
-/*
+
     @PostConstruct
     public void init() {
         try (Jedis jedis = jedisSentinelPool.getResource()) {
@@ -56,5 +56,4 @@ public class RedisBoot {
         return (int) (Math.random() * (max - min + 1)) + min;
     }
 
- */
 }

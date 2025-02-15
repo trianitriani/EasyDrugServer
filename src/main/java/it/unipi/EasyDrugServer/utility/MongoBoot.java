@@ -37,7 +37,7 @@ public class MongoBoot {
     private static String secondary1 = "10.1.1.21";
     private static String secondary2 = "10.1.1.22";
 
-    private static MongoTemplate mongoTemplate;
+    private final MongoTemplate mongoTemplate;
 
     private static Process startProcess(String command) throws IOException {
         ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", command);
@@ -45,7 +45,7 @@ public class MongoBoot {
         return processBuilder.start();
     }
 
-    private static void insertCollection(String collectionName) throws IOException {
+    private void insertCollection(String collectionName) throws IOException {
         // Creazione della collezione se non esiste
         if (!mongoTemplate.collectionExists(collectionName)) {
             mongoTemplate.createCollection(collectionName, CollectionOptions.empty());
@@ -95,6 +95,7 @@ public class MongoBoot {
     public void init() throws Exception{
         List<Process> processes = new ArrayList<>();
 
+        /*
         // Avvia i nodi del cluster
         processes.add(startProcess("mongod --replSet rs0 --port 27018 --bind_ip localhost --dbpath c:\\MongoDB\\data\\r1 --oplogSize 200"));
         processes.add(startProcess("mongod --replSet rs0 --port 27019 --bind_ip localhost --dbpath c:\\MongoDB\\data\\r2 --oplogSize 200"));
@@ -110,6 +111,8 @@ public class MongoBoot {
 
         Thread.sleep(3000);
 
+
+         */
         insertCollection("drugs");
         insertCollection("doctors");
         insertCollection("patients");

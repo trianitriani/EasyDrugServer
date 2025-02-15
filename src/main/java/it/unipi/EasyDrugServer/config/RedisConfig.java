@@ -12,16 +12,16 @@ import java.util.Set;
 @Configuration
 public class RedisConfig {
     private JedisSentinelPool jedisSentinelPool;
-    private String master = "localhost";
-    private String replica1 = "localhost";
-    private String replica2 = "localhost";
+    private final String sentinel1 = "localhost";
+    private final String sentinel2 = "localhost";
+    private final String sentinel3 = "localhost";
 
     @Bean
     public JedisSentinelPool jedisSentinelPool() {
         Set<String> sentinels = new HashSet<>();
-        sentinels.add(master+":26379");
-        sentinels.add(replica1+":26380");
-        sentinels.add(replica2+":26381");
+        sentinels.add(sentinel1+":26379");
+        sentinels.add(sentinel2+":26380");
+        sentinels.add(sentinel3+":26381");
         jedisSentinelPool = new JedisSentinelPool("mymaster", sentinels);
         return jedisSentinelPool;
     }
