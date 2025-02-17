@@ -33,10 +33,6 @@ import java.nio.charset.StandardCharsets;
 @Component
 @RequiredArgsConstructor
 public class MongoBoot {
-    private static String primary = "10.1.1.20";
-    private static String secondary1 = "10.1.1.21";
-    private static String secondary2 = "10.1.1.22";
-
     private final MongoTemplate mongoTemplate;
 
     private static Process startProcess(String command) throws IOException {
@@ -103,9 +99,6 @@ public class MongoBoot {
 
         // Aspetta un attimo che i processi si avviino
         Thread.sleep(5000);
-
-        // Avvia mongosh per connettersi al primo nodo
-        processes.add(startProcess("mongosh --port 27018"));
 
         System.out.println("Tutti i processi sono stati avviati!");
 
