@@ -151,11 +151,13 @@ public class DoctorController {
      * @param drug drug to insert into new prescription
      * @return ResponseEntity<ResponseDTO>
      */
-    @PostMapping("/patients/{id_pat}/cart/drugs")
+    @PostMapping("/patients/{id_pat}/cart/{id_cart}/drugs")
     public ResponseEntity<ResponseDTO> saveDrugIntoPrescriptionCart(@PathVariable String id_pat,
-                                                                    @RequestBody PrescribedDrugDTO drug){
+                                                                    @PathVariable int id_cart,
+                                                                    @RequestBody PrescribedDrugDTO drug,
+                                                                    @RequestBody List<String> alreadyInsertedIdDrugs){
         try {
-            PrescribedDrugDTO prescribedDrugDTO = doctorService.saveDrugIntoPrescriptionCart(id_pat, drug);
+            PrescribedDrugDTO prescribedDrugDTO = doctorService.saveDrugIntoPrescriptionCart(id_pat, id_cart, drug, alreadyInsertedIdDrugs);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, prescribedDrugDTO);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (ForbiddenException e){

@@ -56,7 +56,7 @@ public class PurchaseCartRedisRepository {
                 String key = this.entity + ":" + i + ":" + id_pat + ":";
                 if(!jedis.exists(key + "id")) continue;
                 // Se sono qui significa che l'oggetto esiste realmente e lo inserisco nella lista
-                PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(jedis, key);
+                PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(jedis, key, i);
                 cartList.add(drug);
             }
             return cartList;
@@ -65,16 +65,6 @@ public class PurchaseCartRedisRepository {
 
     public PurchaseCartDrugDTO insertPurchaseDrug(String id_pat, PurchaseCartDrugDTO drug) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
-            // se non deriva da una prescrizione controlliamo
-            // che non si trovi di già all'interno del carrello
-            if (drug.getPrescriptionTimestamp() == null) {
-                for (int i = 1; i <= redisHelper.nEntities(jedis, this.entity); i++) {
-                    String keyPurch = this.entity + ":" + i + ":" + id_pat + ":";
-                    if (jedis.exists(keyPurch + "id") && Objects.equals(jedis.get(keyPurch + "id"), String.valueOf(drug.getId())))
-                        throw new ForbiddenException("Drug " + drug.getId() + " is already into the purchase cart");
-                }
-            }
-
             JsonObject info = new JsonObject();
             info.addProperty("name", drug.getName());
             info.addProperty("price", drug.getPrice());
@@ -84,10 +74,11 @@ public class PurchaseCartRedisRepository {
 
             // now we have to search a valid id_purch for a new element
             String id_purch = redisHelper.getReusableId(jedis, this.entity);
+            drug.setIdPurchDrug(Integer.parseInt(id_purch));
             String key = this.entity + ":" + id_purch + ":" + id_pat + ":";
 
             // insert a drug into a purchase cart
-            jedis.set(key + "id", String.valueOf(drug.getId()));
+            jedis.set(key + "id", String.valueOf(drug.getIdDrug()));
             jedis.set(key + "info", String.valueOf(info));
             jedis.set(key + "quantity", String.valueOf(drug.getQuantity()));
 
@@ -99,48 +90,32 @@ public class PurchaseCartRedisRepository {
         }
     }
 
-    public PurchaseCartDrugDTO modifyPurchaseDrugQuantity(String id_pat, String id_drug, int quantity) {
+    public PurchaseCartDrugDTO modifyPurchaseDrugQuantity(String id_pat, int id_purch_drug, int quantity) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             // searching drug with idDrug
-            for (int i = 0; i <= redisHelper.nEntities(jedis, this.entity); i++) {
-                String key = this.entity + ":" + i + ":" + id_pat + ":";
-                if (jedis.exists(key + "id")) {
-                    if (!Objects.equals(id_drug, jedis.get(key + "id"))) continue;
-                    // modifica il campo quantità
-                    jedis.set(key + "quantity", String.valueOf(quantity));
-                    return createPurchaseCartDrugDTO(jedis, id_drug, quantity, key);
-                }
+            String key = this.entity + ":" + id_purch_drug + ":" + id_pat + ":";
+            if (jedis.exists(key + "id")) {
+                // modifica il campo quantità
+                jedis.set(key + "quantity", String.valueOf(quantity));
+                return createPurchaseCartDrugDTO(jedis, quantity, key, id_purch_drug);
             }
-            throw new NotFoundException("Impossibile modify the drug: patient " + id_pat + " has not drug with id " + id_drug + " in the cart.");
+            throw new NotFoundException("Impossibile modify the drug: patient " + id_pat + " has not drug with purch_id" + id_purch_drug + " in the cart.");
         }
     }
 
-    public PurchaseCartDrugDTO deletePurchaseDrug(String id_pat, String id_drug, String prescriptionTimestamp) {
+    public PurchaseCartDrugDTO deletePurchaseDrug(String id_pat, int id_purch_drug) {
         try(Jedis jedis = jedisSentinelPool.getResource()){
-        // searching into purchase cart the specific drug
-        for(int i=0; i<=redisHelper.nEntities(jedis, this.entity); i++) {
-            String key = this.entity + ":" + i + ":" + id_pat + ":";
+            // searching into purchase cart the specific drug
+            String key = this.entity + ":" + id_purch_drug + ":" + id_pat + ":";
             if (jedis.exists(key + "id")) {
-                if (!Objects.equals(id_drug, jedis.get(key + "id"))) continue;
-
-                // se il farmaco faceva parte di una prescrizione, devo trovare il farmaco con quel timestamp
-                // per evitare di eliminare uno stesso farmaco in una prescrizione diversa
-                if(!Objects.equals(prescriptionTimestamp, "")){
-                    JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
-                    String timestampString = jsonObject.get("prescriptionTimestamp").getAsString();
-
-                    if(!Objects.equals(prescriptionTimestamp, timestampString)) continue;
-                }
-
-                PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(jedis, id_drug, key);
+                PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(jedis, key, id_purch_drug);
                 jedis.del(key + "id");
                 jedis.del(key + "info");
                 jedis.del(key + "quantity");
-                redisHelper.returnIdToPool(jedis, this.entity, String.valueOf(i));
+                redisHelper.returnIdToPool(jedis, this.entity, String.valueOf(id_purch_drug));
                 return drug;
             }
-        }
-        throw new NotFoundException("Impossibile to delete the drug: patient "+id_pat+" " + "has no drug with id "+id_drug+" in the cart.");
+            throw new NotFoundException("Impossibile to delete the drug: patient "+id_pat+" " + "has no purch drug with id "+ id_purch_drug +" in the cart.");
         }
     }
 
@@ -159,7 +134,7 @@ public class PurchaseCartRedisRepository {
                 if (jedis.exists(keyPurch + "id")) {
                     PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(jedis, keyPurch);
                     purchaseDrugs.add(drug);
-                    String id = drug.getId();
+                    String id = drug.getIdDrug();
                     // aggiornare hash per diverse prescrizioni di farmaci prescritti acquistati.
                     if (drug.getPrescriptionTimestamp() != null) {
                         // allora il farmaco è relativo a una prescrizione
@@ -269,10 +244,30 @@ public class PurchaseCartRedisRepository {
         }
     }
 
-    private PurchaseCartDrugDTO createPurchaseCartDrugDTO(Jedis jedis, String key) {
+    /*private PurchaseCartDrugDTO createPurchaseCartDrugDTO(Jedis jedis, String key, int idPurchDrug) {
         PurchaseCartDrugDTO purchaseDrug = new PurchaseCartDrugDTO();
-        purchaseDrug.setId(jedis.get(key + "id"));
+        purchaseDrug.setIdPurchDrug(idPurchDrug);
+        purchaseDrug.setIdDrug(jedis.get(key + "id"));
         JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
+        purchaseDrug.setName(jsonObject.get("name").getAsString());
+        purchaseDrug.setPrice(jsonObject.get("price").getAsDouble());
+        String timestampString = jsonObject.get("prescriptionTimestamp").getAsString();
+        if(Objects.equals(timestampString, "")){
+            purchaseDrug.setPrescriptionTimestamp(null);
+        } else {
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+            LocalDateTime prescriptionTimestamp = LocalDateTime.parse(timestampString, formatter);
+            purchaseDrug.setPrescriptionTimestamp(prescriptionTimestamp);
+        }
+        purchaseDrug.setQuantity(Integer.parseInt(jedis.get(key + "quantity")));
+        return purchaseDrug;
+    }*/
+
+    private PurchaseCartDrugDTO createPurchaseCartDrugDTO(Jedis jedis, String key, int id_purch_drug){
+        PurchaseCartDrugDTO purchaseDrug = new PurchaseCartDrugDTO();
+        purchaseDrug.setIdPurchDrug(id_purch_drug);
+        JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
+        purchaseDrug.setIdDrug(jedis.get(key + "id"));
         purchaseDrug.setName(jsonObject.get("name").getAsString());
         purchaseDrug.setPrice(jsonObject.get("price").getAsDouble());
         String timestampString = jsonObject.get("prescriptionTimestamp").getAsString();
@@ -287,39 +282,22 @@ public class PurchaseCartRedisRepository {
         return purchaseDrug;
     }
 
-    private PurchaseCartDrugDTO createPurchaseCartDrugDTO(Jedis jedis, String id, String key){
-        PurchaseCartDrugDTO purchasedDrug = new PurchaseCartDrugDTO();
+    private PurchaseCartDrugDTO createPurchaseCartDrugDTO(Jedis jedis, int quantity, String key, int id_purch_drug){
+        PurchaseCartDrugDTO purchaseDrug = new PurchaseCartDrugDTO();
+        purchaseDrug.setIdPurchDrug(id_purch_drug);
         JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
-        purchasedDrug.setId(id);
-        purchasedDrug.setName(jsonObject.get("name").getAsString());
-        purchasedDrug.setPrice(jsonObject.get("price").getAsDouble());
+        purchaseDrug.setIdDrug(jedis.get(key + "id"));
+        purchaseDrug.setName(jsonObject.get("name").getAsString());
+        purchaseDrug.setPrice(jsonObject.get("price").getAsDouble());
         String timestampString = jsonObject.get("prescriptionTimestamp").getAsString();
         if(Objects.equals(timestampString, "")){
-            purchasedDrug.setPrescriptionTimestamp(null);
+            purchaseDrug.setPrescriptionTimestamp(null);
         } else {
             DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
             LocalDateTime prescriptionTimestamp = LocalDateTime.parse(timestampString, formatter);
-            purchasedDrug.setPrescriptionTimestamp(prescriptionTimestamp);
+            purchaseDrug.setPrescriptionTimestamp(prescriptionTimestamp);
         }
-        purchasedDrug.setQuantity(Integer.parseInt(jedis.get(key + "quantity")));
-        return purchasedDrug;
-    }
-
-    private PurchaseCartDrugDTO createPurchaseCartDrugDTO(Jedis jedis, String id, int quantity, String key){
-        PurchaseCartDrugDTO purchasedDrug = new PurchaseCartDrugDTO();
-        JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
-        purchasedDrug.setId(id);
-        purchasedDrug.setName(jsonObject.get("name").getAsString());
-        purchasedDrug.setPrice(jsonObject.get("price").getAsDouble());
-        String timestampString = jsonObject.get("prescriptionTimestamp").getAsString();
-        if(Objects.equals(timestampString, "")){
-            purchasedDrug.setPrescriptionTimestamp(null);
-        } else {
-            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-            LocalDateTime prescriptionTimestamp = LocalDateTime.parse(timestampString, formatter);
-            purchasedDrug.setPrescriptionTimestamp(prescriptionTimestamp);
-        }
-        purchasedDrug.setQuantity(quantity);
-        return purchasedDrug;
+        purchaseDrug.setQuantity(quantity);
+        return purchaseDrug;
     }
 }

@@ -11,16 +11,12 @@ import it.unipi.EasyDrugServer.utility.RedisHelper;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.TransactionSystemException;
 import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.exceptions.JedisException;
 
-import java.net.SocketException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -112,39 +108,18 @@ public class PrescriptionRedisRepository {
         }
     }
 
-    public PrescribedDrugDTO saveDrugIntoPrescriptionCart(String id_pat, PrescribedDrugDTO drug) {
+    public PrescribedDrugDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
-            boolean found = false;
-            // controllare se esiste una prescrizione inattiva del paziente
-            String presKey = "";
-            int i;
-            for (i = 1; i <= redisHelper.nEntities(jedis, this.pres); i++) {
-                presKey = this.pres + ":" + i + ":" + id_pat + ":";
-                if (jedis.exists(presKey + "timestamp") &&  jedis.get(presKey + "timestamp").isEmpty()) {
-                    // trovato l'id della prescrizione inattiva devo inserire all'interno
-                    // della prescrizione un nuovo farmaco
-                    found = true;
-
-                    // in one prescription there can not be twice the same drug
-                    for (int j = 1; j <= redisHelper.nEntities(jedis, this.presDrug); j++) {
-                        String presDrugKey = this.presDrug + ":" + j + ":" + i + ":";
-                        if (jedis.exists(presDrugKey + "id") &&
-                                Objects.equals(jedis.get(presDrugKey + "id"), String.valueOf(drug.getId())))
-                            throw new ForbiddenException("Drug " + drug.getId() + " is already into the prescription cart");
-                    }
-                    break;
-                }
-            }
-
             // se la prescrizione inattiva non esiste, devo crearla
-            if (!found) {
-                int id_pres = Integer.parseInt(redisHelper.getReusableId(jedis, this.pres));
-                presKey = this.pres + ":" + id_pres + ":" + id_pat + ":";
-                i = id_pres;
+            boolean found = true;
+            if (id_pres == 0) {
+                found = false;
+                id_pres = Integer.parseInt(redisHelper.getReusableId(jedis, this.pres));
             }
             // adesso possiamo inserire il farmaco presente all'interno del db
-            String id_presDrug = redisHelper.getReusableId(jedis, this.presDrug);
-            String presDrugKey = this.presDrug + ":" + id_presDrug + ":" + i + ":";
+            String id_pres_drug = redisHelper.getReusableId(jedis, this.presDrug);
+            String presKey = this.pres + ":" + id_pres + ":" + id_pat + ":";
+            String presDrugKey = this.presDrug + ":" + id_pres_drug + ":" + id_pres + ":";
             JsonObject info = new JsonObject();
 
             // Modifica dati della prescrizione
@@ -152,7 +127,7 @@ public class PrescriptionRedisRepository {
             jedis.expire(presKey + "timestamp", this.day);
 
             // Modifica dati del farmaco
-            jedis.set(presDrugKey + "id", String.valueOf(drug.getId()));
+            jedis.set(presDrugKey + "id", String.valueOf(drug.getIdDrug()));
             info.addProperty("name", drug.getName());
             info.addProperty("price", drug.getPrice());
             jedis.set(presDrugKey + "info", String.valueOf(info));
@@ -164,11 +139,12 @@ public class PrescriptionRedisRepository {
             jedis.expire(presDrugKey + "info", this.day);
             jedis.expire(presDrugKey + "quantity", this.day);
             jedis.expire(presDrugKey + "purchased", this.day);
+            drug.setIdPresDrug(Integer.parseInt(id_pres_drug));
             return drug;
         }
     }
 
-    public PrescribedDrugDTO deleteDrugIntoPrescriptionCart(String id_pat, String id_drug) {
+    public PrescribedDrugDTO deleteDrugIntoPrescriptionCart(String id_pat, int id_pres, int id_pres_drug) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             PrescribedDrugDTO prescribedDrug;
             for (int i = 1; i <= redisHelper.nEntities(jedis, this.pres); i++) {

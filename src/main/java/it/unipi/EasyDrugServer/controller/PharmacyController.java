@@ -55,7 +55,7 @@ public class PharmacyController {
     }
 
     /**
-     * ## PHARMACIST ## Test senza mettere errori: OK
+     * ## PHARMACIST ##
      * Insert into redis db information related to a specific drug that is insert into a cart
      * of a specific patient by a pharmacist
      * @param id_pat code of patient
@@ -64,9 +64,10 @@ public class PharmacyController {
      */
     @PostMapping("/patients/{id_pat}/cart/drugs")
     public ResponseEntity<ResponseDTO> savePurchaseDrug(@PathVariable String id_pat,
-                                                        @RequestBody PurchaseCartDrugDTO drug){
+                                                        @RequestBody PurchaseCartDrugDTO drug,
+                                                        @RequestBody List<String> alreadyInsertedIdDrugs){
         try {
-            PurchaseCartDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(id_pat, drug);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(id_pat, drug, alreadyInsertedIdDrugs);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (BadRequestException e) {
@@ -87,15 +88,14 @@ public class PharmacyController {
      * ## PHARMACIST ## Test senza mettere errori: OK
      * Remove from purchase cart a specific drug
      * @param id_pat code of patient
-     * @param id_drug code of drug to delete
+     * @param id_purch_drug code of purchase to delete
      * @return ResponseEntity<ResponseDTO>
      */
-    @DeleteMapping("/patients/{id_pat}/cart/drugs/{id_drug}")
+    @DeleteMapping("/patients/{id_pat}/cart/drugs/{id_purch_drug}")
     public ResponseEntity<ResponseDTO> deletePurchaseDrug(@PathVariable String id_pat,
-                                                          @PathVariable String id_drug,
-                                                          @RequestBody(required = false) LocalDateTime prescriptionTimestamp){
+                                                          @PathVariable int id_purch_drug){
         try {
-            PurchaseCartDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(id_pat, id_drug, prescriptionTimestamp);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.deletePurchaseDrug(id_pat, id_purch_drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -115,16 +115,16 @@ public class PharmacyController {
      * ## PHARMACIST ##
      * Modify the quantity of the selected drug that is into the purchase cart of patient
      * @param id_pat code of patient
-     * @param id_drug code of drug to delete
+     * @param id_purch_drug code of purchase to delete
      * @param quantity new quantity
      * @return ResponseEntity<?>
      */
-    @PatchMapping("/patients/{id_pat}/cart/drugs/{id_drug}")
+    @PatchMapping("/patients/{id_pat}/cart/drugs/{id_purch_drug}")
     public ResponseEntity<ResponseDTO> modifyPurchaseDrugQuantity(@PathVariable String id_pat,
-                                                                  @PathVariable String id_drug,
+                                                                  @PathVariable int id_purch_drug,
                                                                   @RequestBody int quantity){
         try {
-            PurchaseCartDrugDTO purchaseDrug = pharmacyService.modifyPurchaseDrugQuantity(id_pat, id_drug, quantity);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.modifyPurchaseDrugQuantity(id_pat, id_purch_drug, quantity);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

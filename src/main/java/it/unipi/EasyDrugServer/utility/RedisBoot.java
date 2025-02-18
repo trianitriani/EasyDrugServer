@@ -36,14 +36,14 @@ public class RedisBoot {
                 for(int j = 0; j < 2; j++){
                     Drug drug = drugs.get(random(drugs.size()-1));
                     PrescribedDrugDTO prescribedDrugDTO = new PrescribedDrugDTO();
-                    prescribedDrugDTO.setId(drug.getId());
+                    prescribedDrugDTO.setIdDrug(drug.getId());
                     prescribedDrugDTO.setName(drug.getDrugName());
                     prescribedDrugDTO.setPrice(drug.getPrice());
                     prescribedDrugDTO.setQuantity(random(2));
                     prescribedDrugDTO.setPurchased(false);
-                    doctorService.saveDrugIntoPrescriptionCart(patient.getId(), prescribedDrugDTO);
+                    //  doctorService.saveDrugIntoPrescriptionCart(patient.getId(), 0, prescribedDrugDTO);
                 }
-                doctorService.activatePrescriptionCart(patient.getId());
+                // doctorService.activatePrescriptionCart(patient.getId());
                 System.out.println("Prescrizioni attive per: "+patient.getId());
             }
         } catch (Exception e) {
