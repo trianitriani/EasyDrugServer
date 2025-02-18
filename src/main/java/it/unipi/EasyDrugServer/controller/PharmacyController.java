@@ -150,9 +150,10 @@ public class PharmacyController {
      */
     @PatchMapping("/patients/{id_pat}/cart/checkout")
     public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable String id_pat,
+                                                       @RequestBody List<Integer> id_purch_drugs,
                                                        @RequestBody String pharmacyRegion){
         try {
-            LatestPurchase latestPurchase = pharmacyService.confirmPurchase(id_pat, pharmacyRegion);
+            LatestPurchase latestPurchase = pharmacyService.confirmPurchase(id_pat, id_purch_drugs, pharmacyRegion);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, latestPurchase);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

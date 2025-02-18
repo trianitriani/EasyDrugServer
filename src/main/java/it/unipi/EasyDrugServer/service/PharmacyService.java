@@ -169,10 +169,10 @@ public class PharmacyService {
             backoff = @Backoff(delay = 2000)
     )
     @Transactional
-    public LatestPurchase confirmPurchase(String id_pat, String pharmacyRegion) {
+    public LatestPurchase confirmPurchase(String id_pat, List<Integer> id_purch_drugs, String pharmacyRegion) {
         Transaction transaction = null;
         try {
-            ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
+            ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat, id_purch_drugs);
             List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
 
             // eseguiamo la transazione di MongoDB

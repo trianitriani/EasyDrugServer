@@ -151,9 +151,9 @@ public class DoctorController {
      * @param drug drug to insert into new prescription
      * @return ResponseEntity<ResponseDTO>
      */
-    @PostMapping("/patients/{id_pat}/cart/{id_cart}/drugs")
+    @PostMapping("/patients/{id_pat}/cart/drugs")
     public ResponseEntity<ResponseDTO> saveDrugIntoPrescriptionCart(@PathVariable String id_pat,
-                                                                    @PathVariable int id_cart,
+                                                                    @RequestBody int id_cart,
                                                                     @RequestBody PrescribedDrugDTO drug,
                                                                     @RequestBody List<String> alreadyInsertedIdDrugs){
         try {
@@ -178,14 +178,15 @@ public class DoctorController {
      * Method for the doctor to delete a specific drug into a new prescription that is
      * still invalid
      * @param id_pat code of patient
-     * @param id_drug id of drug
+     * @param id_pres_drug id of prescribed drug
      * @return ResponseEntity<ResponseDTO>
      */
-    @DeleteMapping("/patients/{id_pat}/cart/drugs/{id_drug}")
+    @DeleteMapping("/patients/{id_pat}/cart/{id_cart}/drugs/{id_drug}")
     public ResponseEntity<ResponseDTO> deleteDrugIntoPrescriptionCart(@PathVariable String id_pat,
-                                                                      @PathVariable String id_drug){
+                                                                      @PathVariable int id_cart,
+                                                                      @PathVariable int id_pres_drug){
         try {
-            PrescribedDrugDTO prescribedDrugDTO = doctorService.deleteDrugIntoPrescriptionCart(id_pat, id_drug);
+            PrescribedDrugDTO prescribedDrugDTO = doctorService.deleteDrugIntoPrescriptionCart(id_pat, id_cart, id_pres_drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (NotFoundException e){
@@ -203,16 +204,18 @@ public class DoctorController {
      * ## DOCTOR ##
      * Method for the doctor to modify quantity of a specific drug related to a specific patient
      * @param id_pat code of patient
-     * @param id_drug id of drug
+     * @param id_cart id of prescription
+     * @param id_pres_drug id of prescribed drug
      * @param quantity new quantity
      * @return ResponseEntity<ResponseDTO>
      */
-    @PatchMapping("/patients/{id_pat}/cart/drugs/{id_drug}")
+    @PatchMapping("/patients/{id_pat}/cart/{id_cart}/drugs/{id_pres_drug}")
     public ResponseEntity<ResponseDTO> modifyDrugQuantityIntoPrescriptionCart(@PathVariable String id_pat,
-                                                                              @PathVariable String id_drug,
+                                                                              @PathVariable int id_cart,
+                                                                              @PathVariable int id_pres_drug,
                                                                               @RequestBody int quantity){
         try {
-            PrescribedDrugDTO prescribedDrugDTO = doctorService.modifyDrugQuantityIntoPrescriptionCart(id_pat, id_drug, quantity);
+            PrescribedDrugDTO prescribedDrugDTO = doctorService.modifyDrugQuantityIntoPrescriptionCart(id_pat, id_cart, id_pres_drug, quantity);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescribedDrugDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
@@ -235,10 +238,12 @@ public class DoctorController {
      * @param id_pat code of patient
      * @return ResponseEntity<ResponseDTO>
      */
-    @PatchMapping("/patients/{id_pat}/cart/activate")
-    public ResponseEntity<ResponseDTO> activatePrescriptionCart(@PathVariable String id_pat){
+    @PatchMapping("/patients/{id_pat}/cart/{id_cart}/activate")
+    public ResponseEntity<ResponseDTO> activatePrescriptionCart(@PathVariable String id_pat,
+                                                                @PathVariable int id_cart,
+                                                                @RequestBody List<Integer> id_pres_drugs){
         try {
-            PrescriptionDTO prescriptionDTO = doctorService.activatePrescriptionCart(id_pat);
+            PrescriptionDTO prescriptionDTO = doctorService.activatePrescriptionCart(id_pat, id_cart, id_pres_drugs);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescriptionDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (ForbiddenException e){

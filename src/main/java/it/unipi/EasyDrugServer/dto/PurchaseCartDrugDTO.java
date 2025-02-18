@@ -19,6 +19,6 @@ public class PurchaseCartDrugDTO {
     private LocalDateTime prescriptionTimestamp;
 
     public PurchaseCartDrugDTO() {
-
+        
     }
 }

@@ -23,8 +23,4 @@ public class PrescriptionDTO {
     public void addPrescribedDrug(PrescribedDrugDTO drug){
         prescribedDrugs.add(drug);
     }
-
-    public boolean checkIfEmpty(){
-        return prescribedDrugs.isEmpty();
-    }
 }

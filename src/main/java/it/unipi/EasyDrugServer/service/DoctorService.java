@@ -48,20 +48,20 @@ public class DoctorService {
         return prescriptionRedisRepository.saveDrugIntoPrescriptionCart(id_pat, id_pres, drug);
     }
 
-    public PrescribedDrugDTO deleteDrugIntoPrescriptionCart(String id_pat, String id_drug) {
-        return prescriptionRedisRepository.deleteDrugIntoPrescriptionCart(id_pat, id_drug);
+    public PrescribedDrugDTO deleteDrugIntoPrescriptionCart(String id_pat, int id_pres, int id_pres_drug) {
+        return prescriptionRedisRepository.deleteDrugIntoPrescriptionCart(id_pat, id_pres, id_pres_drug);
     }
 
-    public PrescribedDrugDTO modifyDrugQuantityIntoPrescriptionCart(String id_pat, String id_drug, int quantity) {
+    public PrescribedDrugDTO modifyDrugQuantityIntoPrescriptionCart(String id_pat, int id_pres, int id_pres_drug, int quantity) {
         if(quantity == 0)
-            return prescriptionRedisRepository.deleteDrugIntoPrescriptionCart(id_pat, id_drug);
+            return prescriptionRedisRepository.deleteDrugIntoPrescriptionCart(id_pat, id_pres, id_pres_drug);
         else if(quantity < 0)
             throw new BadRequestException("Quantity can not be lower that zero.");
-        return prescriptionRedisRepository.modifyDrugQuantityIntoPrescriptionCart(id_pat, id_drug, quantity);
+        return prescriptionRedisRepository.modifyDrugQuantityIntoPrescriptionCart(id_pat, id_pres, id_pres_drug, quantity);
     }
 
-    public PrescriptionDTO activatePrescriptionCart(String id_pat) {
-        return prescriptionRedisRepository.activatePrescriptionCart(id_pat);
+    public PrescriptionDTO activatePrescriptionCart(String id_pat, int id_pres, List<Integer> id_pres_drugs) {
+        return prescriptionRedisRepository.activatePrescriptionCart(id_pat, id_pres, id_pres_drugs);
     }
 
     public Doctor getDoctorById(String id) {

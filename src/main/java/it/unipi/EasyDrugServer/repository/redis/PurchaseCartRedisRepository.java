@@ -99,7 +99,7 @@ public class PurchaseCartRedisRepository {
                 jedis.set(key + "quantity", String.valueOf(quantity));
                 return createPurchaseCartDrugDTO(jedis, quantity, key, id_purch_drug);
             }
-            throw new NotFoundException("Impossibile modify the drug: patient " + id_pat + " has not drug with purch_id" + id_purch_drug + " in the cart.");
+            throw new NotFoundException("Impossibile to modify the drug: patient " + id_pat + " has no drug with purch_id" + id_purch_drug + " in the cart.");
         }
     }
 
@@ -119,7 +119,7 @@ public class PurchaseCartRedisRepository {
         }
     }
 
-    public ConfirmPurchaseCartDTO confirmPurchaseCart(String id_pat){
+    public ConfirmPurchaseCartDTO confirmPurchaseCart(String id_pat, List<Integer> id_purch_drugs){
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             LinkedHashMap<String, List<String>> prescribedDrugs = new LinkedHashMap<>();
             List<PurchaseCartDrugDTO> purchaseDrugs = new ArrayList<>();
@@ -128,11 +128,37 @@ public class PurchaseCartRedisRepository {
             List<String> presDrugPurchased = new ArrayList<>();
             LinkedHashMap<String, Integer> presToDelete = new LinkedHashMap<>();
             LinkedHashMap<String, Integer> presToModify = new LinkedHashMap<>();
+
+            for(int id_purch_drug: id_purch_drugs){
+                String keyPurch = this.entity + ":" + id_purch_drug + ":" + id_pat + ":";
+                PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(jedis, keyPurch, id_purch_drug);
+                purchaseDrugs.add(drug);
+                String id = drug.getIdDrug();
+                // aggiornare hash per diverse prescrizioni di farmaci prescritti acquistati.
+                if (drug.getPrescriptionTimestamp() != null) {
+                    // allora il farmaco è relativo a una prescrizione
+                    String timestampString = String.valueOf(drug.getPrescriptionTimestamp());
+                    if (!prescribedDrugs.containsKey(timestampString))
+                        prescribedDrugs.put(timestampString, new ArrayList<>());
+                    prescribedDrugs.get(timestampString).add(id);
+                }
+                // if there are any missing fields throw an exception because in not possible
+                // create a prescription with missing values
+                // can be missing because the application don't use atomic operation
+                if(!jedis.exists(keyPurch + "info"))
+                    throw new BadRequestException("Some purchases drugs are missing fields");
+                if(!jedis.exists(keyPurch + "quantity"))
+                    throw new BadRequestException("Some purchases drugs are missing fields");
+                // elimino dal key value il farmaco nel carrello
+                purchToDelete.put(keyPurch, id_purch_drug);
+            }
+
+            /*
             // cerco tutti i farmaci che sono nel carrello e si riferiscono al paziente selezionato
             for (int i = 1; i <= redisHelper.nEntities(jedis, this.entity); i++) {
                 String keyPurch = this.entity + ":" + i + ":" + id_pat + ":";
                 if (jedis.exists(keyPurch + "id")) {
-                    PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(jedis, keyPurch);
+                    PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(jedis, keyPurch, i);
                     purchaseDrugs.add(drug);
                     String id = drug.getIdDrug();
                     // aggiornare hash per diverse prescrizioni di farmaci prescritti acquistati.
@@ -154,6 +180,8 @@ public class PurchaseCartRedisRepository {
                     purchToDelete.put(keyPurch, i);
                 }
             }
+             */
+
             // adesso per ogni prescrizione che contiene farmaci acquistati vado a modificare il db
             // segnando quel farmaco come acquistato e controllando se una prescrizione è conclusa.
             for (int j = 1; j <= redisHelper.nEntities(jedis, "pres"); j++) {
