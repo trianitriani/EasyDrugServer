@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 @Setter
 @Data
 public class PurchaseCartDrugDTO {
-    private String id;
+    private int idPurchDrug;
+    private String idDrug;
     private String name;
     private double price;
     private int quantity;

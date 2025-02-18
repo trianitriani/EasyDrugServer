@@ -4,6 +4,7 @@ import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.SimplePatientDTO;
 import it.unipi.EasyDrugServer.dto.UserType;
+import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.exception.UnauthorizedException;
 import it.unipi.EasyDrugServer.model.*;
@@ -34,12 +35,17 @@ public class DoctorService {
         return prescriptionRedisRepository.getPrescriptionCart(id_pat);
     }
 
-    public PrescribedDrugDTO saveDrugIntoPrescriptionCart(String id_pat, PrescribedDrugDTO drug) {
+    public PrescribedDrugDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug, List<String> alreadyInsertedIdDrugs) {
         if(Objects.equals(drug.getName(), ""))
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)
             throw new BadRequestException("Quantity can not be lower than one");
-        return prescriptionRedisRepository.saveDrugIntoPrescriptionCart(id_pat, drug);
+        // in one prescription there can not be twice the same drug
+        for (String id_drug : alreadyInsertedIdDrugs) {
+            if(Objects.equals(id_drug, drug.getIdDrug()))
+                throw new ForbiddenException("Drug " + id_drug + " is already into the prescription cart");
+        }
+        return prescriptionRedisRepository.saveDrugIntoPrescriptionCart(id_pat, id_pres, drug);
     }
 
     public PrescribedDrugDTO deleteDrugIntoPrescriptionCart(String id_pat, String id_drug) {
