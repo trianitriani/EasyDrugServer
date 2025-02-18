@@ -35,7 +35,7 @@ public class DoctorService {
         return prescriptionRedisRepository.getPrescriptionCart(id_pat);
     }
 
-    public PrescribedDrugDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug, List<String> alreadyInsertedIdDrugs) {
+    public PrescriptionDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug, List<String> alreadyInsertedIdDrugs) {
         if(Objects.equals(drug.getName(), ""))
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)

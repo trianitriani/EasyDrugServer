@@ -157,8 +157,8 @@ public class DoctorController {
                                                                     @RequestBody PrescribedDrugDTO drug,
                                                                     @RequestBody List<String> alreadyInsertedIdDrugs){
         try {
-            PrescribedDrugDTO prescribedDrugDTO = doctorService.saveDrugIntoPrescriptionCart(id_pat, id_cart, drug, alreadyInsertedIdDrugs);
-            ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, prescribedDrugDTO);
+            PrescriptionDTO prescriptionDTO = doctorService.saveDrugIntoPrescriptionCart(id_pat, id_cart, drug, alreadyInsertedIdDrugs);
+            ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, prescriptionDTO);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (ForbiddenException e){
             return exceptionHandler.handleForbiddenException(e);

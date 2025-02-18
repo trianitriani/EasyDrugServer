@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @Data
 public class PrescriptionDTO {
-    private int id_pres;
+    private int idPres;
     private LocalDateTime timestamp;
     private List<PrescribedDrugDTO> prescribedDrugs;
 

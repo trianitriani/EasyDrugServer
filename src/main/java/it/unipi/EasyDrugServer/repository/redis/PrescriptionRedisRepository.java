@@ -16,6 +16,8 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.resps.ScanResult;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,7 +38,7 @@ public class PrescriptionRedisRepository {
     private final String presDrug = "pres-drug";
     private final JedisSentinelPool jedisSentinelPool;
     private final RedisHelper redisHelper;
-    private final int day = 3600*24;
+    private final int day = 3600*24*3;
     private final int month = day*30;
 
     /*
@@ -55,6 +57,7 @@ public class PrescriptionRedisRepository {
         this.redisHelper = redisHelper;
     }
 
+    /*
     public List<PrescriptionDTO> getAllActivePrescriptions(String id_pat) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             List<PrescriptionDTO> prescriptions = new ArrayList<>();
@@ -82,7 +85,59 @@ public class PrescriptionRedisRepository {
             }
             return prescriptions;
         }
+    }*/
+
+    public List<PrescriptionDTO> getAllActivePrescriptions(String id_pat) {
+        try (Jedis jedis = jedisSentinelPool.getResource()) {
+            List<PrescriptionDTO> prescriptions = new ArrayList<>();
+            String matchPattern = this.pres + ":*:" + id_pat + ":timestamp";
+            String cursor = "0";
+
+            do {
+                ScanResult<String> scanResult = jedis.scan(cursor, new ScanParams().match(matchPattern).count(200));
+                cursor = scanResult.getCursor();
+
+                for (String keyPresTimestamp : scanResult.getResult()) {
+                    // Rimuove ":timestamp"
+                    String keyPres = keyPresTimestamp.substring(0, keyPresTimestamp.lastIndexOf(":"));
+                    String timestampString = jedis.get(keyPresTimestamp);
+                    if (timestampString == null || timestampString.isEmpty()) continue;
+
+                    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+                    LocalDateTime timestamp = LocalDateTime.parse(timestampString, formatter);
+
+                    PrescriptionDTO prescription = new PrescriptionDTO();
+                    prescription.setTimestamp(timestamp);
+
+                    // Trovare i farmaci associati alla prescrizione
+                    String matchPresDrugPattern = this.presDrug + ":*:" + keyPres.split(":")[1] + ":";
+                    String drugCursor = "0";
+
+                    do {
+                        ScanResult<String> scanPresDrug = jedis.scan(drugCursor, new ScanParams().match(matchPresDrugPattern + "id").count(200));
+                        drugCursor = scanPresDrug.getCursor();
+
+                        for (String keyPresDrugId : scanPresDrug.getResult()) {
+                            String keyPresDrug = keyPresDrugId.substring(0, keyPresDrugId.lastIndexOf(":")); // Rimuove ":id"
+                            int drugIndex = extractIndexFromKey(keyPresDrug);
+                            prescription.addPrescribedDrug(createPrescribedDrugDTO(jedis, keyPresDrug + ":", drugIndex));
+                        }
+
+                    } while (!drugCursor.equals("0"));
+
+                    prescriptions.add(prescription);
+                }
+            } while (!cursor.equals("0"));
+
+            return prescriptions;
+        }
     }
+
+    private int extractIndexFromKey(String key) {
+        String[] parts = key.split(":");
+        return Integer.parseInt(parts[1]); // Supponendo che l'indice sia nella seconda posizione
+    }
+
 
     public PrescriptionDTO getPrescriptionCart(String id_pat) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
@@ -108,9 +163,10 @@ public class PrescriptionRedisRepository {
         }
     }
 
-    public PrescribedDrugDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug) {
+    public PrescriptionDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             // se la prescrizione inattiva non esiste, devo crearla
+            PrescriptionDTO prescriptionDTO = new PrescriptionDTO();
             boolean found = true;
             if (id_pres == 0) {
                 found = false;
@@ -140,7 +196,9 @@ public class PrescriptionRedisRepository {
             jedis.expire(presDrugKey + "quantity", this.day);
             jedis.expire(presDrugKey + "purchased", this.day);
             drug.setIdPresDrug(Integer.parseInt(id_pres_drug));
-            return drug;
+            prescriptionDTO.setIdPres(id_pres);
+            prescriptionDTO.addPrescribedDrug(drug);
+            return prescriptionDTO;
         }
     }
 
@@ -257,7 +315,7 @@ public class PrescriptionRedisRepository {
     public PrescriptionDTO activatePrescriptionCart(String id_pat, int id_pres, List<Integer> id_pres_drugs) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             PrescriptionDTO prescription = new PrescriptionDTO();
-            prescription.setId_pres(id_pres);
+            prescription.setIdPres(id_pres);
             prescription.setTimestamp(LocalDateTime.now());
             String keyPres = this.pres + ":" + id_pres + ":" + id_pat + ":";
             int nDrugs = id_pres_drugs.size();

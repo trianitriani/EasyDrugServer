@@ -34,4 +34,6 @@ public interface DrugRepository extends MongoRepository<Drug, String> {
     List<TopRareIndicationDTO> getIndicationsWithLessDrugs(@Param("top") int top);
 
     List<Drug> findByOnPrescriptionTrue();
+
+    List<Drug> findByOnPrescriptionFalse();
 }
