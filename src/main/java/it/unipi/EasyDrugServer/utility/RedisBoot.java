@@ -30,14 +30,15 @@ public class RedisBoot {
     private final DoctorService doctorService;
     private final PharmacyService pharmacyService;
     private final JedisSentinelPool jedisSentinelPool;
-    
+
     @PostConstruct
     public void init() {
         try (Jedis jedis = jedisSentinelPool.getResource()) {
-            jedis.flushAll();
+            // jedis.flushAll();
             List<Patient> patients = patientRepository.findAll();
             List<Drug> drugs1 = drugRepository.findByOnPrescriptionTrue();
             List<Drug> drugs2 = drugRepository.findByOnPrescriptionFalse();
+            /*
             for (int i = 0; i < 1500; i++) {
                 Patient patient = patients.get(i);
                 int id_pres = 0;
@@ -83,7 +84,7 @@ public class RedisBoot {
                     }
                 }
                 System.out.println("Carrello per: "+patient.getId());
-            }
+            }*/
 
             // Provare a mostrare i farmaci inseriti
             for (int i = 0; i < 1500; i++) {

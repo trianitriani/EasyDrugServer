@@ -64,10 +64,9 @@ public class PharmacyController {
      */
     @PostMapping("/patients/{id_pat}/cart/drugs")
     public ResponseEntity<ResponseDTO> savePurchaseDrug(@PathVariable String id_pat,
-                                                        @RequestBody PurchaseCartDrugDTO drug,
-                                                        @RequestBody List<String> alreadyInsertedIdDrugs){
+                                                        @RequestBody PurchaseCartDrugDTO drug){
         try {
-            PurchaseCartDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(id_pat, drug, alreadyInsertedIdDrugs);
+            PurchaseCartDrugDTO purchaseDrug = pharmacyService.savePurchaseDrug(id_pat, drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, purchaseDrug);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (BadRequestException e) {

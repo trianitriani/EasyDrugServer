@@ -56,18 +56,19 @@ public class PharmacyService {
         return pharmacyHomeDTO;
     }
 
-    public PurchaseCartDrugDTO savePurchaseDrug(String id_pat, PurchaseCartDrugDTO drug, List<String> alreadyInsertedIdDrugs) {
+    public PurchaseCartDrugDTO savePurchaseDrug(String id_pat, PurchaseCartDrugDTO drug) {
         if(Objects.equals(drug.getName(), ""))
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)
             throw new BadRequestException("Quantity can not be lower than one");
         // se non deriva da una prescrizione controlliamo che non si trovi di già all'interno del carrello
+        /*
         if (drug.getPrescriptionTimestamp() == null){
             for (String idDrug : alreadyInsertedIdDrugs){
                 if(Objects.equals(idDrug, drug.getIdDrug()))
                     throw new ForbiddenException("Drug " + drug.getIdDrug() + " is already into the purchase cart");
             }
-        }
+        }*/
         return purchaseCartRedisRepository.insertPurchaseDrug(id_pat, drug);
     }
 

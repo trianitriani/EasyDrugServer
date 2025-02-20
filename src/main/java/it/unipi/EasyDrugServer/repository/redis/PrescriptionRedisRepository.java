@@ -38,17 +38,18 @@ public class PrescriptionRedisRepository {
     private final String presDrug = "pres-drug";
     private final JedisSentinelPool jedisSentinelPool;
     private final RedisHelper redisHelper;
-    private final int day = 3600*24*3;
+    private final int day = 3600*24*3;  // MODIFICARE
     private final int month = day*30;
 
     /*
         pres:id_pres:id_pat:timestamp
         pres:id_pres:id_pat:toPurchase
+        pres:id_pat:list
 
         pres-drug:id_pres-drug:id_pres:id
-        pres-drug:id_pres-drug:id_pres:info { name, price }
-        pres-drug:id_pres-drug:id_pres:quantity
+        pres-drug:id_pres-drug:id_pres:info { name, price, quantity }
         pres-drug:id_pres-drug:id_pres:purchased
+        pres-drug:id_pres:list
      */
 
     @Autowired
@@ -94,7 +95,7 @@ public class PrescriptionRedisRepository {
             String cursor = "0";
 
             do {
-                ScanResult<String> scanResult = jedis.scan(cursor, new ScanParams().match(matchPattern).count(200));
+                ScanResult<String> scanResult = jedis.scan(cursor, new ScanParams().match(matchPattern).count(10000));
                 cursor = scanResult.getCursor();
 
                 for (String keyPresTimestamp : scanResult.getResult()) {
@@ -114,7 +115,7 @@ public class PrescriptionRedisRepository {
                     String drugCursor = "0";
 
                     do {
-                        ScanResult<String> scanPresDrug = jedis.scan(drugCursor, new ScanParams().match(matchPresDrugPattern + "id").count(200));
+                        ScanResult<String> scanPresDrug = jedis.scan(drugCursor, new ScanParams().match(matchPresDrugPattern + "id").count(10000));
                         drugCursor = scanPresDrug.getCursor();
 
                         for (String keyPresDrugId : scanPresDrug.getResult()) {
