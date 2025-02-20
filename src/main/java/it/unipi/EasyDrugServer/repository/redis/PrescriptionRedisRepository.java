@@ -1,9 +1,11 @@
 package it.unipi.EasyDrugServer.repository.redis;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
+import it.unipi.EasyDrugServer.dto.PurchaseCartDrugDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
@@ -16,14 +18,11 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.params.ScanParams;
-import redis.clients.jedis.resps.ScanResult;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Setter
 @Getter
@@ -44,12 +43,12 @@ public class PrescriptionRedisRepository {
     /*
         pres:id_pres:id_pat:timestamp
         pres:id_pres:id_pat:toPurchase
-        pres:id_pat:list
+        pres:id_pat:set
 
         pres-drug:id_pres-drug:id_pres:id
         pres-drug:id_pres-drug:id_pres:info { name, price, quantity }
         pres-drug:id_pres-drug:id_pres:purchased
-        pres-drug:id_pres:list
+        pres-drug:id_pres:set
      */
 
     @Autowired
@@ -58,36 +57,60 @@ public class PrescriptionRedisRepository {
         this.redisHelper = redisHelper;
     }
 
-    /*
     public List<PrescriptionDTO> getAllActivePrescriptions(String id_pat) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             List<PrescriptionDTO> prescriptions = new ArrayList<>();
-            for (int i = 1; i <= redisHelper.nEntities(jedis, this.pres); i++) {
-                String keyPres = this.pres + ":" + i + ":" + id_pat + ":";
-                // Controllare che le prescrizioni siano attive, quindi con timestamp != false
-                if (jedis.exists(keyPres + "timestamp") &&  jedis.get(keyPres + "timestamp").isEmpty()) {
-                    // allora si tratta di una prescrizione attiva
-                    String timestampString = jedis.get(keyPres + "timestamp");
-                    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-                    LocalDateTime timestamp = LocalDateTime.parse(timestampString, formatter);
+            String listKey = this.pres + ":" + id_pat + ":set";
+            if(!jedis.exists(listKey))
+                // in realtà significa che non esiste ancora nessuna prescrizione (attiva e non)
+                // valutare se ritornare qualcosa di vuoto, mi sa che bisogna fa questo
+                throw new NotFoundException("The patient with id: " + id_pat + " does not exist");
 
-                    // cerco all'interno della prescrizione alla ricerca di tutti i farmaci di essa
-                    PrescriptionDTO prescription = new PrescriptionDTO();
-                    prescription.setTimestamp(timestamp);
-                    for (int j = 1; j <= redisHelper.nEntities(jedis, this.presDrug); j++) {
-                        String keyPresDrug = this.presDrug + ":" + j + ":" + i + ":";
-                        if (jedis.exists(keyPresDrug + "id")) {
-                            // allora il farmaco è relativo a quella prescrizione dell'utente
-                            prescription.addPrescribedDrug(createPrescribedDrugDTO(jedis, keyPresDrug, j));
-                        }
-                    }
-                    prescriptions.add(prescription);
+            // ottenimento delle SOLE N prescrizioni dell'utente
+            String list = jedis.get(listKey);
+            Gson gson = new Gson();
+            int[] presIds = gson.fromJson(list, int[].class);
+
+            for(int id_pres: presIds){
+                String keyPres = this.pres + ":" + id_pat + ":";
+                String listKeyPresDrug = this.presDrug + ":" + id_pres + ":set";
+                // controllo che il farmaco sia
+                String timestamp = jedis.get(keyPres + "timestamp");
+                if(timestamp.isEmpty())
+                    continue;
+
+                // inserimento nel dto delle prescrizioni attive
+                PrescriptionDTO prescriptionDTO = new PrescriptionDTO();
+                prescriptionDTO.setTimestamp(LocalDateTime.parse(timestamp));
+                prescriptionDTO.setIdPres(id_pres);
+
+                // ottenimento delle chiavi da leggere per tutti i farmaci della prescrizione
+                int[] presDrugIds = gson.fromJson(jedis.get(listKeyPresDrug), int[].class);
+                List<String> keys = new ArrayList<>();
+                for(int id_pres_drug: presDrugIds){
+                    String keyPresDrug = this.presDrug + ":" + id_pres_drug + ":" + id_pres + ":";
+                    keys.add(keyPresDrug + "id");
+                    keys.add(keyPresDrug + "info");
+                    keys.add(keyPresDrug + "purchased");
                 }
+
+                // effettuiamo una sola chiamata a MGET per tutti e i SOLI farmaci della prescrizione
+                List<String> values = jedis.mget(keys.toArray(new String[0]));
+                for (int i = 0; i < presDrugIds.length; i++) {
+                    int id_pres_drug = presDrugIds[i];
+                    String idDrug = values.get(i * 3);
+                    String infoJson = values.get(i * 3 + 1);
+                    String purchased = values.get(i * 3 + 2);
+                    PrescribedDrugDTO drug = createPrescribedDrugDTO(idDrug, infoJson, purchased, id_pres_drug);
+                    prescriptionDTO.getPrescribedDrugs().add(drug);
+                }
+                prescriptions.add(prescriptionDTO);
             }
             return prescriptions;
         }
-    }*/
+    }
 
+    /*
     public List<PrescriptionDTO> getAllActivePrescriptions(String id_pat) {
         try (Jedis jedis = jedisSentinelPool.getResource()) {
             List<PrescriptionDTO> prescriptions = new ArrayList<>();
@@ -137,10 +160,56 @@ public class PrescriptionRedisRepository {
     private int extractIndexFromKey(String key) {
         String[] parts = key.split(":");
         return Integer.parseInt(parts[1]); // Supponendo che l'indice sia nella seconda posizione
-    }
-
+    }*/
 
     public PrescriptionDTO getPrescriptionCart(String id_pat) {
+        try (Jedis jedis = jedisSentinelPool.getResource()) {
+            Gson gson = new Gson();
+            PrescriptionDTO prescription = new PrescriptionDTO();
+            prescription.setTimestamp(null);
+            String listKey = this.pres + ":" + id_pat + ":set";
+            if (!jedis.exists(listKey))
+                // in realtà significa che non esiste ancora nessuna prescrizione (attiva e non)
+                // valutare se ritornare qualcosa di vuoto, mi sa che bisogna fa questo
+                throw new NotFoundException("The patient with id: " + id_pat + " does not exist");
+
+            // ottenimento delle SOLE N prescrizioni dell'utente
+            String list = jedis.get(listKey);
+            int[] presIds = gson.fromJson(list, int[].class);
+            for (int id_pres : presIds) {
+                String keyPres = this.pres + ":" + id_pat + ":";
+                String listKeyPresDrug = this.presDrug + ":" + id_pres + ":set";
+                // controllo che il farmaco sia
+                String timestamp = jedis.get(keyPres + "timestamp");
+                if (timestamp.isEmpty()) {
+                    // in questo caso la prescrizione è inattiva
+                    // otteniamo i SOLI id dei farmaci del carrello della prescrizione
+                    int[] presDrugIds = gson.fromJson(jedis.get(listKeyPresDrug), int[].class);
+                    List<String> keys = new ArrayList<>();
+                    for (int id_pres_drug : presDrugIds) {
+                        String keyPresDrug = this.presDrug + ":" + id_pres_drug + ":" + id_pres + ":";
+                        keys.add(keyPresDrug + "id");
+                        keys.add(keyPresDrug + "info");
+                    }
+
+                    // effettuiamo una sola chiamata a MGET per tutti e i SOLI farmaci della prescrizione
+                    List<String> values = jedis.mget(keys.toArray(new String[0]));
+                    for (int i = 0; i < presDrugIds.length; i++) {
+                        int id_pres_drug = presDrugIds[i];
+                        String idDrug = values.get(i * 3);
+                        String infoJson = values.get(i * 3 + 1);
+                        String purchased = values.get(i * 3 + 2);
+                        PrescribedDrugDTO drug = createPrescribedDrugDTO(idDrug, infoJson, purchased, id_pres_drug);
+                        prescription.getPrescribedDrugs().add(drug);
+                    }
+                    return prescription;
+                }
+            }
+        }
+        throw new NotFoundException("The prescription cart of patient : " + id_pat + " does not exist");
+    }
+
+    /*public PrescriptionDTO getPrescriptionCart(String id_pat) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             PrescriptionDTO prescription = new PrescriptionDTO();
             prescription.setTimestamp(null);
@@ -162,7 +231,7 @@ public class PrescriptionRedisRepository {
             }
             return prescription;
         }
-    }
+    }*/
 
     public PrescriptionDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
@@ -374,6 +443,18 @@ public class PrescriptionRedisRepository {
         }
     }
 
+    private PrescribedDrugDTO createPrescribedDrugDTO(String id_drug, String info_json, String purchased, int id_pres_drug){
+        PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
+        prescribedDrug.setIdPresDrug(id_pres_drug);
+        prescribedDrug.setIdDrug(id_drug);
+        JsonObject jsonObject = JsonParser.parseString(info_json).getAsJsonObject();
+        prescribedDrug.setName(jsonObject.get("name").getAsString());
+        prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
+        prescribedDrug.setQuantity(Integer.parseInt(jsonObject.get("quantity").getAsString()));
+        prescribedDrug.setPurchased(Boolean.parseBoolean(purchased));
+        return prescribedDrug;
+    }
+    /*
     private PrescribedDrugDTO createPrescribedDrugDTO(Jedis jedis, String key, int id_pres_drug){
         PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
         prescribedDrug.setIdPresDrug(id_pres_drug);
@@ -398,7 +479,7 @@ public class PrescriptionRedisRepository {
     }
 
      */
-
+    /*
     private PrescribedDrugDTO createPrescribedDrugDTO(Jedis jedis, int quantity, String key, int id_pres_drug){
         PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
         prescribedDrug.setIdPresDrug(id_pres_drug);
@@ -409,5 +490,5 @@ public class PrescriptionRedisRepository {
         prescribedDrug.setQuantity(quantity);
         prescribedDrug.setPurchased(Boolean.parseBoolean(jedis.get(key + "purchased")));
         return prescribedDrug;
-    }
+    }*/
 }
