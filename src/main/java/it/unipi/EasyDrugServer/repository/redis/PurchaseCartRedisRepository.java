@@ -69,20 +69,19 @@ public class PurchaseCartRedisRepository {
         try (Jedis jedis = jedisSentinelPool.getResource()) {
             List<PurchaseCartDrugDTO> cartList = new ArrayList<>();
             String listKey = this.entity + ":" + id_pat + ":set";
+            List<String> purchIds = new ArrayList<>(jedis.smembers(listKey));
 
-            if(!jedis.exists(listKey))
-                // in realtà significa che non esiste ancora un carrello degli acquisti
-                // valutare se ritornare qualcosa di vuoto, mi sa che bisogna fa questo
-                throw new NotFoundException("The patient with id: " + id_pat + " does not exist");
+            if(purchIds.isEmpty())
+                return cartList;
 
             // Ottenere SOLO i purch_id relativi a quel paziente
-            String list = jedis.get(listKey);
+            /*String list = jedis.get(listKey);
             Gson gson = new Gson();
-            int[] purchIds = gson.fromJson(list, int[].class);
+            int[] purchIds = gson.fromJson(list, int[].class);*/
 
             // Ottenere tutte le chiavi per fare poi una sola MGET
             List<String> keys = new ArrayList<>();
-            for(int id_purch: purchIds){
+            for(String id_purch: purchIds){
                 String key = this.entity + ":" + id_purch + ":" + id_pat + ":";
                 keys.add(key + "id");
                 keys.add(key + "info");
@@ -90,14 +89,13 @@ public class PurchaseCartRedisRepository {
 
             // Effettuiamo una sola chiamata a MGET per tutti i valori
             List<String> values = jedis.mget(keys.toArray(new String[0]));
-            for (int i = 0; i < purchIds.length; i++) {
-                int id_purch = purchIds[i];
-                String idDrug = values.get(i * 2);              // "id" si trova nella posizione i * 2
-                String infoJson = values.get(i * 2 + 1);        // "info" si trova nella posizione i * 2 + 1
+            for (int i = 0; i < purchIds.size(); i++) {
+                int id_purch = Integer.parseInt(purchIds.get(i));
+                String idDrug = values.get(i * 2);                  // "id" si trova nella posizione i * 2
+                String infoJson = values.get(i * 2 + 1);            // "info" si trova nella posizione i * 2 + 1
                 PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(idDrug, infoJson, id_purch);
                 cartList.add(drug);
             }
-
             return cartList;
         }
     }
@@ -133,12 +131,9 @@ public class PurchaseCartRedisRepository {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             // se esiste già quel farmaco, dobbiamo lanciare un'eccezione
             String listKey = this.entity + ":" + id_pat + ":set";
-            String list = jedis.get(listKey);
-            Gson gson = new Gson();
-            Type listType = new TypeToken<List<Integer>>(){}.getType();
-            List<Integer> purchIds = gson.fromJson(list, listType);
-            for(int old_id_purch: purchIds){
-                String purchKey = this.entity + ":" + old_id_purch + ":" + id_pat + ":";
+            Set<String> purchIds = jedis.smembers(listKey);
+            for(String id_purch: purchIds){
+                String purchKey = this.entity + ":" + id_purch + ":" + id_pat + ":";
                 String drugId = jedis.get(purchKey + "id");
                 if(drug.getIdDrug().equals(drugId))
                     throw new ForbiddenException("Drug " + drug.getIdDrug() + " is already into the purchase cart");
@@ -162,7 +157,6 @@ public class PurchaseCartRedisRepository {
             jedis.set(key + "id", String.valueOf(drug.getIdDrug()));
             jedis.set(key + "info", String.valueOf(info));
             // inserire nella lista solo dopo che gli altri campi sono stati compilati
-            // garantire che
             jedis.sadd(listKey, new_id_purch);
 
             // expire of one hour for delete an object into purchase cart
