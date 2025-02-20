@@ -35,12 +35,6 @@ import java.nio.charset.StandardCharsets;
 public class MongoBoot {
     private final MongoTemplate mongoTemplate;
 
-    private static Process startProcess(String command) throws IOException {
-        ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", command);
-        // processBuilder.inheritIO(); // Permette di vedere l'output nel terminale Java
-        return processBuilder.start();
-    }
-
     private void insertCollection(String collectionName) throws IOException {
         // Creazione della collezione se non esiste
         if (!mongoTemplate.collectionExists(collectionName)) {
@@ -89,23 +83,6 @@ public class MongoBoot {
 
     @PostConstruct
     public void init() throws Exception{
-        List<Process> processes = new ArrayList<>();
-
-        /*
-        // Avvia i nodi del cluster
-        processes.add(startProcess("mongod --replSet rs0 --port 27018 --bind_ip localhost --dbpath c:\\MongoDB\\data\\r1 --oplogSize 200"));
-        processes.add(startProcess("mongod --replSet rs0 --port 27019 --bind_ip localhost --dbpath c:\\MongoDB\\data\\r2 --oplogSize 200"));
-        processes.add(startProcess("mongod --replSet rs0 --port 27020 --bind_ip localhost --dbpath c:\\MongoDB\\data\\r3 --oplogSize 200"));
-
-        // Aspetta un attimo che i processi si avviino
-        Thread.sleep(5000);
-
-        System.out.println("Tutti i processi sono stati avviati!");
-
-        Thread.sleep(3000);
-
-
-         */
         insertCollection("drugs");
         insertCollection("doctors");
         insertCollection("patients");

@@ -19,18 +19,3 @@ public class LatestPurchase {
     @Schema(name = "drugs", description = "List of drugs included in the latest purchase.", type = "List<LatestDrug>")
     private List<LatestDrug> drugs = new ArrayList<>();
 }
-
-
-/*
-[
-        {
-        "drugId": {
-        "$oid": "67aba9215da6705a000d4050"
-        },
-        "drugName": "froben 100 mg compressa rivestita",
-        "quantity": 1,
-        "price": 22.15,
-        "prescriptionDate": "2024-08-03T13:35:00"
-        }
-        ]
-*/
