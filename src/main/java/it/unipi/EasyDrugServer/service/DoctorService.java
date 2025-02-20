@@ -60,8 +60,8 @@ public class DoctorService {
         return prescriptionRedisRepository.modifyDrugQuantityIntoPrescriptionCart(id_pat, id_pres, id_pres_drug, quantity);
     }
 
-    public PrescriptionDTO activatePrescriptionCart(String id_pat, int id_pres, List<Integer> id_pres_drugs) {
-        return prescriptionRedisRepository.activatePrescriptionCart(id_pat, id_pres, id_pres_drugs);
+    public PrescriptionDTO activatePrescriptionCart(String id_pat, int id_pres) {
+        return prescriptionRedisRepository.activatePrescriptionCart(id_pat, id_pres);
     }
 
     public Doctor getDoctorById(String id) {

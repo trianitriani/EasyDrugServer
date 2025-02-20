@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
-import it.unipi.EasyDrugServer.dto.PurchaseCartDrugDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
@@ -20,7 +19,6 @@ import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -235,6 +233,10 @@ public class PrescriptionRedisRepository {
                 found = false;
                 id_pres = Integer.parseInt(redisHelper.getReusableId(jedis, this.pres));
             }
+
+            // controllare che il farmaco non sia già all'interno del carrello
+
+
             // adesso possiamo inserire il farmaco presente all'interno del db
             String id_pres_drug = redisHelper.getReusableId(jedis, this.presDrug);
             String presKey = this.pres + ":" + id_pres + ":" + id_pat + ":";
@@ -284,18 +286,21 @@ public class PrescriptionRedisRepository {
             if(timestamp == null)
                 throw new NotFoundException("Not found any prescription with id " + id_pres + " related to patient " + id_pat);
             if(!timestamp.isEmpty())
-                throw new NotFoundException("Not found any inactive prescription related to patient " + id_pat);
+                throw new NotFoundException("Not found any prescription cart related to patient " + id_pat);
 
             // la prescrizione è inattiva
+            String idDrug = jedis.get(keyPresDrug + "id");
+            String infoJson = jedis.get(keyPres + "info");
             if(jedis.exists(keyPresDrug + "id")){
-                prescribedDrug = createPrescribedDrugDTO(jedis, keyPresDrug, id_pres_drug);
-                // rimuovo il farmaco dalla prescrizione attiva
+                String listKey = this.presDrug + ":" + id_pres + ":set";
+                // prima rimuovo l'id dal set dei farmaci nel carrello
+                jedis.srem(listKey, String.valueOf(id_pres_drug));
+                // rimuovo le informazioni sul farmaco dal carrello
                 jedis.del(keyPresDrug + "id");
                 jedis.del(keyPresDrug + "info");
-                jedis.del(keyPresDrug + "quantity");
                 jedis.del(keyPresDrug + "purchased");
                 redisHelper.returnIdToPool(jedis, this.presDrug, String.valueOf(id_pres_drug));
-                return prescribedDrug;
+                return createPrescribedDrugDTO(idDrug, infoJson, "false", id_pres_drug);
             }
             // se qui allora il farmaco da cancellare non è esistente
             throw new NotFoundException("Not found the pres drug with id " + id_pres_drug);
@@ -340,10 +345,17 @@ public class PrescriptionRedisRepository {
                 throw new NotFoundException("Not found any prescription with id " + id_pres + " related to patient " + id_pat);
             if(!timestamp.isEmpty())
                 throw new NotFoundException("Not found any inactive prescription related to patient " + id_pat);
+
             // la prescrizione è inattiva
+            String idDrug = jedis.get(keyPresDrug + "id");
             if(jedis.exists(keyPresDrug + "id")){
-                jedis.set(keyPresDrug + "quantity", String.valueOf(quantity));
-                return createPrescribedDrugDTO(jedis, quantity, keyPresDrug, id_pres_drug);
+                // modifica il campo quantità
+                String infoJson = jedis.get(keyPresDrug + "info");
+                JsonObject jsonObject = JsonParser.parseString(infoJson).getAsJsonObject();
+                jsonObject.addProperty("quantity", quantity);
+                infoJson = jsonObject.toString();
+                jedis.set(keyPresDrug + "info", infoJson);
+                return createPrescribedDrugDTO(idDrug, infoJson, "false", id_pres_drug);
             }
             throw new NotFoundException("Not found any drug with pres_id "+ id_pres_drug +" into an inactive prescription");
 
@@ -386,15 +398,26 @@ public class PrescriptionRedisRepository {
         }
     }
 
-    public PrescriptionDTO activatePrescriptionCart(String id_pat, int id_pres, List<Integer> id_pres_drugs) {
+    public PrescriptionDTO activatePrescriptionCart(String id_pat, int id_pres) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             PrescriptionDTO prescription = new PrescriptionDTO();
             prescription.setIdPres(id_pres);
             prescription.setTimestamp(LocalDateTime.now());
+            // controllare che la prescrizione esista e sia un carrello (inattiva)
             String keyPres = this.pres + ":" + id_pres + ":" + id_pat + ":";
-            int nDrugs = id_pres_drugs.size();
+            String timestamp = jedis.get(keyPres + "timestamp");
+            if(timestamp == null)
+                throw new NotFoundException("Not found any prescription with id " + id_pres + " related to patient " + id_pat);
+            if(!timestamp.isEmpty())
+                throw new NotFoundException("Not found any inactive prescription related to patient " + id_pat);
+
+            // ottenimento di tutti e i SOLI farmaci del carrello delle prescrizioni
+            String listPresDrug = this.presDrug + ":" + id_pres + ":set";
+            String listPres = this.pres + ":"  + id_pat + ":set";
+            List<String> presDrugIds = new ArrayList<>(jedis.smembers(listPresDrug));
+            int nDrugs = presDrugIds.size();
             if(nDrugs == 0)
-                throw new ForbiddenException("The patient "+id_pat+" has no prescribed drugs in the cart.");
+                throw new ForbiddenException("The patient "+id_pat+" has no drugs in the cart.");
 
             /*
             for(int i = 1; i<=redisHelper.nEntities(jedis, this.pres); i++){
@@ -415,9 +438,10 @@ public class PrescriptionRedisRepository {
                 }
             }*/
 
+            // DA SALTARE (?)
             // controllare che i farmaci all'interno del carrello abbiano tutti gli attributi esistenti
             // atomicità infatti non è garantita per gli inserimenti di farmaci
-            for (int id_pres_drug : id_pres_drugs){
+            for (String id_pres_drug : presDrugIds){
                 String keyDrugs = this.presDrug + ":" + id_pres_drug + ":" + id_pres + ":";
                 // modify time to expire for all drugs into the prescription to activate
                 jedis.expire(keyDrugs + "id", this.month);
@@ -430,19 +454,49 @@ public class PrescriptionRedisRepository {
                     throw new BadRequestException("Some prescription drugs are missing fields");
                 if(jedis.expire(keyDrugs + "purchased", this.month) == 0)
                     throw new BadRequestException("Some prescription drugs are missing fields");
-
-                prescription.addPrescribedDrug(createPrescribedDrugDTO(jedis, keyDrugs, id_pres_drug));
             }
+
+            // otteniamo la lista di tutte le chiavi da leggere da redis
+            List<String> keys = new ArrayList<>();
+            for (String id_pres_drug : presDrugIds) {
+                String keyPresDrug = this.presDrug + ":" + id_pres_drug + ":" + id_pres + ":";
+                keys.add(keyPresDrug + "id");
+                keys.add(keyPresDrug + "info");
+                // se è la prima volta ad inserirle
+                jedis.set(keyPresDrug + "purchased", "false");
+                // modify time to expire for all drugs into the prescription to activate
+                jedis.expire(keyPresDrug + "id", this.month);
+                // if there are any missing fields throw an exception because in not possible
+                // create a prescription with missing values
+                // can be missing because the application don't use atomic operation
+                if(jedis.expire(keyPresDrug + "info", this.month) == 0)
+                    throw new BadRequestException("Some prescription drugs are missing fields");
+                if(jedis.expire(keyPresDrug + "quantity", this.month) == 0)
+                    throw new BadRequestException("Some prescription drugs are missing fields");
+                if(jedis.expire(keyPresDrug + "purchased", this.month) == 0)
+                    throw new BadRequestException("Some prescription drugs are missing fields");
+            }
+
+            // effettuiamo una sola chiamata a MGET per tutti e i SOLI farmaci della prescrizione
+            List<String> values = jedis.mget(keys.toArray(new String[0]));
+            for (int i = 0; i < presDrugIds.size(); i++) {
+                int id_pres_drug = Integer.parseInt(presDrugIds.get(i));
+                String idDrug = values.get(i * 3);
+                String infoJson = values.get(i * 3 + 1);
+                PrescribedDrugDTO drug = createPrescribedDrugDTO(idDrug, infoJson, "false", id_pres_drug);
+                prescription.getPrescribedDrugs().add(drug);
+            }
+
+            // setto il numero di farmaci all'interno
+            jedis.set(keyPres + "toPurchase", String.valueOf(nDrugs));
+            // setto il timestamp a quello di ora e conto i farmaci relativi a quella prescrizione
+            jedis.set(keyPres + "timestamp", String.valueOf(prescription.getTimestamp()));
 
             // un mese dopo la sua creazione la prescrizione viene eliminata
             jedis.expire(keyPres + "timestamp", this.month);
             jedis.expire(keyPres + "toPurchase", this.month);
-
-            // setto il numero di farmaci all'interno
-            jedis.set(keyPres + "toPurchase", String.valueOf(nDrugs));
-
-            // setto il timestamp a quello di ora e conto i farmaci relativi a quella prescrizione
-            jedis.set(keyPres + "timestamp", String.valueOf(prescription.getTimestamp()));
+            jedis.expire(listPres, this.month);
+            jedis.expire(listPresDrug, this.month);
             return prescription;
         }
     }
@@ -458,41 +512,4 @@ public class PrescriptionRedisRepository {
         prescribedDrug.setPurchased(Boolean.parseBoolean(purchased));
         return prescribedDrug;
     }
-    /*
-    private PrescribedDrugDTO createPrescribedDrugDTO(Jedis jedis, String key, int id_pres_drug){
-        PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
-        prescribedDrug.setIdPresDrug(id_pres_drug);
-        prescribedDrug.setIdDrug(jedis.get(key + "id"));
-        JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
-        prescribedDrug.setName(jsonObject.get("name").getAsString());
-        prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
-        prescribedDrug.setQuantity(Integer.parseInt(jedis.get(key + "quantity")));
-        prescribedDrug.setPurchased(Boolean.parseBoolean(jedis.get(key + "purchased")));
-        return prescribedDrug;
-    }
-    /*
-    private PrescribedDrugDTO createPrescribedDrugDTO(Jedis jedis, String id, String key){
-        PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
-        JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
-        prescribedDrug.setId(id);
-        prescribedDrug.setName(jsonObject.get("name").getAsString());
-        prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
-        prescribedDrug.setQuantity(Integer.parseInt(jedis.get(key + "quantity")));
-        prescribedDrug.setPurchased(Boolean.parseBoolean(jedis.get(key + "purchased")));
-        return prescribedDrug;
-    }
-
-     */
-    /*
-    private PrescribedDrugDTO createPrescribedDrugDTO(Jedis jedis, int quantity, String key, int id_pres_drug){
-        PrescribedDrugDTO prescribedDrug = new PrescribedDrugDTO();
-        prescribedDrug.setIdPresDrug(id_pres_drug);
-        JsonObject jsonObject = JsonParser.parseString(jedis.get(key + "info")).getAsJsonObject();
-        prescribedDrug.setIdDrug(jedis.get(key + "id"));
-        prescribedDrug.setName(jsonObject.get("name").getAsString());
-        prescribedDrug.setPrice(jsonObject.get("price").getAsDouble());
-        prescribedDrug.setQuantity(quantity);
-        prescribedDrug.setPurchased(Boolean.parseBoolean(jedis.get(key + "purchased")));
-        return prescribedDrug;
-    }*/
 }

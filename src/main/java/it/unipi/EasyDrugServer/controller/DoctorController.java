@@ -240,10 +240,9 @@ public class DoctorController {
      */
     @PatchMapping("/patients/{id_pat}/cart/{id_cart}/activate")
     public ResponseEntity<ResponseDTO> activatePrescriptionCart(@PathVariable String id_pat,
-                                                                @PathVariable int id_cart,
-                                                                @RequestBody List<Integer> id_pres_drugs){
+                                                                @PathVariable int id_cart){
         try {
-            PrescriptionDTO prescriptionDTO = doctorService.activatePrescriptionCart(id_pat, id_cart, id_pres_drugs);
+            PrescriptionDTO prescriptionDTO = doctorService.activatePrescriptionCart(id_pat, id_cart);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, prescriptionDTO);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (ForbiddenException e){

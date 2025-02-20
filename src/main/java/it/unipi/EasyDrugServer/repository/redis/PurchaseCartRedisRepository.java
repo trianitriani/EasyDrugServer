@@ -74,11 +74,6 @@ public class PurchaseCartRedisRepository {
             if(purchIds.isEmpty())
                 return cartList;
 
-            // Ottenere SOLO i purch_id relativi a quel paziente
-            /*String list = jedis.get(listKey);
-            Gson gson = new Gson();
-            int[] purchIds = gson.fromJson(list, int[].class);*/
-
             // Ottenere tutte le chiavi per fare poi una sola MGET
             List<String> keys = new ArrayList<>();
             for(String id_purch: purchIds){
