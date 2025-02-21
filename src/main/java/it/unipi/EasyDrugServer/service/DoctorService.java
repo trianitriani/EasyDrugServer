@@ -35,16 +35,12 @@ public class DoctorService {
         return prescriptionRedisRepository.getPrescriptionCart(id_pat);
     }
 
-    public PrescriptionDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug, List<String> alreadyInsertedIdDrugs) {
+    public PrescriptionDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug) {
         if(Objects.equals(drug.getName(), ""))
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)
             throw new BadRequestException("Quantity can not be lower than one");
-        // in one prescription there can not be twice the same drug
-        for (String id_drug : alreadyInsertedIdDrugs) {
-            if(Objects.equals(id_drug, drug.getIdDrug()))
-                throw new ForbiddenException("Drug " + id_drug + " is already into the prescription cart");
-        }
+
         return prescriptionRedisRepository.saveDrugIntoPrescriptionCart(id_pat, id_pres, drug);
     }
 

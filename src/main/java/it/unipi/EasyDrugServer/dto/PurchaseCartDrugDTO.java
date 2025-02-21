@@ -16,9 +16,11 @@ public class PurchaseCartDrugDTO {
     private String name;
     private double price;
     private int quantity;
+    private Integer idPres;
+    private Integer idPresDrug;
     private LocalDateTime prescriptionTimestamp;
 
     public PurchaseCartDrugDTO() {
-        
+
     }
 }

@@ -61,14 +61,6 @@ public class PharmacyService {
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)
             throw new BadRequestException("Quantity can not be lower than one");
-        // se non deriva da una prescrizione controlliamo che non si trovi di già all'interno del carrello
-        /*
-        if (drug.getPrescriptionTimestamp() == null){
-            for (String idDrug : alreadyInsertedIdDrugs){
-                if(Objects.equals(idDrug, drug.getIdDrug()))
-                    throw new ForbiddenException("Drug " + drug.getIdDrug() + " is already into the purchase cart");
-            }
-        }*/
         return purchaseCartRedisRepository.insertPurchaseDrug(id_pat, drug);
     }
 
@@ -137,21 +129,16 @@ public class PharmacyService {
 
         if(optPatient.isPresent()) {
             patient = optPatient.get();
-
-            System.out.println("Latest Purchased Drugs Before Update: " + patient.getLatestPurchasedDrugs());   // DEBUG
-
             nDrugs = patient.getLatestPurchasedDrugs().size();
         }
 
         if (nDrugs >= 5) {
             // PRIMO UPDATE: Rimuove l'ultimo elemento
             Update popUpdate = new Update().pop("latestPurchasedDrugs", Update.Position.LAST);
-            System.out.println("Executing Update: " + popUpdate);  // DEBUG
             mongoTemplate.updateFirst(query, popUpdate, Patient.class);
         }
 
         Update pushUpdate = new Update().push("latestPurchasedDrugs").atPosition(0).value(latestPurchase);
-        System.out.println("Executing Update: " + pushUpdate);  // DEBUG
         mongoTemplate.updateFirst(query, pushUpdate, Patient.class);
 
         // aggiorno le liste "purchases" e "prescriptions"
@@ -159,7 +146,6 @@ public class PharmacyService {
                 .push("purchases").each(purchaseDrugsId.toArray())
                 .push("prescriptions").each(prescribedDrugsId.toArray());
 
-        System.out.println("Executing Update: " + updateLists);  // DEBUG
         mongoTemplate.updateFirst(query, updateLists, Patient.class);
         return latestPurchase;
     }
@@ -170,10 +156,10 @@ public class PharmacyService {
             backoff = @Backoff(delay = 2000)
     )
     @Transactional
-    public LatestPurchase confirmPurchase(String id_pat, List<Integer> id_purch_drugs, String pharmacyRegion) {
+    public LatestPurchase confirmPurchase(String id_pat, String pharmacyRegion) {
         Transaction transaction = null;
         try {
-            ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat, id_purch_drugs);
+            ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
             List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
 
             // eseguiamo la transazione di MongoDB
