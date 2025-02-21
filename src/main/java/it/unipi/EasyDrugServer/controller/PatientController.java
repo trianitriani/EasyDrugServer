@@ -18,7 +18,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.List;
 
 @RestController
@@ -28,6 +31,14 @@ public class PatientController {
     private final PatientService patientService;
     private final GlobalExceptionHandler exceptionHandler;
 
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "404", description = "Server cannot find the requested resource (valid endpoint but resource doesn't exist)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDTO> getPatientById(@PathVariable String id){
         try {
@@ -46,7 +57,13 @@ public class PatientController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{id}/profile")
     public ResponseEntity<ResponseDTO> getAccountPatientById(@PathVariable String id){
         try {
@@ -63,7 +80,13 @@ public class PatientController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PutMapping()
     public ResponseEntity<ResponseDTO> modifyPatient(@RequestBody AccountPatientDTO patient){
         try {
@@ -80,7 +103,13 @@ public class PatientController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseDTO> deletePatient(@PathVariable String id){
         try {
@@ -97,7 +126,13 @@ public class PatientController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{id}/purchases/latest")
     public ResponseEntity<ResponseDTO> getLatestPurchases(@PathVariable String id){
         try {
@@ -114,7 +149,13 @@ public class PatientController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{id}/purchases/from/{n_uploaded}")
     public ResponseEntity<ResponseDTO> getNextPurchases(@PathVariable String id,
                                                         @PathVariable int n_uploaded){
@@ -139,6 +180,13 @@ public class PatientController {
      * @param patCode code of patient
      * @return ResponseEntity<ResponseDTO>
      */
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{patCode}/prescriptions/active")
     public ResponseEntity<ResponseDTO> getAllActivePrescriptions(@PathVariable String patCode){
         try {

@@ -39,8 +39,3 @@ public class Doctor {
     @Schema(name = "doctorRegisterCode", description="Doctor's registration number in the official medical register.",type="String",example = "70598")
     private String doctorRegisterCode;
 }
-
-/*
-@Schema(name = "", description="",type="", example = "")
-*/
-

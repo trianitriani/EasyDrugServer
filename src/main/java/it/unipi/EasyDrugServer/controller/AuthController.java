@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,8 +29,16 @@ public class AuthController {
     private final AuthService authService;
     private final GlobalExceptionHandler exceptionHandler;
 
+    @Operation(summary = "Sign-up", description = "Create a new account if it doesn't exist.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "New account created successfully."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error: Mandatory fields omitted; unknown type of data; invalid date of birth."),
+            @ApiResponse(responseCode = "403", description = "Server refuse client request because violate business logic: account already existing; patient's doctor not existing."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PostMapping("/signup")
-    public ResponseEntity<ResponseDTO> signup(@RequestBody SignupUserDTO user) {
+    public ResponseEntity<ResponseDTO> signup(@RequestBody  @Parameter(name = "user", description = "Data extracted from the sign-up form.", example = "") SignupUserDTO user) {
         try {
             SessionUserDTO sessionUserDTO = authService.signup(user);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, sessionUserDTO);
@@ -44,8 +56,15 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "Login", description = "Give access to the application using valid and existing credential: identify code and password.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded: access granted."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error: wrong password or not existing account; unknown type of data; identify code or password cannot be null."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PostMapping("/login")
-    public ResponseEntity<ResponseDTO> login(@RequestBody LoginUserDTO user){
+    public ResponseEntity<ResponseDTO> login(@RequestBody @Parameter(name = "user", description = "Struct conteining identify code and password.", example = "") LoginUserDTO user){
         try {
             SessionUserDTO sessionUserDTO = authService.login(user);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, sessionUserDTO);
@@ -61,3 +80,5 @@ public class AuthController {
         }
     }
 }
+//andrebbe mappato il caso di NotFoundException o UnauthorizedException come unico errore ovvero: Password o identify code sbagliato o non esistente
+//manca password null da mappare insieme a idnetify code null

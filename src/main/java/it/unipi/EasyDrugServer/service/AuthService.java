@@ -135,7 +135,7 @@ public class AuthService {
                 sessionUserDTO.setId(pharmacy.getId());
                 break;
             default:
-                throw new BadRequestException("User type not supported ");
+                throw new BadRequestException("One or more fields have unknown type of data");
         }
         return sessionUserDTO;
     }
@@ -215,7 +215,7 @@ public class AuthService {
                     break;
                 default:
                     // identifyCode sbagliato
-                    throw new BadRequestException("User type not supported");
+                    throw new BadRequestException("One or more fields have unknown type of data");
             }
         }
         return sessionUserDTO;

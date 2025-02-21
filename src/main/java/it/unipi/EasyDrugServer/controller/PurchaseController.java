@@ -16,6 +16,10 @@ import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
 @RequestMapping("/api/purchases")
@@ -24,6 +28,12 @@ public class PurchaseController {
     private final PurchaseService purchaseService;
     private final GlobalExceptionHandler exceptionHandler;
 
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "New resource created successfully."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PostMapping
     public ResponseEntity<ResponseDTO> insertPurchase(Purchase purchase){
         try {
@@ -38,7 +48,13 @@ public class PurchaseController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDTO> getPurchaseById(String id){
         try {
@@ -55,7 +71,13 @@ public class PurchaseController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PutMapping
     public ResponseEntity<ResponseDTO> modifyPurchase(Purchase purchase){
         try {
@@ -72,7 +94,13 @@ public class PurchaseController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseDTO> deletePurchase(String id){
         try {

@@ -12,7 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.List;
 
 @RestController
@@ -22,6 +25,14 @@ public class DrugController {
     private final DrugService drugService;
     private final GlobalExceptionHandler exceptionHandler;
 
+    //cambiare tutti gli how to handle da ho to handle
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "New resource created successfully."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PostMapping
     public ResponseEntity<ResponseDTO> insertDrug(@RequestBody Drug drug){
         try {
@@ -38,7 +49,13 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PutMapping()
     public ResponseEntity<ResponseDTO> modifyDrug(@RequestBody Drug drug){
         try {
@@ -55,7 +72,13 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseDTO> deleteDrug(@PathVariable String id){
         try {
@@ -72,7 +95,13 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDTO> getDrugById(@PathVariable String id){
         try {
@@ -89,7 +118,14 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
+    //qui come in molte atre manca la not found exception
 
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/search/{name}")
     public ResponseEntity<ResponseDTO> getDrugThatStartWith(@PathVariable String name){
         try {
@@ -104,7 +140,12 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/search/{name}/otp")
     public ResponseEntity<ResponseDTO> getOPTDrugsThatStartWith(@PathVariable String name){
         try {
@@ -119,7 +160,12 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/search/{name}/on-prescription")
     public ResponseEntity<ResponseDTO> getOnPrescriptionDrugsThatStartWith(@PathVariable String name){
         try {

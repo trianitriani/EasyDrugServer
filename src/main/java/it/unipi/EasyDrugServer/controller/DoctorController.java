@@ -14,7 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.net.SocketException;
 import java.util.List;
 
@@ -26,6 +29,13 @@ public class DoctorController {
     private final PatientService patientService;
     private final GlobalExceptionHandler exceptionHandler;
 
+    @Operation(summary = "Get doctor by id", description = "Return doctor private area if exist: id, password, city, district, region, name, surname, date of birth, gender, tax code, doctor register code")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDTO> getDoctorById(@PathVariable String id){
         try {
@@ -42,7 +52,13 @@ public class DoctorController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PutMapping()
     public ResponseEntity<ResponseDTO> modifyDoctor(@RequestBody Doctor doctor){
         try {
@@ -59,7 +75,13 @@ public class DoctorController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseDTO> deleteDoctor(@PathVariable String id){
         try {
@@ -76,7 +98,13 @@ public class DoctorController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{id_doc}/patients/{id_pat}/prescriptions/from/{n_uploaded}")
     public ResponseEntity<ResponseDTO> getNextPrescriptions(@PathVariable String id_doc,
                                                             @PathVariable String id_pat,
@@ -95,7 +123,13 @@ public class DoctorController {
             return exceptionHandler.handleException(e);
         }
     }
-
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/{id}/patients/surname/{pat_surname}")
     public ResponseEntity<ResponseDTO> getOwnPatientsBySurname(@PathVariable String id,
                                                       @PathVariable String pat_surname){
@@ -121,6 +155,14 @@ public class DoctorController {
      * @param id_pat code of patient
      * @return ResponseEntity<ResponseDTO>
      */
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "401", description = "Client doesn't have access rights to the content (unauthorized)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @GetMapping("/home/patients/{id_pat}")
     public ResponseEntity<ResponseDTO> viewDoctorHome(@PathVariable String id_pat){
         try {
@@ -151,6 +193,14 @@ public class DoctorController {
      * @param drug drug to insert into new prescription
      * @return ResponseEntity<ResponseDTO>
      */
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "New resource created successfully."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "403", description = "Server refuse client request because violate business logic."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PostMapping("/patients/{id_pat}/cart/drugs")
     public ResponseEntity<ResponseDTO> saveDrugIntoPrescriptionCart(@PathVariable String id_pat,
                                                                     @RequestBody int id_cart,
@@ -181,6 +231,13 @@ public class DoctorController {
      * @param id_pres_drug id of prescribed drug
      * @return ResponseEntity<ResponseDTO>
      */
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "404", description = "Server cannot find the requested resource (valid endpoint but resource doesn't exist)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @DeleteMapping("/patients/{id_pat}/cart/{id_cart}/drugs/{id_drug}")
     public ResponseEntity<ResponseDTO> deleteDrugIntoPrescriptionCart(@PathVariable String id_pat,
                                                                       @PathVariable int id_cart,
@@ -209,6 +266,14 @@ public class DoctorController {
      * @param quantity new quantity
      * @return ResponseEntity<ResponseDTO>
      */
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
+            @ApiResponse(responseCode = "404", description = "Server cannot find the requested resource (valid endpoint but resource doesn't exist)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PatchMapping("/patients/{id_pat}/cart/{id_cart}/drugs/{id_pres_drug}")
     public ResponseEntity<ResponseDTO> modifyDrugQuantityIntoPrescriptionCart(@PathVariable String id_pat,
                                                                               @PathVariable int id_cart,
@@ -238,6 +303,13 @@ public class DoctorController {
      * @param id_pat code of patient
      * @return ResponseEntity<ResponseDTO>
      */
+    @Operation(summary = "", description = "")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
+            @ApiResponse(responseCode = "403", description = "Server refuse client request because violate business logic."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
+    })
     @PatchMapping("/patients/{id_pat}/cart/{id_cart}/activate")
     public ResponseEntity<ResponseDTO> activatePrescriptionCart(@PathVariable String id_pat,
                                                                 @PathVariable int id_cart){
