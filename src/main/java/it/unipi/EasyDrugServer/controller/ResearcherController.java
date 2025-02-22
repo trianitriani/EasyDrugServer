@@ -32,7 +32,8 @@ public class ResearcherController {
     private final GlobalExceptionHandler exceptionHandler;
     /*
     @PathVariable("") @Parameter(name = "", description = "", example = "")
-    @RequestBody("") @Parameter(name = "", description = "", example = "")
+    @RequestBody @Parameter(name = "", description = "", example = "")
+
     @PathVariable("id") @Parameter(name = "id", description = "Product id", example = "1") type var
 
 
@@ -62,7 +63,7 @@ public class ResearcherController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded: researcher private area modified."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @PutMapping()
@@ -87,7 +88,7 @@ public class ResearcherController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @DeleteMapping("/{id}")
@@ -117,7 +118,7 @@ public class ResearcherController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @GetMapping("/{id}")
@@ -140,7 +141,7 @@ public class ResearcherController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @GetMapping("/ratios/patients-to-doctors/order/{order}")
@@ -163,7 +164,7 @@ public class ResearcherController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @GetMapping("/purchases/top/{top}/from/{from}/to/{to}")
@@ -189,7 +190,7 @@ public class ResearcherController {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
             @ApiResponse(responseCode = "404", description = "Server cannot find the requested resource (valid endpoint but resource doesn't exist)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @GetMapping("/drugs/{id_drug}/distribution/from/{from}/to/{to}/order/{order}")
@@ -220,7 +221,7 @@ public class ResearcherController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @GetMapping("/indications/less-drugs/top/{top}")

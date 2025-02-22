@@ -26,15 +26,15 @@ public class DrugController {
     private final GlobalExceptionHandler exceptionHandler;
 
     //cambiare tutti gli how to handle da ho to handle
-    @Operation(summary = "", description = "")
+    @Operation(summary = "Insert drug", description = "Insert a new drug in the database.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "New resource created successfully."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @PostMapping
-    public ResponseEntity<ResponseDTO> insertDrug(@RequestBody Drug drug){
+    public ResponseEntity<ResponseDTO> insertDrug(@RequestBody @Parameter(name = "", description = "", example = "") Drug drug){
         try {
             drugService.insertDrug(drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.CREATED, drug);
@@ -49,15 +49,15 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-    @Operation(summary = "", description = "")
+    @Operation(summary = "Update drug by id", description = "Update drug details: drug name, price, IUPAC, SMILES, list of indiations, list of side effects, company, active ingredient, prescribable.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @PutMapping()
-    public ResponseEntity<ResponseDTO> modifyDrug(@RequestBody Drug drug){
+    public ResponseEntity<ResponseDTO> modifyDrug(@RequestBody @Parameter(name = "", description = "", example = "") Drug drug){
         try {
             drugService.modifyDrug(drug);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drug);
@@ -72,15 +72,15 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-    @Operation(summary = "", description = "")
+    @Operation(summary = "Delete drug by id", description = "Delete drug from the database.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResponseDTO> deleteDrug(@PathVariable String id){
+    public ResponseEntity<ResponseDTO> deleteDrug(@PathVariable("id") @Parameter(name = "", description = "", example = "") String id){
         try {
             Drug drug = drugService.deleteDrug(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drug);
@@ -95,15 +95,15 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-    @Operation(summary = "", description = "")
+    @Operation(summary = "Get drug by id", description = "Returns information about a specified drug.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseDTO> getDrugById(@PathVariable String id){
+    public ResponseEntity<ResponseDTO> getDrugById(@PathVariable("id") @Parameter(name = "", description = "", example = "") String id){
         try {
             Drug drug = drugService.getDrugById(id);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drug);
@@ -120,14 +120,14 @@ public class DrugController {
     }
     //qui come in molte atre manca la not found exception
 
-    @Operation(summary = "", description = "")
+    @Operation(summary = "Get drugs by name", description = "Returns a list of drug, which start with a specified name.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @GetMapping("/search/{name}")
-    public ResponseEntity<ResponseDTO> getDrugThatStartWith(@PathVariable String name){
+    public ResponseEntity<ResponseDTO> getDrugThatStartWith(@PathVariable("name") @Parameter(name = "", description = "", example = "") String name){
         try {
             List<SimpleDrugDTO> drugsDTOs = drugService.getDrugThatStartWith(name);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
@@ -140,14 +140,14 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-    @Operation(summary = "", description = "")
+    @Operation(summary = "Get OTP drugs by name", description = "Returns a list of OTP drug, which start with a specified name.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @GetMapping("/search/{name}/otp")
-    public ResponseEntity<ResponseDTO> getOPTDrugsThatStartWith(@PathVariable String name){
+    public ResponseEntity<ResponseDTO> getOPTDrugsThatStartWith(@PathVariable("name") @Parameter(name = "", description = "", example = "") String name){
         try {
             List<SimpleDrugDTO> drugsDTOs = drugService.getOPTDrugsThatStartWith(name);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
@@ -160,14 +160,14 @@ public class DrugController {
             return exceptionHandler.handleException(e);
         }
     }
-    @Operation(summary = "", description = "")
+    @Operation(summary = "Get prescribable drug by name", description = "Returns a list of prescribable drug, which start with a specified name.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded:."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
+            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
     @GetMapping("/search/{name}/on-prescription")
-    public ResponseEntity<ResponseDTO> getOnPrescriptionDrugsThatStartWith(@PathVariable String name){
+    public ResponseEntity<ResponseDTO> getOnPrescriptionDrugsThatStartWith(@PathVariable("name") @Parameter(name = "", description = "", example = "") String name){
         try {
             List<SimpleDrugDTO> drugsDTOs = drugService.getOnPrescriptionDrugsThatStartWith(name);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, drugsDTOs);
