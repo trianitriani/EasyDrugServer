@@ -141,8 +141,8 @@ public class PrescriptionRedisRepository {
                     return prescription;
                 }
             }
+            return prescription;
         }
-        throw new NotFoundException("The prescription cart of patient : " + id_pat + " does not exist");
     }
 
     public PrescriptionDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug) {

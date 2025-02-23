@@ -29,7 +29,7 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final PurchaseRepository purchaseRepository;
     private final PatientRepository patientRepository;
-    private final int N_TO_VIEW = 5;
+    private final int N_TO_VIEW = 10;
 
     public PrescriptionDTO getPrescriptionCart(String id_pat) {
         return prescriptionRedisRepository.getPrescriptionCart(id_pat);
