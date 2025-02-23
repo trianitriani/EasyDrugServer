@@ -146,6 +146,9 @@ public class AuthService {
         if (user.getIdentifyCode() == null || user.getIdentifyCode().isEmpty()) {
             throw new BadRequestException("Identify code cannot be empty");
         }
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            throw new BadRequestException("Password code cannot be empty");
+        }
 
         String identifyCode = user.getIdentifyCode();
         String psw = user.getPassword();
