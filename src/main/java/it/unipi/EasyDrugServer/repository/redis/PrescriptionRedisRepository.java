@@ -114,7 +114,7 @@ public class PrescriptionRedisRepository {
 
             // ottenimento delle SOLE N prescrizioni dell'utente
             for (String id_pres : presIds) {
-                String keyPres = this.pres + ":" + id_pat + ":";
+                String keyPres = this.pres + ":" + id_pres + ":" + id_pat + ":";
                 String listKeyPresDrug = this.presDrug + ":" + id_pres + ":set";
                 // controllo che la prescrizione sia o meno attiva
                 String timestamp = jedis.get(keyPres + "timestamp");

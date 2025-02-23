@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class PurchaseCartDrugDTO {
     @Schema(name = "idPurchDrug", description = "Unique identifier for the purchase in the cart.", type = "int", example = "")
     private int idPurchDrug;
-    @Schema(name = "idDrug", description = "Unique identifier for the drug purchase.", type = "String", example = "")
+    @Schema(name = "idDrug", description = "Unique identifier for the drug purchase.", type = "String", example = "67a7702c189d387b9f61fa14")
     private String idDrug;
     @Schema(name = "name", description = "Commercial name of the drug.", type = "String", example = "acido acetilsalicilico l.f.m. 500 mg compressa")
     private String name;

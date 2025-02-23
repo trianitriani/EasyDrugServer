@@ -72,7 +72,7 @@ public class PharmacyController {
      * @param drug drug insert into a cart
      * @return ResponseEntity<ResponseDTO>
      */
-    @Operation(summary = "Insert purchase into cart", description = "Add a new drug (not inserted before) into the patient's purchase cart.")
+    @Operation(summary = "Insert drug into purchase cart", description = "Add a new drug into the patient's purchase cart.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "New drug added to purchase cart."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),

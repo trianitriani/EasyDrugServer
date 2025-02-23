@@ -175,7 +175,7 @@ public class DoctorController {
         try {
             DoctorHomeDTO doctorHomeDTO = new DoctorHomeDTO();
             // Ottenere il carrello della prescrizione
-            doctorHomeDTO.setInactivePrescription(doctorService.getPrescriptionCart(id_pat));
+            doctorHomeDTO.setPrescriptionCart(doctorService.getPrescriptionCart(id_pat));
             // Ottenere la lista delle prescrizioni attive
             doctorHomeDTO.setActivePrescriptions(patientService.getAllActivePrescriptions(id_pat));
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, doctorHomeDTO);

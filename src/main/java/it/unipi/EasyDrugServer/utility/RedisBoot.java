@@ -32,7 +32,7 @@ public class RedisBoot {
     private final PharmacyService pharmacyService;
     private final JedisSentinelPool jedisSentinelPool;
     private final RedisHelper redisHelper;
-    
+
     @PostConstruct
     public void init() {
         try (Jedis jedis = jedisSentinelPool.getResource()) {
