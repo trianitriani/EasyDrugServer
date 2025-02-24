@@ -22,8 +22,8 @@ public class Purchase {
     @Schema(name = "id", description = "Unique identifier for the purchase transaction.", type = "String", example = "67aba9305da6705a000d6576")
     private String id;
 
-    @Schema(name = "drugId", description = "Identifier of the purchased drug.", type = "ObjectId",example = "67aba9215da6705a000d4184")
-    private ObjectId drugId;
+    @Schema(name = "drugId", description = "Identifier of the purchased drug.", type = "String",example = "67aba9215da6705a000d4184")
+    private String drugId;
 
     @Schema(name = "name", description = "Name of the purchased drug.", type = "String", example = "maalox nausea 5 mg granulato effervescente")
     private String name;

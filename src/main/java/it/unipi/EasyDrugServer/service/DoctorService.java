@@ -122,7 +122,7 @@ public class DoctorService {
             Purchase purch = prescriptions.get(i);
 
             ObjectId objectId = new ObjectId(purch.getId());
-            drug.setDrugId(objectId);
+            drug.setDrugId(String.valueOf(objectId));
             drug.setDrugName(purch.getName());
             drug.setQuantity(purch.getQuantity());
             drug.setPrice(purch.getPrice());

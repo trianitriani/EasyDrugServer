@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @Setter
 @Data
 public class LatestDrug {
-    @Schema(name = "drugId", description = "Unique identifier for the drug.", type = "ObjectId",example = "67aba9215da6705a000d4050")
-    private ObjectId drugId;
+    @Schema(name = "drugId", description = "Unique identifier for the drug.", type = "String",example = "67aba9215da6705a000d4050")
+    private String drugId;
 
     @Schema(name = "drugName", description = "Commercial name of the drug.", type = "String", example = "froben 100 mg compressa rivestita")
     private String drugName;

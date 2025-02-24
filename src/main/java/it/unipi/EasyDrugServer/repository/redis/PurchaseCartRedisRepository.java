@@ -98,14 +98,26 @@ public class PurchaseCartRedisRepository {
 
     public PurchaseCartDrugDTO insertPurchaseDrug(String id_pat, PurchaseCartDrugDTO drug) {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
-            // se esiste già quel farmaco, dobbiamo lanciare un'eccezione
             String listKey = this.entity + ":" + id_pat + ":set";
+            // se esiste già quel farmaco, dobbiamo lanciare un'eccezione
             Set<String> purchIds = jedis.smembers(listKey);
-            for(String id_purch: purchIds){
+            System.out.println("PURCHIDS: " + purchIds);
+            for (String id_purch : purchIds) {
                 String purchKey = this.entity + ":" + id_purch + ":" + id_pat + ":";
-                String drugId = jedis.get(purchKey + "id");
-                if(drug.getIdDrug().equals(drugId))
-                    throw new ForbiddenException("Drug " + drug.getIdDrug() + " is already into the purchase cart");
+                if(drug.getIdPres() == null){
+                    String drugId = jedis.get(purchKey + "id");
+                    if (drug.getIdDrug().equals(drugId))
+                        throw new ForbiddenException("Drug " + drug.getIdDrug() + " is already into the purchase cart");
+                } else {
+                    String info = jedis.get(purchKey + "info");
+                    System.out.println("INFO: " + info);
+                    JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
+                    if(!jsonObject.has("idPresDrug"))
+                        continue;
+                    int idPurchDrug = jsonObject.getAsJsonPrimitive("idPresDrug").getAsInt();
+                    if(idPurchDrug == drug.getIdPurchDrug())
+                        throw new ForbiddenException("Drug " + drug.getIdDrug() + " of the same prescription is already into the purchase cart");
+                }
             }
 
             // se non si trova già all'interno bisogna inserirlo

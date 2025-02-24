@@ -24,7 +24,7 @@ public class PurchaseCartDrugDTO {
     private int quantity;
     @Schema(name = "idPres", description = "Unique identifier for the prescription related to the drug.", type = "Integer", example = "")
     private Integer idPres;
-    @Schema(name = "", description = ".", type = "String", example = "")
+    @Schema(name = "idPresDrug", description = ".", type = "String", example = "")
     private Integer idPresDrug;
     @Schema(name = "prescriptionTimestamp", description = "If present, it's the timestamp when the drug was prescribed.", type = "LocalDateTime", example = "")
     private LocalDateTime prescriptionTimestamp;

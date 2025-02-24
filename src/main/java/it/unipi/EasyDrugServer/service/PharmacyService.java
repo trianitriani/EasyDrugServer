@@ -48,6 +48,8 @@ public class PharmacyService {
     private MongoTemplate mongoTemplate;
 
     public PharmacyHomeDTO viewPharmacyHome(String id_pat) {
+        if(id_pat == null || id_pat.isEmpty())
+            throw new BadRequestException("The patient id can not be null");
         PharmacyHomeDTO pharmacyHomeDTO = new PharmacyHomeDTO();
         // Mostra il carrello degli acquisti del paziente
         pharmacyHomeDTO.setPurchaseCart(purchaseCartRedisRepository.getPurchaseCart(id_pat));
@@ -57,18 +59,27 @@ public class PharmacyService {
     }
 
     public PurchaseCartDrugDTO savePurchaseDrug(String id_pat, PurchaseCartDrugDTO drug) {
-        if(Objects.equals(drug.getName(), ""))
+        if(id_pat == null || id_pat.isEmpty())
+            throw new BadRequestException("The patient id can not be null");
+        if(drug.getName() == null || Objects.equals(drug.getName(), ""))
             throw new BadRequestException("Name of the drug can not be null");
         if(drug.getQuantity() < 1)
             throw new BadRequestException("Quantity can not be lower than one");
+        if(drug.getPrice() <= 0)
+            throw new BadRequestException("Price must be higher than zero");
+
         return purchaseCartRedisRepository.insertPurchaseDrug(id_pat, drug);
     }
 
     public PurchaseCartDrugDTO deletePurchaseDrug(String id_pat, int id_purch_drug) {
+        if(id_pat == null || id_pat.isEmpty())
+            throw new BadRequestException("The patient id can not be null");
         return purchaseCartRedisRepository.deletePurchaseDrug(id_pat, id_purch_drug);
     }
 
     public PurchaseCartDrugDTO modifyPurchaseDrugQuantity(String id_pat, int id_purch_drug, int quantity) {
+        if(id_pat == null || id_pat.isEmpty())
+            throw new BadRequestException("The patient id can not be null");
         if(quantity == 0)
             return purchaseCartRedisRepository.deletePurchaseDrug(id_pat, id_purch_drug);
         else if(quantity < 0)
@@ -88,7 +99,7 @@ public class PharmacyService {
             Purchase purchase = new Purchase();
 
             ObjectId objectIdDrug = new ObjectId(purchaseDrugDTO.getIdDrug());
-            purchase.setDrugId(objectIdDrug);
+            purchase.setDrugId(String.valueOf(objectIdDrug));
 
             purchase.setName(purchaseDrugDTO.getName());
             purchase.setQuantity(purchaseDrugDTO.getQuantity());
@@ -108,7 +119,7 @@ public class PharmacyService {
             LatestDrug latestDrug = new LatestDrug();
 
             ObjectId objectIdPurchase = new ObjectId(purchaseDrugDTO.getIdDrug());
-            latestDrug.setDrugId(objectIdPurchase);
+            latestDrug.setDrugId(String.valueOf(objectIdPurchase));
 
             latestDrug.setDrugName(purchaseDrugDTO.getName());
             latestDrug.setQuantity(purchaseDrugDTO.getQuantity());
@@ -157,6 +168,8 @@ public class PharmacyService {
     )
     @Transactional
     public LatestPurchase confirmPurchase(String id_pat, String pharmacyRegion) {
+        if(id_pat == null || id_pat.isEmpty())
+            throw new BadRequestException("The patient id can not be null");
         Transaction transaction = null;
         try {
             ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
