@@ -190,11 +190,11 @@ public class PharmacyController {
             @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
-    @PatchMapping("/patients/{id_pat}/cart/checkout")
-    public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable("id_pat") @Parameter(name = "Identify code", description = "Patient identify code.", example = "PBRNNCL54B03F205J") String id_pat,
-                                                       @RequestBody @Parameter(name = "Region", description = "Region where is located the pharmacy.", example = "") String pharmacyRegion){
+    @PatchMapping("/{id_pharm}/patients/{id_pat}/cart/checkout")
+    public ResponseEntity<ResponseDTO> confirmPurchase(@PathVariable("id_pharm") @Parameter(name = "Code of the pharmacy", description = "Pharmacy identify code.", example = "Ph72144395207") String id_pharm,
+                                                       @PathVariable("id_pat") @Parameter(name = "Identify code", description = "Patient identify code.", example = "PBRNNCL54B03F205J") String id_pat){
         try {
-            LatestPurchase latestPurchase = pharmacyService.confirmPurchase(id_pat, pharmacyRegion);
+            LatestPurchase latestPurchase = pharmacyService.confirmPurchase(id_pat, id_pharm);
             ResponseDTO response = new ResponseDTO(HttpStatus.OK, latestPurchase);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){

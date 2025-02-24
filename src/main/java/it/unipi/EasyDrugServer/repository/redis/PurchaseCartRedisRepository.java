@@ -101,7 +101,6 @@ public class PurchaseCartRedisRepository {
             String listKey = this.entity + ":" + id_pat + ":set";
             // se esiste già quel farmaco, dobbiamo lanciare un'eccezione
             Set<String> purchIds = jedis.smembers(listKey);
-            System.out.println("PURCHIDS: " + purchIds);
             for (String id_purch : purchIds) {
                 String purchKey = this.entity + ":" + id_purch + ":" + id_pat + ":";
                 if(drug.getIdPres() == null){
@@ -110,12 +109,13 @@ public class PurchaseCartRedisRepository {
                         throw new ForbiddenException("Drug " + drug.getIdDrug() + " is already into the purchase cart");
                 } else {
                     String info = jedis.get(purchKey + "info");
-                    System.out.println("INFO: " + info);
+
                     JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
                     if(!jsonObject.has("idPresDrug"))
                         continue;
-                    int idPurchDrug = jsonObject.getAsJsonPrimitive("idPresDrug").getAsInt();
-                    if(idPurchDrug == drug.getIdPurchDrug())
+                    int idPresDrug = jsonObject.getAsJsonPrimitive("idPresDrug").getAsInt();
+                    System.out.println("idPresDrug:" + idPresDrug);
+                    if(idPresDrug == drug.getIdPresDrug())
                         throw new ForbiddenException("Drug " + drug.getIdDrug() + " of the same prescription is already into the purchase cart");
                 }
             }
@@ -245,6 +245,7 @@ public class PurchaseCartRedisRepository {
             Transaction transaction = jedis.multi();
 
             // delete purchase drug into the cart
+            System.out.println("1");
             for (PurchaseCartDrugDTO drug : purchaseDrugs) {
                 String key = this.entity + ":" + drug.getIdPurchDrug() + ":" + id_pat + ":";
                 transaction.del(key + "id");
@@ -252,6 +253,7 @@ public class PurchaseCartRedisRepository {
                 redisHelper.returnIdToPool(transaction, this.entity, String.valueOf(drug.getIdPurchDrug()));
             }
 
+            System.out.println("2");
             // delete drugs into prescriptions that are finished and the prescription
             for (Map.Entry<Integer, List<Integer>> entry : presToDelete.entrySet()) {
                 String keyPres = "pres:" + entry.getKey() + ":" + id_pat + ":";
@@ -262,6 +264,7 @@ public class PurchaseCartRedisRepository {
                 transaction.srem(keyPresList, String.valueOf(entry.getKey()));
                 redisHelper.returnIdToPool(transaction, "pres", Integer.toString(entry.getKey()));
 
+                System.out.println("3");
                 for(Integer id_pres_drug : entry.getValue()){
                     String keyPresDrug = "pres-drug:" + id_pres_drug + ":" + entry.getKey() + ":";
                     String keyPresDrugList = "pres-drug:" + entry.getKey() + ":set";
@@ -274,6 +277,7 @@ public class PurchaseCartRedisRepository {
                 }
             }
 
+            System.out.println("4");
             // update the number of drug to purchase on unfinished prescriptions and set purchased to
             // selected drugs
             for (Map.Entry<Integer, List<Integer>> entry : presToModify.entrySet()) {
@@ -284,7 +288,7 @@ public class PurchaseCartRedisRepository {
                     transaction.set(keyPresDrug + "purchased", "true");
                 }
             }
-
+            System.out.println("5");
             ConfirmPurchaseCartDTO confirmPurchaseCartDTO = new ConfirmPurchaseCartDTO();
             confirmPurchaseCartDTO.setPurchaseDrugs(purchaseDrugs);
             confirmPurchaseCartDTO.setTransaction(transaction);

@@ -167,7 +167,7 @@ public class PharmacyService {
             backoff = @Backoff(delay = 2000)
     )
     @Transactional
-    public LatestPurchase confirmPurchase(String id_pat, String pharmacyRegion) {
+    public LatestPurchase confirmPurchase(String id_pat, String id_pharm) {
         if(id_pat == null || id_pat.isEmpty())
             throw new BadRequestException("The patient id can not be null");
         Transaction transaction = null;
@@ -176,20 +176,28 @@ public class PharmacyService {
             List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
 
             // eseguiamo la transazione di MongoDB
+            Optional<Pharmacy> optPharmacy = pharmacyRepository.findById(id_pharm);
+            String pharmacyRegion = null;
+            if(optPharmacy.isPresent())
+                pharmacyRegion = optPharmacy.get().getRegion();
+            else
+                throw new BadRequestException("Pharmacy " + id_pharm + " does not exist");
+
             LatestPurchase latestPurchase = insertPurchases(id_pat, pharmacyRegion, purchasedDrugs);
 
             // eseguiamo la transazione di Redis
             transaction = confirmPurchaseCartDTO.getTransaction();
+
             List<Object> result = transaction.exec();
             if (result == null)
                 throw new JedisException("Error in the transaction");
-
             return latestPurchase;
         } catch (JedisException e) {
             if (transaction != null)
                 transaction.discard();
             throw new TransactionSystemException("Jedis error!");
         } catch(Exception e) {
+            System.out.println("BU: "+transaction);
             if (transaction != null)
                 transaction.discard();
             throw e;
