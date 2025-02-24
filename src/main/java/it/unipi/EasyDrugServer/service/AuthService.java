@@ -226,7 +226,7 @@ public class AuthService {
         if(user.getCity() == null) return false;
         if(user.getDistrict() == null) return false;
         if(user.getRegion() == null) return false;
-        if(user.getPassword() == null) return false;
+        if(user.getPassword() == null || user.getPassword().isEmpty()) return false;
         switch (userType) {
             case PHARMACY:
                 if(user.getAddress() == null) return false;
