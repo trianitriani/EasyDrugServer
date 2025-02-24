@@ -114,7 +114,7 @@ public class PrescriptionRedisRepository {
 
             // ottenimento delle SOLE N prescrizioni dell'utente
             for (String id_pres : presIds) {
-                String keyPres = this.pres + ":" + id_pat + ":";
+                String keyPres = this.pres + ":" + id_pres + ":" + id_pat + ":";
                 String listKeyPresDrug = this.presDrug + ":" + id_pres + ":set";
                 // controllo che la prescrizione sia o meno attiva
                 String timestamp = jedis.get(keyPres + "timestamp");
@@ -141,8 +141,8 @@ public class PrescriptionRedisRepository {
                     return prescription;
                 }
             }
+            return prescription;
         }
-        throw new NotFoundException("The prescription cart of patient : " + id_pat + " does not exist");
     }
 
     public PrescriptionDTO saveDrugIntoPrescriptionCart(String id_pat, int id_pres, PrescribedDrugDTO drug) {

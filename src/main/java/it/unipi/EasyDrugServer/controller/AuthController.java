@@ -6,9 +6,7 @@ import it.unipi.EasyDrugServer.dto.LoginUserDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.dto.SessionUserDTO;
 import it.unipi.EasyDrugServer.dto.SignupUserDTO;
-import it.unipi.EasyDrugServer.exception.BadRequestException;
-import it.unipi.EasyDrugServer.exception.ForbiddenException;
-import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
+import it.unipi.EasyDrugServer.exception.*;
 import it.unipi.EasyDrugServer.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -60,6 +58,7 @@ public class AuthController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded: access granted."),
             @ApiResponse(responseCode = "400", description = "Not processable request due to a client error: wrong password or not existing account; unknown type of data; identify code or password cannot be null."),
+            @ApiResponse(responseCode = "404", description = "Server cannot find the requested resource (valid endpoint but resource doesn't exist)."),
             @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
@@ -71,6 +70,9 @@ public class AuthController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e){
             return exceptionHandler.handleBadRequestException(e);
+        } catch (NotFoundException | UnauthorizedException e) {
+            NotFoundException b=new NotFoundException("Identify code or password  wrong or not existing account");
+            return exceptionHandler.handleNotFoundException(b);//Login rule: user should not know if the combination account-password exist (brute force attack)
         } catch (MongoSocketException e) {
             return exceptionHandler.handleMongoDBException(e, HttpStatus.SERVICE_UNAVAILABLE);
         } catch (MongoException e) {
@@ -80,5 +82,3 @@ public class AuthController {
         }
     }
 }
-//andrebbe mappato il caso di NotFoundException o UnauthorizedException come unico errore ovvero: Password o identify code sbagliato o non esistente
-//manca password null da mappare insieme a idnetify code null
