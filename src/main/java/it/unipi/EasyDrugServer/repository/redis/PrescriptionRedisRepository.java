@@ -138,6 +138,7 @@ public class PrescriptionRedisRepository {
                         PrescribedDrugDTO drug = createPrescribedDrugDTO(idDrug, infoJson, "false", id_pres_drug);
                         prescription.getPrescribedDrugs().add(drug);
                     }
+                    prescription.setIdPres(Integer.parseInt(id_pres));
                     return prescription;
                 }
             }
@@ -149,24 +150,42 @@ public class PrescriptionRedisRepository {
         try(Jedis jedis = jedisSentinelPool.getResource()) {
             PrescriptionDTO prescriptionDTO = new PrescriptionDTO();
             boolean found = true;
+            String listPresKey = this.pres + ":" + id_pat + ":set";
             // se la prescrizione inattiva non esiste (id_pres = 0), devo crearla
             if (id_pres == 0) {
+                // controllare che non vi sia già un carrello delle prescrizioni usato
+                List<String> presIdList = new ArrayList<>(jedis.smembers(listPresKey));
+                for(String idPres : presIdList){
+                    String keyPres = this.pres + ":" + idPres + ":" + id_pat + ":";
+                    String timestamp = jedis.get(keyPres + "timestamp");
+                    // il carrello è utilizzato nel caso in cui timestamp esista ed è ""
+                    if(timestamp != null && timestamp.isEmpty())
+                        throw new ForbiddenException("Patient " + id_pat + " already has an open prescription cart");
+                }
                 found = false;
                 id_pres = Integer.parseInt(redisHelper.getReusableId(jedis, this.pres));
-            }
+            } else {
+                String presKey = this.pres + ":" + id_pres + ":" + id_pat + ":";
+                String timestamp = jedis.get(presKey + "timestamp");
+                // controllare che id_pres passato sia relativo ad una prescrizione di id_pat e che sia
+                // effettivamente un carrello
+                if(timestamp == null)
+                    throw new ForbiddenException("Prescription cart "+ id_pres + " is not valid for " + id_pat);
+                if(!timestamp.isEmpty())
+                    throw new ForbiddenException("The prescription with id " + id_pres + " is not a prescription cart");
 
-            // controllare che il farmaco non sia già all'interno del carrello
-            String listDrugKey = this.presDrug + ":" + id_pres + ":set";
-            List<String> presDrugIds = new ArrayList<>(jedis.smembers(listDrugKey));
-            List<String> keys = new ArrayList<>();
-            for(String id_pres_drug : presDrugIds)
-                keys.add(this.presDrug + ":" + id_pres_drug + ":" + id_pres + ":id");
+                // controllare che il farmaco non sia già all'interno del carrello
+                String listDrugKey = this.presDrug + ":" + id_pres + ":set";
+                List<String> presDrugIds = new ArrayList<>(jedis.smembers(listDrugKey));
+                List<String> keys = new ArrayList<>();
+                for(String id_pres_drug : presDrugIds)
+                    keys.add(this.presDrug + ":" + id_pres_drug + ":" + id_pres + ":id");
 
-            if(!keys.isEmpty()){
-                // leggere SOLO gli N id dei farmaci all'interno del carrello della prescrizione
-                List<String> values = jedis.mget(keys.toArray(new String[0]));
-                if(values.contains(drug.getIdDrug()))
-                    throw new ForbiddenException("Drug " + drug.getIdDrug() + " is already into the prescription cart");
+                if(!keys.isEmpty()){
+                    List<String> values = jedis.mget(keys.toArray(new String[0]));
+                    if(values.contains(drug.getIdDrug()))
+                        throw new ForbiddenException("Drug " + drug.getIdDrug() + " is already into the prescription cart");
+                }
             }
 
             // adesso possiamo inserire il farmaco presente all'interno del db
@@ -221,10 +240,13 @@ public class PrescriptionRedisRepository {
             // la prescrizione è inattiva
             String idDrug = jedis.get(keyPresDrug + "id");
             if(idDrug != null){
-                String infoJson = jedis.get(keyPres + "info");
-                String listKey = this.presDrug + ":" + id_pres + ":set";
+                String infoJson = jedis.get(keyPresDrug + "info");
+                String listKeyDrug = this.presDrug + ":" + id_pres + ":set";
                 // prima rimuovo l'id dal set dei farmaci nel carrello
-                jedis.srem(listKey, String.valueOf(id_pres_drug));
+                if(jedis.scard(listKeyDrug) == 1)
+                    jedis.srem(this.pres + ":" + id_pat + ":set", String.valueOf(id_pres));
+
+                jedis.srem(listKeyDrug, String.valueOf(id_pres_drug));
                 // rimuovo le informazioni sul farmaco dal carrello
                 jedis.del(keyPresDrug + "id");
                 jedis.del(keyPresDrug + "info");
@@ -244,7 +266,7 @@ public class PrescriptionRedisRepository {
             if(timestamp == null)
                 throw new NotFoundException("Not found any prescription with id " + id_pres + " related to patient " + id_pat);
             if(!timestamp.isEmpty())
-                throw new NotFoundException("Not found any inactive prescription related to patient " + id_pat);
+                throw new NotFoundException("Not found any prescription cart related to patient " + id_pat);
 
             // la prescrizione è inattiva
             String idDrug = jedis.get(keyPresDrug + "id");
@@ -272,7 +294,7 @@ public class PrescriptionRedisRepository {
             if(timestamp == null)
                 throw new NotFoundException("Not found any prescription with id " + id_pres + " related to patient " + id_pat);
             if(!timestamp.isEmpty())
-                throw new NotFoundException("Not found any inactive prescription related to patient " + id_pat);
+                throw new NotFoundException("Not found any prescription cart related to patient " + id_pat);
 
             // ottenimento di tutti e i SOLI farmaci del carrello delle prescrizioni
             String listPresDrug = this.presDrug + ":" + id_pres + ":set";

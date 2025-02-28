@@ -31,6 +31,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.annotation.Transactional;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisException;
 
@@ -171,6 +172,7 @@ public class PharmacyService {
         if(id_pat == null || id_pat.isEmpty())
             throw new BadRequestException("The patient id can not be null");
         Transaction transaction = null;
+        Jedis jedis = null;
         try {
             ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
             List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
@@ -187,20 +189,25 @@ public class PharmacyService {
 
             // eseguiamo la transazione di Redis
             transaction = confirmPurchaseCartDTO.getTransaction();
-
+            jedis = confirmPurchaseCartDTO.getJedis();
             List<Object> result = transaction.exec();
             if (result == null)
                 throw new JedisException("Error in the transaction");
             return latestPurchase;
+
         } catch (JedisException e) {
             if (transaction != null)
                 transaction.discard();
+            // il metodo verrà rieseguito
             throw new TransactionSystemException("Jedis error!");
         } catch(Exception e) {
-            System.out.println("BU: "+transaction);
             if (transaction != null)
                 transaction.discard();
+            // eccezione che farà o rieseguire il metodo oppure propagata al controller
             throw e;
+        } finally {
+            if(jedis != null)
+                jedis.close();
         }
     }
 

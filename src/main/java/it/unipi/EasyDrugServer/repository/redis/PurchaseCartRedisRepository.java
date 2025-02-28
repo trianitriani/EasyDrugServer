@@ -189,111 +189,108 @@ public class PurchaseCartRedisRepository {
     }
 
     public ConfirmPurchaseCartDTO confirmPurchaseCart(String id_pat){
-        try(Jedis jedis = jedisSentinelPool.getResource()) {
-            List<PurchaseCartDrugDTO> purchaseDrugs = new ArrayList<>();
-            // <id_pres, set of id_pres_drugs>
-            LinkedHashMap<Integer, List<Integer>> prescribedDrugs = new LinkedHashMap<>();
-            LinkedHashMap<Integer, List<Integer>> presToDelete = new LinkedHashMap<>();
-            LinkedHashMap<Integer, List<Integer>> presToModify = new LinkedHashMap<>();
-            LinkedHashMap<Integer, Integer> newToPurchase = new LinkedHashMap<>();
+        Jedis jedis = jedisSentinelPool.getResource();
+        List<PurchaseCartDrugDTO> purchaseDrugs = new ArrayList<>();
+        // <id_pres, set of id_pres_drugs>
+        LinkedHashMap<Integer, List<Integer>> prescribedDrugs = new LinkedHashMap<>();
+        LinkedHashMap<Integer, List<Integer>> presToDelete = new LinkedHashMap<>();
+        LinkedHashMap<Integer, List<Integer>> presToModify = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Integer> newToPurchase = new LinkedHashMap<>();
 
-            String listKey = this.entity + ":" + id_pat + ":set";
-            List<String> purchIds = new ArrayList<>(jedis.smembers(listKey));
-            List<String> keys = new ArrayList<>();
-            for(String id_purch_drug: purchIds){
-                keys.add(this.entity + ":" + id_purch_drug + ":" + id_pat + ":id");
-                keys.add(this.entity + ":" + id_purch_drug + ":" + id_pat + ":info");
-            }
-
-            // Effettuiamo una sola chiamata a MGET per tutti i valori
-            List<String> values = jedis.mget(keys.toArray(new String[0]));
-            for (int i = 0; i < purchIds.size(); i++) {
-                int id_purch = Integer.parseInt(purchIds.get(i));
-                String idDrug = values.get(i * 2);
-                String infoJson = values.get(i * 2 + 1);
-                PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(idDrug, infoJson, id_purch);
-                if(drug.getIdPres() != null){
-                    String presDate = "pres:" + drug.getIdPres() + ":" + id_pat + ":timestamp";
-                    drug.setPrescriptionTimestamp(LocalDateTime.parse(jedis.get(presDate)));
-                    // allora è relativo a una prescrizione
-                    if(!prescribedDrugs.containsKey(drug.getIdPres()))
-                        prescribedDrugs.put(drug.getIdPres(), new ArrayList<>());
-                    prescribedDrugs.get(drug.getIdPres()).add(drug.getIdPresDrug());
-                }
-                purchaseDrugs.add(drug);
-            }
-            if (purchaseDrugs.isEmpty())
-                throw new ForbiddenException("You can not complete the payment if a cart is empty");
-
-            // controllare se le prescrizioni sono da concludere o meno e selezionarle
-            // leggendo dall'entrata toPurchase per ogni prescrizione
-            for(Map.Entry<Integer, List<Integer>> entry : prescribedDrugs.entrySet()){
-                // leggere il numero dei farmaci prescritti ancora da comprare.
-                String keyPres = "pres:" + entry.getKey() + ":" + id_pat + ":toPurchase";
-                int toPurchase = Integer.parseInt(jedis.get(keyPres));
-                if(toPurchase == entry.getValue().size())
-                    presToDelete.put(entry.getKey(), entry.getValue());
-                else{
-                    newToPurchase.put(entry.getKey(), toPurchase - entry.getValue().size());
-                    presToModify.put(entry.getKey(), entry.getValue());
-                }
-            }
-
-            // *************************************************** //
-
-            // effettuiamo le modifiche nel db
-            Transaction transaction = jedis.multi();
-
-            // delete purchase drug into the cart
-            System.out.println("1");
-            for (PurchaseCartDrugDTO drug : purchaseDrugs) {
-                String key = this.entity + ":" + drug.getIdPurchDrug() + ":" + id_pat + ":";
-                transaction.del(key + "id");
-                transaction.del(key + "info");
-                redisHelper.returnIdToPool(transaction, this.entity, String.valueOf(drug.getIdPurchDrug()));
-            }
-
-            System.out.println("2");
-            // delete drugs into prescriptions that are finished and the prescription
-            for (Map.Entry<Integer, List<Integer>> entry : presToDelete.entrySet()) {
-                String keyPres = "pres:" + entry.getKey() + ":" + id_pat + ":";
-                String keyPresList = "pres:" + id_pat + ":set";
-                transaction.del(keyPres + "timestamp");
-                transaction.del(keyPres + "toPurchase");
-                // rimozione dalla lista della prescrizione
-                transaction.srem(keyPresList, String.valueOf(entry.getKey()));
-                redisHelper.returnIdToPool(transaction, "pres", Integer.toString(entry.getKey()));
-
-                System.out.println("3");
-                for(Integer id_pres_drug : entry.getValue()){
-                    String keyPresDrug = "pres-drug:" + id_pres_drug + ":" + entry.getKey() + ":";
-                    String keyPresDrugList = "pres-drug:" + entry.getKey() + ":set";
-                    transaction.del(keyPresDrug + "id");
-                    transaction.del(keyPresDrug + "info");
-                    transaction.del(keyPresDrug + "purchased");
-                    // rimozione della lista della prescrizione
-                    transaction.del(keyPresDrugList);
-                    redisHelper.returnIdToPool(transaction, "pres-drug", String.valueOf(id_pres_drug));
-                }
-            }
-
-            System.out.println("4");
-            // update the number of drug to purchase on unfinished prescriptions and set purchased to
-            // selected drugs
-            for (Map.Entry<Integer, List<Integer>> entry : presToModify.entrySet()) {
-                String keyPres = "pres:" + entry.getKey() + ":" + id_pat + ":";
-                transaction.set(keyPres + "toPurchase", String.valueOf(newToPurchase.get(entry.getKey())));
-                for(Integer id_pres_drug : entry.getValue()){
-                    String keyPresDrug = "pres-drug:" + id_pres_drug + ":" + entry.getKey() + ":";
-                    transaction.set(keyPresDrug + "purchased", "true");
-                }
-            }
-            System.out.println("5");
-            ConfirmPurchaseCartDTO confirmPurchaseCartDTO = new ConfirmPurchaseCartDTO();
-            confirmPurchaseCartDTO.setPurchaseDrugs(purchaseDrugs);
-            confirmPurchaseCartDTO.setTransaction(transaction);
-            return confirmPurchaseCartDTO;
+        String listKey = this.entity + ":" + id_pat + ":set";
+        List<String> purchIds = new ArrayList<>(jedis.smembers(listKey));
+        List<String> keys = new ArrayList<>();
+        for(String id_purch_drug: purchIds){
+            keys.add(this.entity + ":" + id_purch_drug + ":" + id_pat + ":id");
+            keys.add(this.entity + ":" + id_purch_drug + ":" + id_pat + ":info");
         }
+
+        // Effettuiamo una sola chiamata a MGET per tutti i valori
+        List<String> values = jedis.mget(keys.toArray(new String[0]));
+        for (int i = 0; i < purchIds.size(); i++) {
+            int id_purch = Integer.parseInt(purchIds.get(i));
+            String idDrug = values.get(i * 2);
+            String infoJson = values.get(i * 2 + 1);
+            PurchaseCartDrugDTO drug = createPurchaseCartDrugDTO(idDrug, infoJson, id_purch);
+            if(drug.getIdPres() != null){
+                String presDate = "pres:" + drug.getIdPres() + ":" + id_pat + ":timestamp";
+                drug.setPrescriptionTimestamp(LocalDateTime.parse(jedis.get(presDate)));
+                // allora è relativo a una prescrizione
+                if(!prescribedDrugs.containsKey(drug.getIdPres()))
+                    prescribedDrugs.put(drug.getIdPres(), new ArrayList<>());
+                prescribedDrugs.get(drug.getIdPres()).add(drug.getIdPresDrug());
+            }
+            purchaseDrugs.add(drug);
+        }
+        if (purchaseDrugs.isEmpty())
+            throw new ForbiddenException("You can not complete the payment if a cart is empty");
+
+        // controllare se le prescrizioni sono da concludere o meno e selezionarle
+        // leggendo dall'entrata toPurchase per ogni prescrizione
+        for(Map.Entry<Integer, List<Integer>> entry : prescribedDrugs.entrySet()){
+            // leggere il numero dei farmaci prescritti ancora da comprare.
+            String keyPres = "pres:" + entry.getKey() + ":" + id_pat + ":toPurchase";
+            int toPurchase = Integer.parseInt(jedis.get(keyPres));
+            if(toPurchase == entry.getValue().size())
+                presToDelete.put(entry.getKey(), entry.getValue());
+            else{
+                newToPurchase.put(entry.getKey(), toPurchase - entry.getValue().size());
+                presToModify.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        // *************************************************** //
+
+        // effettuiamo le modifiche nel db
+        Transaction transaction = jedis.multi();
+
+        // delete purchase drug into the cart
+        for (PurchaseCartDrugDTO drug : purchaseDrugs) {
+            String key = this.entity + ":" + drug.getIdPurchDrug() + ":" + id_pat + ":";
+            transaction.del(key + "id");
+            transaction.del(key + "info");
+            redisHelper.returnIdToPool(transaction, this.entity, String.valueOf(drug.getIdPurchDrug()));
+        }
+        // delete the list of drugs in the purchase cart
+        transaction.del(this.entity + ":" + id_pat + ":set");
+
+        // delete drugs into prescriptions that are finished and the prescription
+        for (Map.Entry<Integer, List<Integer>> entry : presToDelete.entrySet()) {
+            String keyPres = "pres:" + entry.getKey() + ":" + id_pat + ":";
+            String keyPresList = "pres:" + id_pat + ":set";
+            transaction.del(keyPres + "timestamp");
+            transaction.del(keyPres + "toPurchase");
+            // rimozione dalla lista della prescrizione
+            transaction.srem(keyPresList, String.valueOf(entry.getKey()));
+            redisHelper.returnIdToPool(transaction, "pres", Integer.toString(entry.getKey()));
+
+            for(Integer id_pres_drug : entry.getValue()){
+                String keyPresDrug = "pres-drug:" + id_pres_drug + ":" + entry.getKey() + ":";
+                String keyPresDrugList = "pres-drug:" + entry.getKey() + ":set";
+                transaction.del(keyPresDrug + "id");
+                transaction.del(keyPresDrug + "info");
+                transaction.del(keyPresDrug + "purchased");
+                // rimozione della lista della prescrizione
+                transaction.del(keyPresDrugList);
+                redisHelper.returnIdToPool(transaction, "pres-drug", String.valueOf(id_pres_drug));
+            }
+        }
+
+        // update the number of drug to purchase on unfinished prescriptions and set purchased to
+        // selected drugs
+        for (Map.Entry<Integer, List<Integer>> entry : presToModify.entrySet()) {
+            String keyPres = "pres:" + entry.getKey() + ":" + id_pat + ":";
+            transaction.set(keyPres + "toPurchase", String.valueOf(newToPurchase.get(entry.getKey())));
+            for(Integer id_pres_drug : entry.getValue()){
+                String keyPresDrug = "pres-drug:" + id_pres_drug + ":" + entry.getKey() + ":";
+                transaction.set(keyPresDrug + "purchased", "true");
+            }
+        }
+        ConfirmPurchaseCartDTO confirmPurchaseCartDTO = new ConfirmPurchaseCartDTO();
+        confirmPurchaseCartDTO.setPurchaseDrugs(purchaseDrugs);
+        confirmPurchaseCartDTO.setTransaction(transaction);
+        confirmPurchaseCartDTO.setJedis(jedis);
+        return confirmPurchaseCartDTO;
     }
 
     private PurchaseCartDrugDTO createPurchaseCartDrugDTO(String id_drug, String info_json, int id_purch_drug) {

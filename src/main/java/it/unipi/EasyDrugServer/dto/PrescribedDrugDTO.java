@@ -8,17 +8,17 @@ import org.bson.types.ObjectId;
 @Setter
 @Getter
 public class PrescribedDrugDTO {
-    @Schema(name = "", description = ".", type = "String", example = "")
+    @Schema(name = "idPresDrug", description = ".", type = "int", example = "")
     private int idPresDrug;
-    @Schema(name = "", description = ".", type = "String", example = "")
+    @Schema(name = "idDrug", description = ".", type = "String", example = "")
     private String idDrug;
-    @Schema(name = "", description = ".", type = "String", example = "")
+    @Schema(name = "name", description = ".", type = "String", example = "")
     private String name;
-    @Schema(name = "", description = ".", type = "String", example = "")
+    @Schema(name = "price", description = ".", type = "double", example = "")
     private double price;
-    @Schema(name = "", description = ".", type = "String", example = "")
+    @Schema(name = "quantity", description = ".", type = "int", example = "")
     private int quantity;
-    @Schema(name = "", description = ".", type = "String", example = "")
+    @Schema(name = "purchased", description = ".", type = "boolean", example = "")
     private boolean purchased;
 
     public PrescribedDrugDTO() {

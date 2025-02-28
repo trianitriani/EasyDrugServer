@@ -3,6 +3,7 @@ package it.unipi.EasyDrugServer.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Transaction;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public class ConfirmPurchaseCartDTO {
     List<PurchaseCartDrugDTO> purchaseDrugs;
     @Schema(name = "transaction", description = ".", type = "Transaction", example = "")
     Transaction transaction;
+    @Schema(name = "jedis", description = ".", type = "Jedis", example = "")
+    Jedis jedis;
 }

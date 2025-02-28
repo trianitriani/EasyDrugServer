@@ -177,8 +177,6 @@ public class AuthService {
                         throw new NotFoundException("Patient does not exist");
 
                     Patient patient = optionalPatient.get();
-                    System.out.println(psw);
-                    System.out.println(patient.getPassword());
                     if(!PasswordHasher.verifyPassword(psw, patient.getPassword()))
                         throw new UnauthorizedException("Wrong password");
 
@@ -238,14 +236,14 @@ public class AuthService {
                 break;
             case DOCTOR:
                 if(user.getSurname() == null) return false;
-                if(user.getGender() == null) return false;
+                if(!Objects.equals(user.getGender(), "f") && !Objects.equals(user.getGender(), "m")) return false;
                 if(user.getDoctorRegisterCode() == null) return false;
                 if(user.getTaxCode() == null) return false;
                 if(!isValidDateOfBirth(user.getDateOfBirth())) return false;
                 break;
             case RESEARCHER:
                 if(user.getSurname() == null) return false;
-                if(user.getGender() == null) return false;
+                if(!Objects.equals(user.getGender(), "f") && !Objects.equals(user.getGender(), "m")) return false;
                 if(user.getTaxCode() == null) return false;
                 if(user.getResearcherRegisterCode() == null) return false;
                 if(!isValidDateOfBirth(user.getDateOfBirth())) return false;
@@ -254,7 +252,7 @@ public class AuthService {
                 if(user.getSurname() == null) return false;
                 if(user.getDoctorCode() == null) return false;
                 if(user.getTaxCode() == null) return false;
-                if(user.getGender() == null) return false;
+                if(!Objects.equals(user.getGender(), "f") && !Objects.equals(user.getGender(), "m")) return false;
                 if(!isValidDateOfBirth(user.getDateOfBirth())) return false;
                 break;
         }
@@ -264,10 +262,11 @@ public class AuthService {
     private boolean isValidDateOfBirth(String dateOfBirth) {
         // Usa SimpleDateFormat per verificare se la data è valida
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        sdf.setLenient(false); // Imposta il parsing rigoroso (non accetta date come 2023-02-30)
-
+        // Imposta il parsing rigoroso (non accetta date come 2023-02-30)
+        sdf.setLenient(false);
         try {
-            sdf.parse(dateOfBirth); // Prova a parsare la data
+            // Prova a parsare la data
+            sdf.parse(dateOfBirth);
             return true;
         } catch (ParseException e) {
             return false;

@@ -208,9 +208,9 @@ public class DoctorController {
             @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know how to handle (generic error)."),
             @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
     })
-    @PostMapping("/patients/{id_pat}/cart/drugs")
+    @PostMapping("/patients/{id_pat}/cart/{id_cart}/drugs")
     public ResponseEntity<ResponseDTO> saveDrugIntoPrescriptionCart(@PathVariable("id_pat") @Parameter(name = "Identify code", description = "Patient identify code.", example = "PBRNNCL54B03F205J") String id_pat,
-                                                                    @RequestBody @Parameter(name = "Cart id", description = "Prescription cart id.", example = "") int id_cart,
+                                                                    @PathVariable("id_cart") @Parameter(name = "Cart id", description = "Prescription cart id.", example = "") int id_cart,
                                                                     @RequestBody @Parameter(name = "Drug", description = "Drug struct.", example = "") PrescribedDrugDTO drug){
         try {
             PrescriptionDTO prescriptionDTO = doctorService.saveDrugIntoPrescriptionCart(id_pat, id_cart, drug);

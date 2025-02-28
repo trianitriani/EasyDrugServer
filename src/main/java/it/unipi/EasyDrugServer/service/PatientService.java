@@ -49,6 +49,7 @@ public class PatientService {
         Patient patient = getPatientById(id);
         AccountPatientDTO accountPatientDTO = new AccountPatientDTO();
         accountPatientDTO.setId(patient.getId());
+        accountPatientDTO.setPassword(patient.getPassword());
         accountPatientDTO.setName(patient.getName());
         accountPatientDTO.setSurname(patient.getSurname());
         accountPatientDTO.setCity(patient.getCity());
