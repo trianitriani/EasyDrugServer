@@ -240,7 +240,7 @@ public class PurchaseCartRedisRepository {
         }
 
         // *************************************************** //
-
+        /*
         // effettuiamo le modifiche nel db
         Transaction transaction = jedis.multi();
 
@@ -286,9 +286,13 @@ public class PurchaseCartRedisRepository {
                 transaction.set(keyPresDrug + "purchased", "true");
             }
         }
+        */
+
         ConfirmPurchaseCartDTO confirmPurchaseCartDTO = new ConfirmPurchaseCartDTO();
         confirmPurchaseCartDTO.setPurchaseDrugs(purchaseDrugs);
-        confirmPurchaseCartDTO.setTransaction(transaction);
+        confirmPurchaseCartDTO.setPresToDelete(presToDelete);
+        confirmPurchaseCartDTO.setPresToModify(presToModify);
+        confirmPurchaseCartDTO.setNewToPurchase(newToPurchase);
         confirmPurchaseCartDTO.setJedis(jedis);
         return confirmPurchaseCartDTO;
     }

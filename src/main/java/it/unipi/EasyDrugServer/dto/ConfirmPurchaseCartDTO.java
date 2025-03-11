@@ -6,15 +6,16 @@ import lombok.Setter;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Transaction;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @Getter
 @Setter
 public class ConfirmPurchaseCartDTO {
-    @Schema(name = "purchaseDrugs", description = "List of item purchased.", type = "List<PurchaseCartDrugDTO>", example = "")
     List<PurchaseCartDrugDTO> purchaseDrugs;
-    @Schema(name = "transaction", description = ".", type = "Transaction", example = "")
-    Transaction transaction;
-    @Schema(name = "jedis", description = ".", type = "Jedis", example = "")
+    LinkedHashMap<Integer, List<Integer>> presToDelete;
+    LinkedHashMap<Integer, List<Integer>> presToModify;
+    LinkedHashMap<Integer, Integer> newToPurchase;
     Jedis jedis;
+
 }
