@@ -7,6 +7,7 @@ import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.*;
+import it.unipi.EasyDrugServer.repository.mongo.CommitLogRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PatientRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
@@ -43,6 +44,7 @@ public class PharmacyService {
         private final PharmacyRepository pharmacyRepository;
         private final PurchaseRepository purchaseRepository;
         private final PatientRepository patientRepository;
+        private final CommitLogRepository commitLogRepository;
 
         @Autowired
         private MongoTemplate mongoTemplate;
@@ -248,6 +250,7 @@ public class PharmacyService {
 
             Jedis jedis = null;
             NewPurchaseDTO newPurchaseDTO = new NewPurchaseDTO();
+
             try {
                 ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
                 List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
@@ -259,15 +262,30 @@ public class PharmacyService {
                     pharmacyRegion = optPharmacy.get().getRegion();
                 else throw new BadRequestException("Pharmacy " + id_pharm + " does not exist");
 
+
                 newPurchaseDTO = insertPurchases(id_pat, pharmacyRegion, purchasedDrugs);
+
+                CommitLog log = new CommitLog();
+                log.getPurchaseIds().addAll(newPurchaseDTO.getPurchaseIds());
+                log.setOperationType("DELETE");
+                log.setTimestamp(LocalDateTime.now());
+                log.setProcessed(false);
+                commitLogRepository.save(log);
 
                 // Eseguiamo le modifiche su Redis in modo atomico utilizzando uno script Lua
                 confirmPurchaseCart(id_pat, confirmPurchaseCartDTO);
                 jedis = confirmPurchaseCartDTO.getJedis();
-                return newPurchaseDTO.getLatestPurchase();
 
+                //Se tutto funziona correttamente, contrassegnamo come non necessario il log-rollback
+                log.setProcessed(true);
+                commitLogRepository.save(log);
+                return newPurchaseDTO.getLatestPurchase();
             } catch (JedisException e) {
-                rollbackPurchases(newPurchaseDTO.getPurchaseIds(), id_pat);
+                try{
+                    rollbackPurchases(newPurchaseDTO.getPurchaseIds(), id_pat);
+                } catch (Exception ex){
+                    throw new RuntimeException("Rollback of Mongo failed, it will be executed on reboot", ex);
+                }
                 throw new TransactionSystemException("Jedis error!");
             } finally {
                 if(jedis != null)
