@@ -232,7 +232,7 @@ public class PharmacyService {
             String presToModifyJson = gson.toJson(cartDTO.getPresToModify());
             String newToPurchaseJson = gson.toJson(cartDTO.getNewToPurchase());
             String sha1 = cartDTO.getJedis().scriptLoad(CONFIRM_PURCHAE_SCRIPT);
-            Object result = cartDTO.getJedis().evalsha(sha1, Collections.emptyList(),
+            cartDTO.getJedis().evalsha(sha1, Collections.emptyList(),
                     Arrays.asList(id_pat, purchaseDrugJson, presToDeleteJson, presToModifyJson, newToPurchaseJson));
         }
 
