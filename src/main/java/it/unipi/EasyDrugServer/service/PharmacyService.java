@@ -1,8 +1,10 @@
 package it.unipi.EasyDrugServer.service;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
+import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.*;
 import it.unipi.EasyDrugServer.repository.mongo.CommitLogRepository;
@@ -11,6 +13,7 @@ import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
+import it.unipi.EasyDrugServer.utility.LocalDateTimeAdapter;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import it.unipi.EasyDrugServer.utility.RollbackProcessor;
 import lombok.RequiredArgsConstructor;
@@ -231,7 +234,9 @@ public class PharmacyService {
 
             // Eseguiamo lo script LUA poiché così abbiamo la certezza che avvenga in maniera atomica anche
             // se dovesse accadere un problema di connessione col master.
-            Gson gson = new Gson();
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                    .create();
             String purchaseDrugJson = gson.toJson(cartDTO.getPurchaseDrugs());
             String presToDeleteJson = gson.toJson(cartDTO.getPresToDelete());
             String presToModifyJson = gson.toJson(cartDTO.getPresToModify());

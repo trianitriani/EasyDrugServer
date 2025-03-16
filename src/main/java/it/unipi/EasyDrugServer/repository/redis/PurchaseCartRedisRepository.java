@@ -205,6 +205,10 @@ public class PurchaseCartRedisRepository {
             keys.add(this.entity + ":" + id_purch_drug + ":" + id_pat + ":info");
         }
 
+        // controlla se effettivamente il paziente non ha nessun farmaco nel carrello
+        if (keys.isEmpty())
+            throw new ForbiddenException("You can not complete the payment if a cart is empty");
+
         // Effettuiamo una sola chiamata a MGET per tutti i valori
         List<String> values = jedis.mget(keys.toArray(new String[0]));
         for (int i = 0; i < purchIds.size(); i++) {
@@ -222,8 +226,6 @@ public class PurchaseCartRedisRepository {
             }
             purchaseDrugs.add(drug);
         }
-        if (purchaseDrugs.isEmpty())
-            throw new ForbiddenException("You can not complete the payment if a cart is empty");
 
         // controllare se le prescrizioni sono da concludere o meno e selezionarle
         // leggendo dall'entrata toPurchase per ogni prescrizione
