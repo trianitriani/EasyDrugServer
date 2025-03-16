@@ -1,10 +1,8 @@
 package it.unipi.EasyDrugServer.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
-import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.*;
 import it.unipi.EasyDrugServer.repository.mongo.CommitLogRepository;
@@ -14,6 +12,7 @@ import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.repository.redis.PurchaseCartRedisRepository;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
+import it.unipi.EasyDrugServer.utility.RollbackProcessor;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.dao.DataAccessException;
@@ -32,7 +31,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisException;
 
 @Service
@@ -45,6 +43,7 @@ public class PharmacyService {
         private final PurchaseRepository purchaseRepository;
         private final PatientRepository patientRepository;
         private final CommitLogRepository commitLogRepository;
+        private final RollbackProcessor rollbackProcessor;
 
         @Autowired
         private MongoTemplate mongoTemplate;
@@ -96,7 +95,7 @@ public class PharmacyService {
             LocalDateTime currentTimestamp = LocalDateTime.now();
             LatestPurchase latestPurchase = new LatestPurchase();
             List<String> purchaseIds = new ArrayList<>();
-            
+
             for(PurchaseCartDrugDTO purchaseDrugDTO : purchasedDrugs){
                 // creo, per ogni farmaco acquistato, il documento da inserire nella collezione purchases
                 Purchase purchase = new Purchase();
@@ -114,7 +113,7 @@ public class PharmacyService {
                 // inserisco nella collezione purchase il farmaco acquistato
                 String idPurchase = purchaseRepository.save(purchase).getId();
                 purchaseIds.add(idPurchase);
-                
+
                 ObjectId purchObjectId = new ObjectId(idPurchase);
                 purchaseDrugsId.add(purchObjectId);
                 if(purchase.getPrescriptionDate() != null) prescribedDrugsId.add(purchObjectId);
@@ -152,7 +151,7 @@ public class PharmacyService {
                 Update popUpdate = new Update().pop("latestPurchasedDrugs", Update.Position.LAST);
                 mongoTemplate.updateFirst(query, popUpdate, Patient.class);
             }
-            
+
             Update pushUpdate = new Update().push("latestPurchasedDrugs").atPosition(0).value(latestPurchase);
             mongoTemplate.updateFirst(query, pushUpdate, Patient.class);
 
@@ -168,20 +167,21 @@ public class PharmacyService {
             return newPurchaseDTO;
         }
 
-        private void confirmPurchaseCart(String id_pat, ConfirmPurchaseCartDTO cartDTO) throws JedisException {
+        private void confirmPurchaseCart(String id_pat, ConfirmPurchaseCartDTO cartDTO, String idLog) throws JedisException {
             final String CONFIRM_PURCHAE_SCRIPT =
             """
-                    local id_pat = ARGV[1]          -- ID del paziente
-                    local purchaseDrugsJson = ARGV[2] -- Lista JSON dei farmaci acquistati
-                    local presToDeleteJson = ARGV[3] -- JSON delle prescrizioni da eliminare
-                    local presToModifyJson = ARGV[4] -- JSON delle prescrizioni da aggiornare
-                    local newToPurchaseJson = ARGV[5] -- JSON con i nuovi quantitativi
+                    local id_pat = ARGV[1]
+                    local purchaseDrugsJson = ARGV[2]
+                    local presToDeleteJson = ARGV[3]
+                    local presToModifyJson = ARGV[4]
+                    local newToPurchaseJson = ARGV[5]
+                    local id_log = ARGV[6]
                     local purchaseDrugs = cjson.decode(purchaseDrugsJson)
                     local presToDelete = cjson.decode(presToDeleteJson)
                     local presToModify = cjson.decode(presToModifyJson)
                     local newToPurchase = cjson.decode(newToPurchaseJson)
             
-                    -- **1. Eliminazione farmaci acquistati dal carrello**
+                    -- 1. Eliminazione farmaci acquistati dal carrello
                     for _, drug in ipairs(purchaseDrugs) do
                         local key = "purch-drug:" .. drug.idPurchDrug .. ":" .. id_pat .. ":"
                         redis.call("DEL", key .. "id")
@@ -189,10 +189,10 @@ public class PharmacyService {
                         redis.call("LPUSH", "available_purch-drug_ids", drug.idPurchDrug)
                     end
             
-                    -- **2. Eliminazione della lista di farmaci nel carrello**
+                    -- 2. Eliminazione della lista di farmaci nel carrello
                     redis.call("DEL", "purch-drug:" .. id_pat .. ":set")
             
-                    -- **3. Eliminazione prescrizioni completate**
+                    -- 3. Eliminazione prescrizioni completate
                     for presId, drugList in pairs(presToDelete) do
                         local keyPres = "pres:" .. presId .. ":" .. id_pat .. ":"
                         local keyPresList = "pres:" .. id_pat .. ":set"
@@ -212,7 +212,7 @@ public class PharmacyService {
                         end
                     end
             
-                    -- **4. Aggiornamento prescrizioni parziali**
+                    -- 4. Aggiornamento prescrizioni parziali
                     for presId, drugList in pairs(presToModify) do
                         local keyPres = "pres:" .. presId .. ":" .. id_pat .. ":"
                         redis.call("SET", keyPres .. "toPurchase", newToPurchase[tostring(presId)])
@@ -223,6 +223,9 @@ public class PharmacyService {
                         end
                     end
             
+                    -- 5. Conferma modifiche su Redis effettuate
+                    redis.call("SET", "log:" .. id_log, "ok")
+                    redis.call("EXPIRE", "log:" .. id_log, 3600)
                     return "OK"
             """;
 
@@ -235,87 +238,76 @@ public class PharmacyService {
             String newToPurchaseJson = gson.toJson(cartDTO.getNewToPurchase());
             String sha1 = cartDTO.getJedis().scriptLoad(CONFIRM_PURCHAE_SCRIPT);
             cartDTO.getJedis().evalsha(sha1, Collections.emptyList(),
-                    Arrays.asList(id_pat, purchaseDrugJson, presToDeleteJson, presToModifyJson, newToPurchaseJson));
+                    Arrays.asList(id_pat, purchaseDrugJson, presToDeleteJson, presToModifyJson, newToPurchaseJson, idLog));
+        }
+
+        @Transactional
+        public NewPurchaseDTO insertPurchasesTransaction(String id_pat, String id_pharm, List<PurchaseCartDrugDTO> purchasedDrugs,
+                                               CommitLog log) {
+            Optional<Pharmacy> optPharmacy = pharmacyRepository.findById(id_pharm);
+            String pharmacyRegion = null;
+            if(optPharmacy.isPresent())
+                pharmacyRegion = optPharmacy.get().getRegion();
+            else throw new BadRequestException("Pharmacy " + id_pharm + " does not exist");
+
+            NewPurchaseDTO newPurchaseDTO = insertPurchases(id_pat, pharmacyRegion, purchasedDrugs);
+
+            // se l'inserimento su mongo db è andato tutto apposto, inseriamo le modifiche fatte su
+            // un commit log per ricordarcele se effettivamente dovremo effettuare un rollback
+            log.getPurchaseIds().addAll(newPurchaseDTO.getPurchaseIds());
+            log.setPatientId(id_pat);
+            log.setOperationType("DELETE");
+            log.setTimestamp(LocalDateTime.now());
+            log.setProcessed(false);
+            commitLogRepository.save(log);
+            return newPurchaseDTO;
         }
 
         @Retryable(
-                retryFor = { DataAccessException.class, TransactionSystemException.class },
+                retryFor = { DataAccessException.class, TransactionSystemException.class, JedisException.class },
                 maxAttempts = 3,
                 backoff = @Backoff(delay = 2000)
         )
-        @Transactional
         public LatestPurchase confirmPurchase(String id_pat, String id_pharm) {
             if(id_pat == null || id_pat.isEmpty())
                 throw new BadRequestException("The patient id can not be null");
 
             Jedis jedis = null;
+            CommitLog log = new CommitLog();
             NewPurchaseDTO newPurchaseDTO = new NewPurchaseDTO();
 
             try {
                 ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
                 List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
 
-                // eseguiamo la transazione di MongoDB
-                Optional<Pharmacy> optPharmacy = pharmacyRepository.findById(id_pharm);
-                String pharmacyRegion = null;
-                if(optPharmacy.isPresent())
-                    pharmacyRegion = optPharmacy.get().getRegion();
-                else throw new BadRequestException("Pharmacy " + id_pharm + " does not exist");
-
-
-                newPurchaseDTO = insertPurchases(id_pat, pharmacyRegion, purchasedDrugs);
-
-                CommitLog log = new CommitLog();
-                log.getPurchaseIds().addAll(newPurchaseDTO.getPurchaseIds());
-                log.setOperationType("DELETE");
-                log.setTimestamp(LocalDateTime.now());
-                log.setProcessed(false);
-                commitLogRepository.save(log);
+                // eseguiamo la transazione atomica di MongoDB
+                newPurchaseDTO = insertPurchasesTransaction(id_pat, id_pharm, purchasedDrugs, log);
 
                 // Eseguiamo le modifiche su Redis in modo atomico utilizzando uno script Lua
-                confirmPurchaseCart(id_pat, confirmPurchaseCartDTO);
+                confirmPurchaseCart(id_pat, confirmPurchaseCartDTO, log.getId());
                 jedis = confirmPurchaseCartDTO.getJedis();
 
-                //Se tutto funziona correttamente, contrassegnamo come non necessario il log-rollback
+                //Se tutto funziona correttamente, contrassegnamo come non necessario il rollback su mongo
                 log.setProcessed(true);
                 commitLogRepository.save(log);
                 return newPurchaseDTO.getLatestPurchase();
+
             } catch (JedisException e) {
-                try{
-                    rollbackPurchases(newPurchaseDTO.getPurchaseIds(), id_pat);
+                // viene provato il rollback su Mongo DB
+                try {
+                    rollbackProcessor.rollbackPurchases(newPurchaseDTO.getPurchaseIds(), log);
+                    throw new TransactionSystemException("Retry to do the operations after the Mongo rollback succeeded", e);
                 } catch (Exception ex){
-                    throw new RuntimeException("Rollback of Mongo failed, it will be executed on reboot", ex);
+                    throw new TransactionSystemException("Retry to do the operations after the error in the Mongo rollback", ex);
                 }
-                throw new TransactionSystemException("Jedis error!");
             } finally {
+                // viene restituito il pool di connessione
                 if(jedis != null)
                     jedis.close();
             }
         }
 
-    private void rollbackPurchases(List<String> purchaseIds, String id_pat) {
-        if(purchaseIds.isEmpty()) return;
-
-        // eliminazione degli acquisti dalla purchases
-        for (String purchaseId : purchaseIds) {
-            Query deleteQuery = new Query(Criteria.where("_id").is(new ObjectId(purchaseId)));
-            mongoTemplate.remove(deleteQuery, Purchase.class);
-        }
-
-        // eliminazione dell'ultimo acquisto
-        Query patientQuery = new Query(Criteria.where("_id").is(id_pat));
-        Update removePurchaseUpdate = new Update().pop("latestPurchasedDrugs", Update.Position.FIRST);
-        mongoTemplate.updateFirst(patientQuery, removePurchaseUpdate, Patient.class);
-
-        // eliminazione degli acquisti dalla lista degli acquisti e dei farmaci prescritti
-        Update removePurchasesUpdate = new Update().pullAll("purchases", purchaseIds.toArray());
-        mongoTemplate.updateFirst(patientQuery, removePurchasesUpdate, Patient.class);
-
-        Update removePrescriptionsUpdate = new Update().pullAll("prescriptions", purchaseIds.toArray());
-        mongoTemplate.updateFirst(patientQuery, removePrescriptionsUpdate, Patient.class);
-    }
-
-    public Pharmacy getPharmacyById(String id) {
+        public Pharmacy getPharmacyById(String id) {
             return (Pharmacy) userService.getUserIfExists(id, UserType.PHARMACY);
         }
 
@@ -337,5 +329,4 @@ public class PharmacyService {
             pharmacyRepository.deleteById(id);
             return pharmacy;
         }
-
 }

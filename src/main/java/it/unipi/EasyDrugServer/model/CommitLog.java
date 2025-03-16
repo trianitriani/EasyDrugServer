@@ -8,6 +8,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -17,10 +18,13 @@ import java.util.List;
 public class CommitLog {
     @Id
     private String id;
+    private String patientId;
     private String operationType;
     private List<String> purchaseIds;
     private LocalDateTime timestamp;
     private boolean processed;  // Indica se il rollback è stato eseguito
 
-    // Getters e Setters
+    public CommitLog(){
+        this.purchaseIds = new ArrayList<>();
+    }
 }
