@@ -1,5 +1,6 @@
 package it.unipi.EasyDrugServer.utility;
 
+import com.mongodb.MongoException;
 import it.unipi.EasyDrugServer.model.CommitLog;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.model.Purchase;
@@ -20,6 +21,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class RollbackProcessor {
@@ -72,15 +74,23 @@ public class RollbackProcessor {
         Update removePurchaseUpdate = new Update().pop("latestPurchasedDrugs", Update.Position.FIRST);
         mongoTemplate.updateFirst(patientQuery, removePurchaseUpdate, Patient.class);
 
+        // Converte la lista di String in una lista di ObjectId
+        List<ObjectId> purchaseObjectIds = purchaseIds.stream().map(ObjectId::new).toList();
+
+        throw new MongoException("Errore di prova su Mongo");
+        /*
         // eliminazione degli acquisti dalla lista degli acquisti e dei farmaci prescritti
-        Update removePurchasesUpdate = new Update().pullAll("purchases", purchaseIds.toArray());
+        Update removePurchasesUpdate = new Update().pullAll("purchases", purchaseObjectIds.toArray());
         mongoTemplate.updateFirst(patientQuery, removePurchasesUpdate, Patient.class);
 
-        Update removePrescriptionsUpdate = new Update().pullAll("prescriptions", purchaseIds.toArray());
+        Update removePrescriptionsUpdate = new Update().pullAll("prescriptions", purchaseObjectIds.toArray());
         mongoTemplate.updateFirst(patientQuery, removePrescriptionsUpdate, Patient.class);
 
         // consideriamo gestito il rollback
+        System.out.println("Rollback di: " + purchaseIds);
         log.setProcessed(true);
         commitLogRepository.save(log);
+
+         */
     }
 }

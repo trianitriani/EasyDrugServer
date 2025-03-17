@@ -2,6 +2,7 @@ package it.unipi.EasyDrugServer.service;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mongodb.MongoException;
 import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
@@ -19,6 +20,7 @@ import it.unipi.EasyDrugServer.utility.RollbackProcessor;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.dao.DataAccessException;
+import org.springframework.retry.RetryException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -47,6 +49,7 @@ public class PharmacyService {
         private final PatientRepository patientRepository;
         private final CommitLogRepository commitLogRepository;
         private final RollbackProcessor rollbackProcessor;
+        private int attempt = 0;
 
         @Autowired
         private MongoTemplate mongoTemplate;
@@ -269,7 +272,8 @@ public class PharmacyService {
         }
 
         @Retryable(
-                retryFor = { DataAccessException.class, TransactionSystemException.class, JedisException.class },
+                retryFor = { DataAccessException.class, TransactionSystemException.class,
+                        JedisException.class, RetryException.class },
                 maxAttempts = 3,
                 backoff = @Backoff(delay = 2000)
         )
@@ -282,12 +286,17 @@ public class PharmacyService {
             NewPurchaseDTO newPurchaseDTO = new NewPurchaseDTO();
 
             try {
+                attempt++;
+                System.out.println("Tentativo numero: " + attempt);
+
                 ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
                 List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
 
                 // eseguiamo la transazione atomica di MongoDB
                 newPurchaseDTO = insertPurchasesTransaction(id_pat, id_pharm, purchasedDrugs, log);
 
+                throw new JedisException("Errore di prova su Redis");
+                /*
                 // Eseguiamo le modifiche su Redis in modo atomico utilizzando uno script Lua
                 confirmPurchaseCart(id_pat, confirmPurchaseCartDTO, log.getId());
                 jedis = confirmPurchaseCartDTO.getJedis();
@@ -296,13 +305,16 @@ public class PharmacyService {
                 log.setProcessed(true);
                 commitLogRepository.save(log);
                 return newPurchaseDTO.getLatestPurchase();
-
+*/
             } catch (JedisException e) {
-                // viene provato il rollback su Mongo DB
+                // Errore durante la transazione di Redis: viene provato il rollback su Mongo DB
                 try {
+                    System.out.println("id: " + newPurchaseDTO.getPurchaseIds() + " log: " + log);
                     rollbackProcessor.rollbackPurchases(newPurchaseDTO.getPurchaseIds(), log);
-                    throw new TransactionSystemException("Retry to do the operations after the Mongo rollback succeeded", e);
-                } catch (Exception ex){
+                    throw new RetryException("Retry to do the operations after that Mongo rollback succeeded", e);
+
+                // se ho problemi con il rollback di Mongo
+                } catch (MongoException ex){
                     throw new TransactionSystemException("Retry to do the operations after the error in the Mongo rollback", ex);
                 }
             } finally {
