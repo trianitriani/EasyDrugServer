@@ -295,17 +295,22 @@ public class PharmacyService {
                 // eseguiamo la transazione atomica di MongoDB
                 newPurchaseDTO = insertPurchasesTransaction(id_pat, id_pharm, purchasedDrugs, log);
 
-                throw new JedisException("Errore di prova su Redis");
-                /*
                 // Eseguiamo le modifiche su Redis in modo atomico utilizzando uno script Lua
                 confirmPurchaseCart(id_pat, confirmPurchaseCartDTO, log.getId());
                 jedis = confirmPurchaseCartDTO.getJedis();
 
                 //Se tutto funziona correttamente, contrassegnamo come non necessario il rollback su mongo
-                log.setProcessed(true);
-                commitLogRepository.save(log);
+                try{
+                    log.setProcessed(true);
+                    commitLogRepository.save(log);
+                } catch (Exception exc){
+                    // lancio un'eccezione che non mi fa fare il retry del metodo, dato che in realtà tutte le
+                    // operazioni sono andati a buon fine
+                    throw new IllegalStateException("Not possible to update the commit_log");
+                }
+
                 return newPurchaseDTO.getLatestPurchase();
-*/
+
             } catch (JedisException e) {
                 // Errore durante la transazione di Redis: viene provato il rollback su Mongo DB
                 try {

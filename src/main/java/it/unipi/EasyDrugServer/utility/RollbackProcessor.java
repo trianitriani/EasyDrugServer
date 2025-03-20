@@ -77,8 +77,6 @@ public class RollbackProcessor {
         // Converte la lista di String in una lista di ObjectId
         List<ObjectId> purchaseObjectIds = purchaseIds.stream().map(ObjectId::new).toList();
 
-        throw new MongoException("Errore di prova su Mongo");
-        /*
         // eliminazione degli acquisti dalla lista degli acquisti e dei farmaci prescritti
         Update removePurchasesUpdate = new Update().pullAll("purchases", purchaseObjectIds.toArray());
         mongoTemplate.updateFirst(patientQuery, removePurchasesUpdate, Patient.class);
@@ -91,6 +89,5 @@ public class RollbackProcessor {
         log.setProcessed(true);
         commitLogRepository.save(log);
 
-         */
     }
 }
