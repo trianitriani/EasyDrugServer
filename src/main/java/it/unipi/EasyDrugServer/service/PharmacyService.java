@@ -36,6 +36,7 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
 @Service
@@ -213,9 +214,9 @@ public class PharmacyService {
                             redis.call("DEL", keyPresDrug .. "id")
                             redis.call("DEL", keyPresDrug .. "info")
                             redis.call("DEL", keyPresDrug .. "purchased")
-                            redis.call("DEL", keyPresDrugList)
                             redis.call("LPUSH", "available_pres-drug_ids", id_pres_drug)
                         end
+                        redis.call("DEL", keyPresDrugList)
                     end
             
                     -- 4. Aggiornamento prescrizioni parziali
@@ -231,7 +232,7 @@ public class PharmacyService {
             
                     -- 5. Conferma modifiche su Redis effettuate
                     redis.call("SET", "log:" .. id_log, "ok")
-                    redis.call("EXPIRE", "log:" .. id_log, 3600)
+                    redis.call("EXPIRE", "log:" .. id_log, 10000)
                     return "OK"
             """;
 
@@ -273,7 +274,7 @@ public class PharmacyService {
 
         @Retryable(
                 retryFor = { DataAccessException.class, TransactionSystemException.class,
-                        JedisException.class, RetryException.class },
+                             RetryException.class },
                 maxAttempts = 3,
                 backoff = @Backoff(delay = 2000)
         )
@@ -286,12 +287,17 @@ public class PharmacyService {
             NewPurchaseDTO newPurchaseDTO = new NewPurchaseDTO();
 
             try {
-                attempt++;
-                System.out.println("Tentativo numero: " + attempt);
+                ConfirmPurchaseCartDTO confirmPurchaseCartDTO;
+                // Inserimento un try catch qua perché se viene lanciata una eccezione JedisException
+                // altrimenti verrebbe effettuata il rollback di Mongo
+                try {
+                    // Lettura delle informazioni dei farmaci da comprare
+                    confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
+                } catch (JedisException e) {
+                    throw new RetryException(e.getMessage());
+                }
 
-                ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
                 List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
-
                 // eseguiamo la transazione atomica di MongoDB
                 newPurchaseDTO = insertPurchasesTransaction(id_pat, id_pharm, purchasedDrugs, log);
 
@@ -306,15 +312,18 @@ public class PharmacyService {
                 } catch (Exception exc){
                     // lancio un'eccezione che non mi fa fare il retry del metodo, dato che in realtà tutte le
                     // operazioni sono andati a buon fine
-                    throw new IllegalStateException("Not possible to update the commit_log");
+                    throw new RuntimeException("Not possible to update the commit_log");
                 }
-
                 return newPurchaseDTO.getLatestPurchase();
+
+            } catch (JedisConnectionException e) {
+                // non viene effettuato il rollback perché non abbiamo la sicurezza che le informazioni
+                // su redis non siano state eseguite
+                throw new RetryException(e.getMessage());
 
             } catch (JedisException e) {
                 // Errore durante la transazione di Redis: viene provato il rollback su Mongo DB
                 try {
-                    System.out.println("id: " + newPurchaseDTO.getPurchaseIds() + " log: " + log);
                     rollbackProcessor.rollbackPurchases(newPurchaseDTO.getPurchaseIds(), log);
                     throw new RetryException("Retry to do the operations after that Mongo rollback succeeded", e);
 

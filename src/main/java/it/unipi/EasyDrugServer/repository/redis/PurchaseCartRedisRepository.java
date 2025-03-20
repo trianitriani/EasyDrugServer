@@ -104,17 +104,17 @@ public class PurchaseCartRedisRepository {
             for (String id_purch : purchIds) {
                 String purchKey = this.entity + ":" + id_purch + ":" + id_pat + ":";
                 if(drug.getIdPres() == null){
+                    // Farmaco OTC
                     String drugId = jedis.get(purchKey + "id");
                     if (drug.getIdDrug().equals(drugId))
                         throw new ForbiddenException("Drug " + drug.getIdDrug() + " is already into the purchase cart");
                 } else {
+                    // Farmaco prescritto
                     String info = jedis.get(purchKey + "info");
-
                     JsonObject jsonObject = JsonParser.parseString(info).getAsJsonObject();
                     if(!jsonObject.has("idPresDrug"))
                         continue;
                     int idPresDrug = jsonObject.getAsJsonPrimitive("idPresDrug").getAsInt();
-                    System.out.println("idPresDrug:" + idPresDrug);
                     if(idPresDrug == drug.getIdPresDrug())
                         throw new ForbiddenException("Drug " + drug.getIdDrug() + " of the same prescription is already into the purchase cart");
                 }
@@ -240,55 +240,6 @@ public class PurchaseCartRedisRepository {
                 presToModify.put(entry.getKey(), entry.getValue());
             }
         }
-
-        // *************************************************** //
-        /*
-        // effettuiamo le modifiche nel db
-        Transaction transaction = jedis.multi();
-
-        // delete purchase drug into the cart
-        for (PurchaseCartDrugDTO drug : purchaseDrugs) {
-            String key = this.entity + ":" + drug.getIdPurchDrug() + ":" + id_pat + ":";
-            transaction.del(key + "id");
-            transaction.del(key + "info");
-            redisHelper.returnIdToPool(transaction, this.entity, String.valueOf(drug.getIdPurchDrug()));
-        }
-        // delete the list of drugs in the purchase cart
-        transaction.del(this.entity + ":" + id_pat + ":set");
-
-        // delete drugs into prescriptions that are finished and the prescription
-        for (Map.Entry<Integer, List<Integer>> entry : presToDelete.entrySet()) {
-            String keyPres = "pres:" + entry.getKey() + ":" + id_pat + ":";
-            String keyPresList = "pres:" + id_pat + ":set";
-            transaction.del(keyPres + "timestamp");
-            transaction.del(keyPres + "toPurchase");
-            // rimozione dalla lista della prescrizione
-            transaction.srem(keyPresList, String.valueOf(entry.getKey()));
-            redisHelper.returnIdToPool(transaction, "pres", Integer.toString(entry.getKey()));
-
-            for(Integer id_pres_drug : entry.getValue()){
-                String keyPresDrug = "pres-drug:" + id_pres_drug + ":" + entry.getKey() + ":";
-                String keyPresDrugList = "pres-drug:" + entry.getKey() + ":set";
-                transaction.del(keyPresDrug + "id");
-                transaction.del(keyPresDrug + "info");
-                transaction.del(keyPresDrug + "purchased");
-                // rimozione della lista della prescrizione
-                transaction.del(keyPresDrugList);
-                redisHelper.returnIdToPool(transaction, "pres-drug", String.valueOf(id_pres_drug));
-            }
-        }
-
-        // update the number of drug to purchase on unfinished prescriptions and set purchased to
-        // selected drugs
-        for (Map.Entry<Integer, List<Integer>> entry : presToModify.entrySet()) {
-            String keyPres = "pres:" + entry.getKey() + ":" + id_pat + ":";
-            transaction.set(keyPres + "toPurchase", String.valueOf(newToPurchase.get(entry.getKey())));
-            for(Integer id_pres_drug : entry.getValue()){
-                String keyPresDrug = "pres-drug:" + id_pres_drug + ":" + entry.getKey() + ":";
-                transaction.set(keyPresDrug + "purchased", "true");
-            }
-        }
-        */
 
         ConfirmPurchaseCartDTO confirmPurchaseCartDTO = new ConfirmPurchaseCartDTO();
         confirmPurchaseCartDTO.setPurchaseDrugs(purchaseDrugs);

@@ -36,7 +36,6 @@ public class PatientService {
     private final int N_TO_VIEW = 5;
 
     public List<PrescriptionDTO> getAllActivePrescriptions(String patientCode){
-        System.out.println("Tentativo di recupero prescrizioni per: " + patientCode);
         return prescriptionRedisRepository.getAllActivePrescriptions(patientCode);
     }
 
