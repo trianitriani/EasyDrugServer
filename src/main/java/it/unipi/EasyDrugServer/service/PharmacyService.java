@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -50,10 +51,9 @@ public class PharmacyService {
         private final PatientRepository patientRepository;
         private final CommitLogRepository commitLogRepository;
         private final RollbackProcessor rollbackProcessor;
-        private int attempt = 0;
 
-        @Autowired
-        private MongoTemplate mongoTemplate;
+        // @Autowired
+        // private MongoTemplate mongoTemplate;
 
         public PharmacyHomeDTO viewPharmacyHome(String id_pat) {
             if(id_pat == null || id_pat.isEmpty())
@@ -96,7 +96,7 @@ public class PharmacyService {
         }
 
         // funzione usata per inserire un acquisto di farmaci all'interno di mongo db
-        private NewPurchaseDTO insertPurchases(String patientCode, String pharmacyRegion, List<PurchaseCartDrugDTO> purchasedDrugs){
+        public NewPurchaseDTO insertPurchases(String patientCode, String pharmacyRegion, List<PurchaseCartDrugDTO> purchasedDrugs){
             List<ObjectId> prescribedDrugsId =  new ArrayList<>();
             List<ObjectId> purchaseDrugsId =  new ArrayList<>();
             LocalDateTime currentTimestamp = LocalDateTime.now();
@@ -140,6 +140,7 @@ public class PharmacyService {
 
             latestPurchase.setTimestamp(currentTimestamp);
 
+            /*
             // seleziono il paziente col codice in esame
             Query query = new Query(Criteria.where("_id").is(patientCode));
 
@@ -168,6 +169,38 @@ public class PharmacyService {
                     .push("prescriptions").each(prescribedDrugsId.toArray());
 
             mongoTemplate.updateFirst(query, updateLists, Patient.class);
+            */
+
+            Optional<Patient> optPatient = patientRepository.findById(patientCode);
+            if (optPatient.isEmpty())
+                throw new NotFoundException("Patient not found: " + patientCode);
+            Patient patient = optPatient.get();
+
+            // Se ha già 5 farmaci, rimuove l'ultimo
+            List<LatestPurchase> latestDrugs = new ArrayList<>(patient.getLatestPurchasedDrugs());
+            if (latestDrugs.size() >= 5)
+                latestDrugs.remove(latestDrugs.size() - 1);
+
+            // Aggiunge il nuovo farmaco in prima posizione
+            latestDrugs.add(0, latestPurchase);
+            patient.setLatestPurchasedDrugs(latestDrugs);
+
+            // Converti ObjectId in String
+            List<String> purchaseDrugsIdStr = purchaseDrugsId.stream()
+                    .map(ObjectId::toHexString)
+                    .toList();
+
+            List<String> prescribedDrugsIdStr = prescribedDrugsId.stream()
+                    .map(ObjectId::toHexString)
+                    .toList();
+
+            // Aggiorna le liste "purchases" e "prescriptions"
+            patient.getPurchases().addAll(purchaseDrugsIdStr);
+            patient.getPrescriptions().addAll(prescribedDrugsIdStr);
+
+            // Salva il paziente aggiornato
+            patientRepository.save(patient);
+
             NewPurchaseDTO newPurchaseDTO = new NewPurchaseDTO();
             newPurchaseDTO.setLatestPurchase(latestPurchase);
             newPurchaseDTO.setPurchaseIds(purchaseIds);
@@ -268,8 +301,13 @@ public class PharmacyService {
             log.setOperationType("DELETE");
             log.setTimestamp(LocalDateTime.now());
             log.setProcessed(false);
+
+            throw new TransactionSystemException("Erroreee!");
+            /*
             commitLogRepository.save(log);
             return newPurchaseDTO;
+
+             */
         }
 
         @Retryable(
@@ -284,18 +322,11 @@ public class PharmacyService {
 
             Jedis jedis = null;
             CommitLog log = new CommitLog();
-            NewPurchaseDTO newPurchaseDTO = new NewPurchaseDTO();
+            NewPurchaseDTO newPurchaseDTO;
 
             try {
-                ConfirmPurchaseCartDTO confirmPurchaseCartDTO;
-                // Inserimento un try catch qua perché se viene lanciata una eccezione JedisException
-                // altrimenti verrebbe effettuata il rollback di Mongo
-                try {
-                    // Lettura delle informazioni dei farmaci da comprare
-                    confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
-                } catch (JedisException e) {
-                    throw new RetryException(e.getMessage());
-                }
+                // Lettura delle informazioni dei farmaci da comprare
+                ConfirmPurchaseCartDTO confirmPurchaseCartDTO = purchaseCartRedisRepository.confirmPurchaseCart(id_pat);
 
                 List<PurchaseCartDrugDTO> purchasedDrugs = confirmPurchaseCartDTO.getPurchaseDrugs();
                 // eseguiamo la transazione atomica di MongoDB
@@ -306,6 +337,7 @@ public class PharmacyService {
                 jedis = confirmPurchaseCartDTO.getJedis();
 
                 //Se tutto funziona correttamente, contrassegnamo come non necessario il rollback su mongo
+                /*
                 try{
                     log.setProcessed(true);
                     commitLogRepository.save(log);
@@ -313,15 +345,15 @@ public class PharmacyService {
                     // lancio un'eccezione che non mi fa fare il retry del metodo, dato che in realtà tutte le
                     // operazioni sono andati a buon fine
                     throw new RuntimeException("Not possible to update the commit_log");
-                }
+                }*/
                 return newPurchaseDTO.getLatestPurchase();
 
-            } catch (JedisConnectionException e) {
+            } catch (JedisException e) {
                 // non viene effettuato il rollback perché non abbiamo la sicurezza che le informazioni
-                // su redis non siano state eseguite
+                // su redis non siano state eseguite realmente
                 throw new RetryException(e.getMessage());
 
-            } catch (JedisException e) {
+            } /*catch (JedisException e) {
                 // Errore durante la transazione di Redis: viene provato il rollback su Mongo DB
                 try {
                     rollbackProcessor.rollbackPurchases(newPurchaseDTO.getPurchaseIds(), log);
@@ -331,7 +363,7 @@ public class PharmacyService {
                 } catch (MongoException ex){
                     throw new TransactionSystemException("Retry to do the operations after the error in the Mongo rollback", ex);
                 }
-            } finally {
+            } */finally {
                 // viene restituito il pool di connessione
                 if(jedis != null)
                     jedis.close();
