@@ -327,7 +327,7 @@ public class PrescriptionRedisRepository {
                 PrescribedDrugDTO drug = createPrescribedDrugDTO(idDrug, infoJson, "false", id_pres_drug);
                 prescription.getPrescribedDrugs().add(drug);
             }
-
+            
             // setto il numero di farmaci all'interno
             jedis.set(keyPres + "toPurchase", String.valueOf(nDrugs));
             // setto il timestamp a quello di ora e conto i farmaci relativi a quella prescrizione
