@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class RollbackProcessor {
     private final CommitLogRepository commitLogRepository;
     private final JedisSentinelPool jedisSentinelPool;
-    private final int time = 60 * 60 * 6;
+    private final int time = 60000 * 60;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -47,9 +47,11 @@ public class RollbackProcessor {
                 try {
                     if ("DELETE".equals(log.getOperationType())) {
                         // controllo se su Redis ho la conferma che il metodo è andato a buon fine
-                        if(jedis.exists("log:"+log.getId()))
-                            continue;
-                        rollbackPurchases(log.getPurchaseIds(), log);
+                        if(jedis.exists("log:"+log.getId())){
+                            // quindi considero l'acquisto completamente processato
+                            log.setProcessed(true);
+                            commitLogRepository.save(log);
+                        } else rollbackPurchases(log.getPurchaseIds(), log);
                     }
                 } catch (Exception e) {
                     throw new RuntimeException("Error during Mongo rollback phase: " + log.getId(), e);
@@ -88,6 +90,5 @@ public class RollbackProcessor {
         System.out.println("Rollback di: " + purchaseIds);
         log.setProcessed(true);
         commitLogRepository.save(log);
-
     }
 }
