@@ -84,7 +84,6 @@ public class RedisBoot {
                 System.out.println("Carrello per: "+patient.getId());
             }
 
-            // Provare a mostrare i farmaci inseriti
             for (int i = 0; i < 1500; i++) {
                 long startTime = System.currentTimeMillis();
                 Patient patient = patients.get(i);
@@ -92,6 +91,7 @@ public class RedisBoot {
                 long elapsedTime =  System.currentTimeMillis() - startTime;
                 System.out.println("View home per farmacia per: "+patient.getId() + " time: " + elapsedTime);
             }
+
         } catch (Exception e) {
             logger.error("Errore durante l'inizializzazione di RedisBoot", e);
         }
