@@ -13,8 +13,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PatientRepository extends MongoRepository<Patient, String> {
 
-    List<Patient> findByDoctorCode(String id);
-
     @Aggregation(pipeline = {
             "{ $group: { _id: '$city', nPatients: { $sum: 1 }, distDoctors: { $addToSet: '$doctorCode' } } }",
             "{ $project: { city: '$_id', nPatients: 1, nDoctors: { $size: '$distDoctors' } } }",

@@ -13,14 +13,10 @@ import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.service.ResearcherService;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-
 import java.util.List;
 
 
@@ -30,35 +26,7 @@ import java.util.List;
 public class ResearcherController {
     private final ResearcherService researcherService;
     private final GlobalExceptionHandler exceptionHandler;
-    /*
-    @PathVariable("") @Parameter(name = "", description = "", example = "")
-    @RequestBody @Parameter(name = "", description = "", example = "")
 
-    @PathVariable("id") @Parameter(name = "id", description = "Product id", example = "1") type var
-
-
-
-    OK                          200     Request succeeded.
-    CREATED                     201     New resource created successfully.
-    BAD_REQUEST                 400     Not processable request due to a client error (malformed, invalid or deceptive syntax).
-    UNAUTHORIZED                401     Client doesn't have access rights to the content (unauthorized).
-    FORBIDDEN                   403     Server refuse client request because violate business logic.
-    NOT_FOUND                   404     Server cannot find the requested resource (valid endpoint but resource doesn't exist).
-    INTERNAL_SERVER_ERROR       500     Server encountered a situation it does not know ho to handle (generic error).
-    SERVICE_UNAVAILABLE         503     Server not ready to handle request (maintenance or overloaded).
-
-    @Operation(summary = "", description = "")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Request succeeded:."),
-            @ApiResponse(responseCode = "201", description = "New resource created successfully."),
-            @ApiResponse(responseCode = "400", description = "Not processable request due to a client error (malformed, invalid or deceptive syntax)."),
-            @ApiResponse(responseCode = "401", description = "Client doesn't have access rights to the content (unauthorized)."),
-            @ApiResponse(responseCode = "403", description = "Server refuse client request because violate business logic."),
-            @ApiResponse(responseCode = "404", description = "Server cannot find the requested resource (valid endpoint but resource doesn't exist)."),
-            @ApiResponse(responseCode = "500", description = "Server encountered a situation it does not know ho to handle (generic error)."),
-            @ApiResponse(responseCode = "503", description = "Server not ready to handle request (maintenance or overloaded).")
-    })
-    */
     @Operation(summary = "Get researcher by id.", description = "Fetch the researcher's private information using their unique identify code: identify code, password, city, district, region, name, surname, date of birth, gender, tax code, researcher register code.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Request succeeded: researcher data retrieved successfully."),
@@ -109,7 +77,6 @@ public class ResearcherController {
             return exceptionHandler.handleException(e);
         }
     }
-    //tecnicamente qui c'è anche una not found sollevata che però viene gestita da internal server error (forse semplicemente perchè è impossibile che non si ritrobi l'account che si vuole modificare, visto che modifichi quello che hai davanti)
 
     @Operation(summary = "Delete researcher account", description = "Permanently remove a researcher's account from the system.")
     @ApiResponses(value = {
@@ -134,12 +101,6 @@ public class ResearcherController {
             return exceptionHandler.handleException(e);
         }
     }
-
-    /*
-    Le delete non causano inconsistenza poichè:
-    -tutti, tranne medico, non causa inconsistenze in DocumentDB
-    -id medico è inserito come campo nel document del patient ma verrebbe usato solo dal medico stesso per ritrovare i suoi pazienti (e se si è eliminato l'account allora non può controllarli per antonomasia e quindi si può benissimo non mettere a null quell'attributo in patient. Ci penserà poi il paziente a cambiare medico e risolvere inconsistenza formale)
-     */
 
     @Operation(summary = "Get patients/doctors ratio", description = "Obtain the ratio of patients to doctors for each region in Italy, sorted by the specified order.")
     @ApiResponses(value = {

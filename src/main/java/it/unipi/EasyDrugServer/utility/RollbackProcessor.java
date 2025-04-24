@@ -1,13 +1,10 @@
 package it.unipi.EasyDrugServer.utility;
 
-import com.mongodb.MongoException;
 import it.unipi.EasyDrugServer.model.CommitLog;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.model.Purchase;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -15,19 +12,16 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import it.unipi.EasyDrugServer.repository.mongo.CommitLogRepository;
-import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class RollbackProcessor {
     private final CommitLogRepository commitLogRepository;
     private final JedisSentinelPool jedisSentinelPool;
-    private final int time = 60000 * 60;
+    private final int time = 60000 * 20;
 
     @Autowired
     private MongoTemplate mongoTemplate;

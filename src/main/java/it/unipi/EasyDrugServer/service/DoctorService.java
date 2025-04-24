@@ -4,7 +4,6 @@ import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
 import it.unipi.EasyDrugServer.dto.SimplePatientDTO;
 import it.unipi.EasyDrugServer.dto.UserType;
-import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.exception.UnauthorizedException;
 import it.unipi.EasyDrugServer.model.*;
@@ -17,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
-
 import java.time.LocalDateTime;
 import java.util.*;
 

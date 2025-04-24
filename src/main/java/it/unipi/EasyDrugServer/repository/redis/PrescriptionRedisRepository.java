@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unipi.EasyDrugServer.dto.PrescribedDrugDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
-import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.utility.RedisHelper;
@@ -16,7 +15,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +106,6 @@ public class PrescriptionRedisRepository {
             prescription.setTimestamp(null);
             String listKey = this.pres + ":" + id_pat + ":set";
             List<String> presIds = new ArrayList<>(jedis.smembers(listKey));
-
             if(presIds.isEmpty())
                 return prescription;
 
@@ -128,7 +125,6 @@ public class PrescriptionRedisRepository {
                         keys.add(keyPresDrug + "id");
                         keys.add(keyPresDrug + "info");
                     }
-
                     // effettuiamo una sola chiamata a MGET per tutti e i SOLI farmaci della prescrizione
                     List<String> values = jedis.mget(keys.toArray(new String[0]));
                     for (int i = 0; i < presDrugIds.size(); i++) {

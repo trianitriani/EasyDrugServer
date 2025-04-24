@@ -2,10 +2,8 @@ package it.unipi.EasyDrugServer.service;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.mongodb.MongoException;
 import it.unipi.EasyDrugServer.dto.*;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
-import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.*;
 import it.unipi.EasyDrugServer.repository.mongo.CommitLogRepository;
@@ -22,22 +20,13 @@ import org.bson.types.ObjectId;
 import org.springframework.dao.DataAccessException;
 import org.springframework.retry.RetryException;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
 @Service
@@ -336,16 +325,6 @@ public class PharmacyService {
                 confirmPurchaseCart(id_pat, confirmPurchaseCartDTO, log.getId());
                 jedis = confirmPurchaseCartDTO.getJedis();
 
-                //Se tutto funziona correttamente, contrassegnamo come non necessario il rollback su mongo
-                /*
-                try{
-                    log.setProcessed(true);
-                    commitLogRepository.save(log);
-                } catch (Exception exc){
-                    // lancio un'eccezione che non mi fa fare il retry del metodo, dato che in realtà tutte le
-                    // operazioni sono andati a buon fine
-                    throw new RuntimeException("Not possible to update the commit_log");
-                }*/
                 return newPurchaseDTO.getLatestPurchase();
 
             } catch (JedisException e) {
@@ -353,17 +332,7 @@ public class PharmacyService {
                 // su redis non siano state eseguite realmente
                 throw new RetryException(e.getMessage());
 
-            } /*catch (JedisException e) {
-                // Errore durante la transazione di Redis: viene provato il rollback su Mongo DB
-                try {
-                    rollbackProcessor.rollbackPurchases(newPurchaseDTO.getPurchaseIds(), log);
-                    throw new RetryException("Retry to do the operations after that Mongo rollback succeeded", e);
-
-                // se ho problemi con il rollback di Mongo
-                } catch (MongoException ex){
-                    throw new TransactionSystemException("Retry to do the operations after the error in the Mongo rollback", ex);
-                }
-            } */finally {
+            } finally {
                 // viene restituito il pool di connessione
                 if(jedis != null)
                     jedis.close();

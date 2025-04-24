@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import redis.clients.jedis.exceptions.JedisException;
 
-// @ControllerAdvice(basePackages = "it.unipi.EasyDrugServer.controller")
 @Component
 public class GlobalExceptionHandler {
     public static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);

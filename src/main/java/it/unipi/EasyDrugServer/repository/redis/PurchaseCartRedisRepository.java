@@ -2,11 +2,8 @@ package it.unipi.EasyDrugServer.repository.redis;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.swagger.v3.oas.models.security.SecurityScheme;
 import it.unipi.EasyDrugServer.dto.ConfirmPurchaseCartDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseCartDrugDTO;
-import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
-import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.utility.RedisHelper;
@@ -18,15 +15,7 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.exceptions.JedisException;
-import redis.clients.jedis.params.ScanParams;
-import redis.clients.jedis.resps.ScanResult;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
-
 import java.time.LocalDateTime;
-
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Setter

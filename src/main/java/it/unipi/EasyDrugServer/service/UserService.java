@@ -11,10 +11,7 @@ import it.unipi.EasyDrugServer.repository.mongo.PatientRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.repository.mongo.ResearcherRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor

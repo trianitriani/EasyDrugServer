@@ -33,7 +33,8 @@ public interface PurchaseRepository extends MongoRepository<Purchase, String> {
                     "100 ] } } }",
             "{ $sort: { percentage: ?1 } }"
     })
-    List<DrugDistributionDTO> getDistributionByDrug(@Param("drugId") ObjectId drugId, @Param("order") int order, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+    List<DrugDistributionDTO> getDistributionByDrug(@Param("drugId") ObjectId drugId, @Param("order") int order,
+                                                    @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     @Aggregation(pipeline = {
             "{ $match: { purchaseDate: { $gte: ?0, $lte: ?1 } } }",

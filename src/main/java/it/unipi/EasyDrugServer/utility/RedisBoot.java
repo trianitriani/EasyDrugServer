@@ -8,16 +8,13 @@ import it.unipi.EasyDrugServer.model.Drug;
 import it.unipi.EasyDrugServer.model.Patient;
 import it.unipi.EasyDrugServer.repository.mongo.DrugRepository;
 import it.unipi.EasyDrugServer.repository.mongo.PatientRepository;
-import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.service.DoctorService;
-import it.unipi.EasyDrugServer.service.PatientService;
 import it.unipi.EasyDrugServer.service.PharmacyService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +29,7 @@ public class RedisBoot {
     private final PharmacyService pharmacyService;
     private final JedisSentinelPool jedisSentinelPool;
     private final RedisHelper redisHelper;
+
 
     @PostConstruct
     public void init() {

@@ -3,12 +3,10 @@ package it.unipi.EasyDrugServer.service;
 
 import it.unipi.EasyDrugServer.dto.SimpleDrugDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
-import it.unipi.EasyDrugServer.exception.ForbiddenException;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Drug;
 import it.unipi.EasyDrugServer.repository.mongo.DrugRepository;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;

@@ -1,7 +1,6 @@
 package it.unipi.EasyDrugServer.config;
 
 import jakarta.annotation.PreDestroy;
-import lombok.Getter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import redis.clients.jedis.*;

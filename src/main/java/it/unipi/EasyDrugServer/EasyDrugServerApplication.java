@@ -1,6 +1,5 @@
 package it.unipi.EasyDrugServer;
 
-import it.unipi.EasyDrugServer.utility.MongoBoot;
 import it.unipi.EasyDrugServer.utility.RedisBoot;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

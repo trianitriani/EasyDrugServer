@@ -4,7 +4,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.AccountPatientDTO;
 import it.unipi.EasyDrugServer.dto.PrescriptionDTO;
-import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;

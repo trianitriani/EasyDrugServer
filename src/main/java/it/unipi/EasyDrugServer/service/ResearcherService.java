@@ -13,17 +13,9 @@ import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +25,6 @@ public class ResearcherService {
     private final PatientRepository patientRepository;
     private final PurchaseRepository purchaseRepository;
     private final DrugRepository drugRepository;
-    private MongoTemplate mongoTemplate;
 
     public Researcher getResearcherById(String id) {
         return (Researcher) userService.getUserIfExists(id, UserType.RESEARCHER);

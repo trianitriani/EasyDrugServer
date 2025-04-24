@@ -4,7 +4,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
 import it.unipi.EasyDrugServer.dto.PharmacyHomeDTO;
 import it.unipi.EasyDrugServer.dto.PurchaseCartDrugDTO;
-import it.unipi.EasyDrugServer.dto.PurchaseDrugDTO;
 import it.unipi.EasyDrugServer.dto.ResponseDTO;
 import it.unipi.EasyDrugServer.exception.BadRequestException;
 import it.unipi.EasyDrugServer.exception.ForbiddenException;
@@ -12,7 +11,6 @@ import it.unipi.EasyDrugServer.exception.GlobalExceptionHandler;
 import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.LatestPurchase;
 import it.unipi.EasyDrugServer.model.Pharmacy;
-import it.unipi.EasyDrugServer.model.Researcher;
 import it.unipi.EasyDrugServer.service.PharmacyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,8 +22,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import java.time.LocalDateTime;
-import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/pharmacies")

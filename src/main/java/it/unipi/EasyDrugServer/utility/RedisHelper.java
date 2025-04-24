@@ -1,7 +1,6 @@
 package it.unipi.EasyDrugServer.utility;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.*;
-import redis.clients.jedis.exceptions.JedisException;
 
 @Component
 public class RedisHelper {

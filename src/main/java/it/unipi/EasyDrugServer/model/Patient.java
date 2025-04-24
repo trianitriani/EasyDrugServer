@@ -4,15 +4,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.annotation.Collation;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
-import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -66,131 +61,3 @@ public class Patient {
     @Schema(name = "prescriptions", description = "List of IDs of prescribed drugs purchased.", type = "List<String>")
     private List<String> prescriptions;
 }
-
-
-/*
-
-[
-            {
-                "timestamp": "2025-01-01T11:28:00",
-                "drugs": [
-                    {
-                        "drugId": {
-                            "$oid": "67aba9215da6705a000d4355"
-                        },
-                        "drugName": "enantyum 25 mg soluzione orale in bustina",
-                        "quantity": 1,
-                        "price": 22.63
-                    }
-                ]
-            },
-            {
-                "timestamp": "2024-12-22T17:51:00",
-                "drugs": [
-                    {
-                        "drugId": {
-                            "$oid": "67aba9215da6705a000d404d"
-                        },
-                        "drugName": "benactivdol gola 8.75 mg spray per mucosa orale",
-                        "quantity": 1,
-                        "price": 2.74
-                    }
-                ]
-            },
-            {
-                "timestamp": "2024-12-14T17:55:00",
-                "drugs": [
-                    {
-                        "drugId": {
-                            "$oid": "67aba9215da6705a000d4549"
-                        },
-                        "drugName": "beacita 60 mg capsula rigida",
-                        "quantity": 2,
-                        "price": 10.14
-                    }
-                ]
-            },
-            {
-                "timestamp": "2024-10-05T16:57:00",
-                "drugs": [
-                    {
-                        "drugId": {
-                            "$oid": "67aba9215da6705a000d4184"
-                        },
-                        "drugName": "maalox nausea 5 mg granulato effervescente",
-                        "quantity": 1,
-                        "price": 4.2
-                    }
-                ]
-            },
-            {
-                "timestamp": "2024-09-16T10:05:00",
-                "drugs": [
-                    {
-                        "drugId": {
-                            "$oid": "67aba9215da6705a000d44c3"
-                        },
-                        "drugName": "actigrip tosse mucolitico 20 mg/ml soluzione orale",
-                        "quantity": 2,
-                        "price": 2.3
-                    }
-                ]
-            }
-        ]
-
- */
-
-/*
-
-[
-            {
-                "$oid": "67aba9555da6705a000dd146"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd144"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd149"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd14d"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd14e"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd147"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd148"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd143"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd14c"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd14b"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd142"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd145"
-            },
-            {
-                "$oid": "67aba9555da6705a000dd14a"
-            }
-        ]
-
- */
-
-
-/*
-[
-            {
-                "$oid": "67aba9555da6705a000dd147"
-            }
-        ]
- */

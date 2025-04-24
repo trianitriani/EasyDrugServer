@@ -18,9 +18,7 @@ import it.unipi.EasyDrugServer.repository.mongo.PharmacyRepository;
 import it.unipi.EasyDrugServer.repository.mongo.ResearcherRepository;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.stereotype.Service;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Objects;

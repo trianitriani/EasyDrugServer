@@ -12,16 +12,7 @@ import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import it.unipi.EasyDrugServer.repository.redis.PrescriptionRedisRepository;
 import it.unipi.EasyDrugServer.utility.PasswordHasher;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-
-import java.net.SocketException;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -33,7 +24,7 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final PurchaseRepository purchaseRepository;
     private final DoctorRepository doctorRepository;
-    private final int N_TO_VIEW = 5;
+    private final int N_TO_VIEW = 10;
 
     public List<PrescriptionDTO> getAllActivePrescriptions(String patientCode){
         return prescriptionRedisRepository.getAllActivePrescriptions(patientCode);

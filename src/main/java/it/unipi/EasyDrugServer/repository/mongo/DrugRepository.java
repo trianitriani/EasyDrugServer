@@ -1,14 +1,10 @@
 package it.unipi.EasyDrugServer.repository.mongo;
 
-import it.unipi.EasyDrugServer.dto.DrugDistributionDTO;
 import it.unipi.EasyDrugServer.dto.TopRareIndicationDTO;
-import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import it.unipi.EasyDrugServer.model.Drug;
-
 import java.util.List;
-
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;

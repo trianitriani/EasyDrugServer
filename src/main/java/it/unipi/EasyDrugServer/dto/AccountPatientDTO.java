@@ -1,14 +1,9 @@
 package it.unipi.EasyDrugServer.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import it.unipi.EasyDrugServer.model.LatestPurchase;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Field;
-
-import java.util.List;
 
 @Getter
 @Setter

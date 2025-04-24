@@ -4,9 +4,7 @@ import it.unipi.EasyDrugServer.exception.NotFoundException;
 import it.unipi.EasyDrugServer.model.Purchase;
 import it.unipi.EasyDrugServer.repository.mongo.PurchaseRepository;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
-
 import java.util.Optional;
 
 
