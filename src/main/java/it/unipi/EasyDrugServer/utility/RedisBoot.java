@@ -34,14 +34,14 @@ public class RedisBoot {
     @PostConstruct
     public void init() {
         try (Jedis jedis = jedisSentinelPool.getResource()) {
-            //jedis.flushAll();
+            jedis.flushAll();
             if(redisHelper.nEntities(jedis, "purch-drug") > 0)
                 return;
 
             List<Patient> patients = patientRepository.findAll();
             List<Drug> drugs1 = drugRepository.findByOnPrescriptionTrue();
             List<Drug> drugs2 = drugRepository.findByOnPrescriptionFalse();
-            for (int i = 0; i < 1500; i++) {
+            for (int i = 0; i < 15; i++) {
                 Patient patient = patients.get(i);
                 int id_pres = 0;
                 List<Integer> id_pres_drugs = new ArrayList<>();
@@ -61,12 +61,11 @@ public class RedisBoot {
                         System.out.println(e.getMessage());
                     }
                 }
-                PrescriptionDTO pres = doctorService.activatePrescriptionCart(patient.getId(), id_pres);
+                doctorService.activatePrescriptionCart(patient.getId(), id_pres);
                 System.out.println("Prescrizioni attive per: "+patient.getId());
-                System.out.println(pres);
             }
 
-            for (int i = 0; i < 1500; i++) {
+            for (int i = 0; i < 15; i++) {
                 Patient patient = patients.get(i);
                 for(int j = 0; j < 3; j++){
                     try {
@@ -84,7 +83,7 @@ public class RedisBoot {
                 System.out.println("Carrello per: "+patient.getId());
             }
 
-            for (int i = 0; i < 1500; i++) {
+            for (int i = 0; i < 15; i++) {
                 long startTime = System.currentTimeMillis();
                 Patient patient = patients.get(i);
                 PharmacyHomeDTO ph = pharmacyService.viewPharmacyHome(patient.getId());

@@ -30,22 +30,13 @@ public class PurchaseCartRedisRepository {
     private final String entity = "purch-drug";
     private final JedisSentinelPool jedisSentinelPool;
     private final RedisHelper redisHelper;
-    private final int hour = 3600*24*3;     // MODIFICARE
+    private final int hour = 3600;
 
     /*
 
         purch-drug:purch-drug_id:id_pat:id
         purch-drug:purch-drug_id:id_pat:info { name, price, quantity, id_pres, id_pres_drug }
         purch-drug:id_pat:set
-
-
-        OPERAZIONI:
-        1) Inserire nuovo farmaco nel carrello
-        2) Controllare che sia già nel carrello
-        3) Recuperare tutti i farmaci nel carrello
-        4) modificare quantità
-        5) eliminare farmaco dal carrello
-
 
      */
 

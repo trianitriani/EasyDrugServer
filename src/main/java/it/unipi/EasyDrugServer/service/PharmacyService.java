@@ -41,9 +41,6 @@ public class PharmacyService {
         private final CommitLogRepository commitLogRepository;
         private final RollbackProcessor rollbackProcessor;
 
-        // @Autowired
-        // private MongoTemplate mongoTemplate;
-
         public PharmacyHomeDTO viewPharmacyHome(String id_pat) {
             if(id_pat == null || id_pat.isEmpty())
                 throw new BadRequestException("The patient id can not be null");
@@ -254,7 +251,6 @@ public class PharmacyService {
             
                     -- 5. Conferma modifiche su Redis effettuate
                     redis.call("SET", "log:" .. id_log, "ok")
-                    redis.call("EXPIRE", "log:" .. id_log, 10000)
                     return "OK"
             """;
 
@@ -291,12 +287,9 @@ public class PharmacyService {
             log.setTimestamp(LocalDateTime.now());
             log.setProcessed(false);
 
-            throw new TransactionSystemException("Erroreee!");
-            /*
             commitLogRepository.save(log);
             return newPurchaseDTO;
 
-             */
         }
 
         @Retryable(

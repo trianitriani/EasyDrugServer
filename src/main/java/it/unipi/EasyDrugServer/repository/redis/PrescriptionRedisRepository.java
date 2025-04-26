@@ -32,8 +32,8 @@ public class PrescriptionRedisRepository {
     private final String presDrug = "pres-drug";
     private final JedisSentinelPool jedisSentinelPool;
     private final RedisHelper redisHelper;
-    private final int day = 3600*24*3;  // MODIFICARE
-    private final int month = day*30;
+    private final int day = 3600*24;
+    private final int month = day*31;
 
     /*
         pres:id_pres:id_pat:timestamp
