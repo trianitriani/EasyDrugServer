@@ -126,37 +126,6 @@ public class PharmacyService {
 
             latestPurchase.setTimestamp(currentTimestamp);
 
-            /*
-            // seleziono il paziente col codice in esame
-            Query query = new Query(Criteria.where("_id").is(patientCode));
-
-            // Rimuove l'ultimo elemento e aggiunge il nuovo in prima posizione se ha già 5 farmaci
-            Optional<Patient> optPatient = patientRepository.findById(patientCode);
-            Patient patient;
-            int nDrugs = 0;
-
-            if(optPatient.isPresent()) {
-                patient = optPatient.get();
-                nDrugs = patient.getLatestPurchasedDrugs().size();
-            }
-
-            if (nDrugs >= 5) {
-                // PRIMO UPDATE: Rimuove l'ultimo elemento
-                Update popUpdate = new Update().pop("latestPurchasedDrugs", Update.Position.LAST);
-                mongoTemplate.updateFirst(query, popUpdate, Patient.class);
-            }
-
-            Update pushUpdate = new Update().push("latestPurchasedDrugs").atPosition(0).value(latestPurchase);
-            mongoTemplate.updateFirst(query, pushUpdate, Patient.class);
-
-            // aggiorno le liste "purchases" e "prescriptions"
-            Update updateLists = new Update()
-                    .push("purchases").each(purchaseDrugsId.toArray())
-                    .push("prescriptions").each(prescribedDrugsId.toArray());
-
-            mongoTemplate.updateFirst(query, updateLists, Patient.class);
-            */
-
             Optional<Patient> optPatient = patientRepository.findById(patientCode);
             if (optPatient.isEmpty())
                 throw new NotFoundException("Patient not found: " + patientCode);
