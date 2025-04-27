@@ -206,7 +206,7 @@ public class PharmacyService {
                     local presToDelete = cjson.decode(presToDeleteJson)
                     local presToModify = cjson.decode(presToModifyJson)
                     local newToPurchase = cjson.decode(newToPurchaseJson)
-            
+                
                     -- 1. Eliminazione farmaci acquistati dal carrello
                     for _, drug in ipairs(purchaseDrugs) do
                         local key = "purch-drug:" .. drug.idPurchDrug .. ":" .. id_pat .. ":"
@@ -226,10 +226,10 @@ public class PharmacyService {
                         redis.call("DEL", keyPres .. "toPurchase")
                         redis.call("SREM", keyPresList, presId)
                         redis.call("LPUSH", "available_pres_ids", presId)
-            
+                        
+                        local keyPresDrugList = "pres-drug:" .. presId .. ":set"
                         for _, id_pres_drug in ipairs(drugList) do
                             local keyPresDrug = "pres-drug:" .. id_pres_drug .. ":" .. presId .. ":"
-                            local keyPresDrugList = "pres-drug:" .. presId .. ":set"
                             redis.call("DEL", keyPresDrug .. "id")
                             redis.call("DEL", keyPresDrug .. "info")
                             redis.call("DEL", keyPresDrug .. "purchased")
@@ -324,7 +324,7 @@ public class PharmacyService {
                 // non viene effettuato il rollback perché non abbiamo la sicurezza che le informazioni
                 // su redis non siano state eseguite realmente
                 throw new RetryException(e.getMessage());
-
+                
             } finally {
                 // viene restituito il pool di connessione
                 if(jedis != null)
